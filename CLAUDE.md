@@ -1,10 +1,10 @@
 # DRAFTKIT CLAUDE GUIDELINES
 
 ## Commands
-- Build: `npm run build` 
-- Dev server: `npm run dev` 
-- Lint: `npm run lint` 
-- Preview: `npm run preview` 
+- Build: `npm run build` (client directory)
+- Dev server: `npm run dev` (client directory)
+- Lint: `npm run lint` (client directory)
+- Preview: `npm run preview` (client directory)
 - Server: `deno run --allow-net main.ts` (server directory)
 
 ## Code Style

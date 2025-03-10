@@ -196,7 +196,7 @@ app.get('/admin', (c) => c.html())
  */
 app.get('/admin/refresh', async (c) => {
     const VALID_SOURCES = ['teams', 'stats', 'projections', 'historical'];
-    const sources_to_update = ['stats'];
+    const sources_to_update = ['teams', 'stats', 'projections'];
 
     // Validate sources_to_update
     if (sources_to_update.length < 1) {
@@ -245,7 +245,7 @@ app.get('/admin/refresh', async (c) => {
         }
         
         // Load player details
-        entries = kv.list({ prefix: ['playerdetails']});
+        entries = kv.list({ prefix: ['players']});
         for await (let entry of entries) {
             playerDetails[entry.key[1]] = entry.value;
         }
@@ -514,7 +514,7 @@ function storePlayerStats(playerData: { stats: any, playerDetails: any }) {
     
     // Store player details (this replaces the need for separate playerlist)
     for (const [playerId, details] of Object.entries(playerData.playerDetails)) {
-        kv.set(['playerdetails', parseInt(playerId)], details);
+        kv.set(['players', parseInt(playerId)], details);
     }
 }
 

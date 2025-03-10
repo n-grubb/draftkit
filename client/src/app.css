@@ -2,30 +2,30 @@
 @font-face {
   font-family: "Grandsans";
   src:
-  url('assets/fonts/Grandsans-Regular.otf') format("opentype"),
-  url("assets/fonts/Grandsans-Regular.woff2") format("woff2"),
-  url("assets/fonts/Grandsans-Regular.woff") format("woff");
+  url('/assets/fonts/Grandsans-Regular.otf') format("opentype"),
+  url("/assets/fonts/Grandsans-Regular.woff2") format("woff2"),
+  url("/assets/fonts/Grandsans-Regular.woff") format("woff");
 }
 
 @font-face {
   font-family: "Grandsans Rough";
   src:
-  url('assets/fonts/Grandsans-Rough.otf') format("opentype"),
-  url("assets/fonts/Grandsans-Rough.woff2") format("woff2"),
-  url("assets/fonts/Grandsans-Rough.woff") format("woff");
+  url('/assets/fonts/Grandsans-Rough.otf') format("opentype"),
+  url("/assets/fonts/Grandsans-Rough.woff2") format("woff2"),
+  url("/assets/fonts/Grandsans-Rough.woff") format("woff");
 }
 
 @font-face {
   font-family: "Seurat Pro";
   src:
-  url('assets/fonts/SeuratProB.otf') format("opentype");
+  url('/assets/fonts/SeuratProB.otf') format("opentype");
 }
 
 /* May not need this one. */
 @font-face {
   font-family: "Rodin Bokutoh Pro";
   src:
-  url('assets/fonts/RodinBokutohProEB.otf') format("opentype");
+  url('/assets/fonts/RodinBokutohProEB.otf') format("opentype");
 }
 
 :root {

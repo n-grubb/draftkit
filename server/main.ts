@@ -1,6 +1,37 @@
 import { Hono } from "jsr:@hono/hono";
 import { cors } from "jsr:@hono/hono/cors";
 
+/**
+ * MLB Fantasy Baseball Draft Tool Server
+ * 
+ * DATA SOURCES FOR HISTORICAL STATS:
+ * 
+ * 1. MLB Stats API (https://statsapi.mlb.com/api/)
+ *    - Official MLB data with comprehensive player information
+ *    - Requires authentication for full access
+ *    - Example: https://statsapi.mlb.com/api/v1/people/{playerId}/stats?stats=statSplits&group=hitting&season=2023
+ * 
+ * 2. Baseball-Reference
+ *    - Not a public API but data can be scraped
+ *    - Contains 3+ years of historical data
+ *    - Has player ages, birthdays and comprehensive stats
+ * 
+ * 3. FanGraphs
+ *    - Contains both current season and historical data
+ *    - Also has projections from multiple systems
+ *    - Example: https://www.fangraphs.com/api/players/stats?playerid={playerId}&position=all&stats=bat
+ * 
+ * 4. Baseball Savant
+ *    - Advanced statistics and Statcast data
+ *    - Great for advanced metrics, less for basic stats
+ *
+ * 5. ESPN Fantasy API (currently used)
+ *    - Limited to recent years only
+ *    - Doesn't provide full player histories
+ *
+ * TODO: Implement comprehensive historical stats from one of the above sources
+ */
+
 const app = new Hono();
 const kv = await Deno.openKv();
 
@@ -43,12 +74,19 @@ interface FangraphsProjection {}
 interface Player {
     id: number,
     name: string,
+    firstName: string,
+    lastName: string,
     team_id: number, 
     pos: string[],
     stats: Record<string, any>,
     projections: Record<string, any> | null,
     headshot: string,
-    ownership: number
+    ownership: number,
+    averageDraftPosition: number | null,
+    percentChange: number | null,
+    injuryStatus: string | null,
+    age: number | null,
+    birthDate: string | null
 }
 
 interface Ranking {}
@@ -157,7 +195,7 @@ app.get('/admin', (c) => c.html())
  * TODO: Setup criteria
  */
 app.get('/admin/refresh', async (c) => {
-    const VALID_SOURCES = ['teams', 'players', 'stats', 'projections'];
+    const VALID_SOURCES = ['teams', 'stats', 'projections', 'historical'];
     const sources_to_update = ['stats'];
 
     // Validate sources_to_update
@@ -168,14 +206,15 @@ app.get('/admin/refresh', async (c) => {
         return c.text('Invalid data source.', 503);
     }
 
+    // Fetch teams and divisions
     let teams: Team[] = [];
     let divisions: Division[] = []; 
     if (sources_to_update.includes('teams')) {
         const {teams: fetchedTeams, divisions: fetchedDivisions} = await fetchTeamsAndDivisions();
-        teams     = fetchedTeams;
+        teams = fetchedTeams;
         divisions = fetchedDivisions;
         storeTeamsAndDivisions(teams, divisions);
-        console.log('teams & divisions refreshed.')
+        console.log('Teams & divisions refreshed.');
     } else {
         let entries = kv.list({ prefix: ['teams'] });
         for await (let team of entries) {
@@ -186,39 +225,53 @@ app.get('/admin/refresh', async (c) => {
             divisions.push(division.value);
         }
     }
-    console.log(`teams found: ${teams.length}`);
-    console.log(`divisions found: ${divisions.length}`);
+    console.log(`Teams found: ${teams.length}`);
+    console.log(`Divisions found: ${divisions.length}`);
 
-    let playerlist = [];
-    if (sources_to_update.includes('players')) {
-        playerlist = await fetchMLBPlayerList();
-        storePlayerList(playerlist);
-        console.log('players refreshed.');
-    } else {
-        let entries = kv.list({ prefix: ['playerlist']});
-        for await (let player of entries) {
-            playerlist.push(player.value);
-        }
-    }
-    console.log(`players found: ${playerlist.length}`);
-
-    let stats = {};
+    // Fetch player stats and details - this now includes both stats and player data
+    let playerStats = {};
+    let playerDetails = {};
     if (sources_to_update.includes('stats')) {
-        stats = await fetchPlayerStats();
-        storePlayerStats(stats);
-        console.log('player stats refreshed.');
+        const playerData = await fetchPlayerStats();
+        playerStats = playerData.stats;
+        playerDetails = playerData.playerDetails;
+        storePlayerStats(playerData);
+        console.log('Player stats and details refreshed.');
     } else {
+        // Load stats
         let entries = kv.list({ prefix: ['stats']});
         for await (let entry of entries) {
-            stats[entry.key[1]] = entry.value;
+            playerStats[entry.key[1]] = entry.value;
+        }
+        
+        // Load player details
+        entries = kv.list({ prefix: ['playerdetails']});
+        for await (let entry of entries) {
+            playerDetails[entry.key[1]] = entry.value;
         }
     }
-    console.log(`stats found for players: ${Object.keys(stats).length}`);
+    console.log(`Stats found for players: ${Object.keys(playerStats).length}`);
+    console.log(`Player details found: ${Object.keys(playerDetails).length}`);
 
+    // Fetch historical data if requested
+    let historicalStats = {};
+    if (sources_to_update.includes('historical')) {
+        historicalStats = await fetchHistoricalStats(Object.values(playerDetails));
+        storeHistoricalStats(historicalStats);
+        console.log('Historical stats refreshed.');
+    } else {
+        let entries = kv.list({ prefix: ['historical']});
+        for await (let entry of entries) {
+            historicalStats[entry.key[1]] = entry.value;
+        }
+    }
+    console.log(`Historical stats found for players: ${Object.keys(historicalStats).length}`);
+
+    // Fetch projections if requested
     let projections = {};
     if (sources_to_update.includes('projections')) {
         let all_projections = await fetchFangraphProjections();
-        projections = await buildAndStorePlayerProjections(all_projections, playerlist);
+        projections = await buildAndStorePlayerProjections(all_projections, Object.values(playerDetails));
     } else {
         let entries = kv.list({ prefix: ['projections']});
         for await (let entry of entries) {
@@ -227,14 +280,14 @@ app.get('/admin/refresh', async (c) => {
     }
     console.log(`Projections found: ${Object.keys(projections).length}`);
 
-    // Our custom player store is built from all of the above data sources. 
-    // If any of them have been refreshed, we rebuild the player data. 
+    // Our custom player store is built from all of the above data sources
     const players = await buildCustomPlayerStore(
         teams, 
         divisions, 
-        playerlist,
-        stats, 
-        projections
+        Object.values(playerDetails),
+        playerStats, 
+        projections,
+        historicalStats
     );
     await storeCustomPlayers(players);
 
@@ -343,9 +396,12 @@ function storePlayerList(playerlist: ESPNPlayer[] ) {
 
 /** 
  * Fetch player stats from ESPN
+ * @returns {Object} - Returns object with player stats and additional player data
  */
 async function fetchPlayerStats() {
     const url = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2025/segments/0/leagues/3850?view=kona_player_info`;
+    
+    // First fetch batters
     let response = await fetch(url, {
         headers: {
             'x-fantasy-filter': '{"players":{"filterSlotIds":{"value":[0,1,2,3,4,5,6,7,8,9,10,11,12,17]},"filterRanksForScoringPeriodIds":{"value":[162]},"sortPercOwned":{"sortPriority":1,"sortAsc":false},"limit":500}}'
@@ -356,6 +412,7 @@ async function fetchPlayerStats() {
     }
     let batter_stats = await response.json();
 
+    // Then fetch pitchers
     response = await fetch(url, {
         headers: {
             'x-fantasy-filter': '{"players":{"filterSlotIds":{"value":[13,14,15,17]},"filterRanksForScoringPeriodIds":{"value":[162]},"sortPercOwned":{"sortPriority":1,"sortAsc":false},"limit":400}}'
@@ -366,28 +423,98 @@ async function fetchPlayerStats() {
     }
     let pitcher_stats = await response.json();
 
-    // Store stats by player id for more efficient lookup later. 
+    // Process all players (combining batters and pitchers)
     let stats = {};
+    let playerDetails = {};
+    
+    // Process batters
     batter_stats.players.forEach(batter => {
-        if (batter.id == 33192) {
-            console.log(batter)
-        } 
+        stats[batter.id] = batter.player.stats;
         
-        stats[batter.id] = batter.player.stats
-    })
+        // Extract additional player details
+        playerDetails[batter.id] = {
+            id: batter.id,
+            fullName: batter.player.fullName,
+            firstName: batter.player.firstName,
+            lastName: batter.player.lastName,
+            injuryStatus: batter.player.injuryStatus,
+            defaultPositionId: batter.player.defaultPositionId,
+            eligibleSlots: batter.player.eligibleSlots || [],
+            proTeamId: batter.player.proTeamId,
+            ownership: batter.player.ownership?.percentOwned || 0,
+            averageDraftPosition: batter.player.ownership?.averageDraftPosition || null,
+            percentChange: batter.player.ownership?.percentChange || null,
+            birthDate: batter.player.dateOfBirth,
+            age: calculateAge(batter.player.dateOfBirth)
+        };
+    });
+    
+    // Process pitchers
     pitcher_stats.players.forEach(pitcher => {
-        stats[pitcher.id] = pitcher.player.stats
-    })
+        stats[pitcher.id] = pitcher.player.stats;
+        
+        // Extract additional player details if not already captured
+        if (!playerDetails[pitcher.id]) {
+            playerDetails[pitcher.id] = {
+                id: pitcher.id,
+                fullName: pitcher.player.fullName,
+                firstName: pitcher.player.firstName,
+                lastName: pitcher.player.lastName,
+                injuryStatus: pitcher.player.injuryStatus,
+                defaultPositionId: pitcher.player.defaultPositionId,
+                eligibleSlots: pitcher.player.eligibleSlots || [],
+                proTeamId: pitcher.player.proTeamId,
+                ownership: pitcher.player.ownership?.percentOwned || 0,
+                averageDraftPosition: pitcher.player.ownership?.averageDraftPosition || null,
+                percentChange: pitcher.player.ownership?.percentChange || null,
+                birthDate: pitcher.player.dateOfBirth,
+                age: calculateAge(pitcher.player.dateOfBirth)
+            };
+        }
+    });
 
-    return stats;
+    return { stats, playerDetails };
+}
+
+/**
+ * Calculate age from birthdate
+ * @param {string} dateOfBirth - Format YYYY-MM-DD
+ * @returns {number|null} - Age or null if invalid date
+ */
+function calculateAge(dateOfBirth) {
+    if (!dateOfBirth) return null;
+    
+    try {
+        const birthDate = new Date(dateOfBirth);
+        const today = new Date();
+        
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        // Adjust age if birthday hasn't occurred yet this year
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        
+        return age;
+    } catch (e) {
+        console.error("Error calculating age:", e);
+        return null;
+    }
 }
 
 /** 
- * Update the KV store of player stats
+ * Update the KV store of player stats and player details
  */
-function storePlayerStats(stats: any[]) {
-    for (const [playerId, playerStats] of Object.entries(stats)) {
-        kv.set(['stats', parseInt(playerId)], playerStats)
+function storePlayerStats(playerData: { stats: any, playerDetails: any }) {
+    // Store stats
+    for (const [playerId, playerStats] of Object.entries(playerData.stats)) {
+        kv.set(['stats', parseInt(playerId)], playerStats);
+    }
+    
+    // Store player details (this replaces the need for separate playerlist)
+    for (const [playerId, details] of Object.entries(playerData.playerDetails)) {
+        kv.set(['playerdetails', parseInt(playerId)], details);
     }
 }
 
@@ -415,16 +542,19 @@ async function fetchFangraphProjections() {
  * Update the KV store of player projections
  * @returns projections - projections by player
  */
-function buildAndStorePlayerProjections(projections: any[], playerlist: ESPNPlayer[]) {
+function buildAndStorePlayerProjections(projections: any[], playerDetails: any[]) {
     const [batting_projections, pitching_projections] = projections;
 
     const player_projections = {}
-    playerlist.forEach(player => {     
+    playerDetails.forEach(player => {     
         let projection = {};
         
-        if (isBatter(player)) {
-            let batting = batting_projections.find(b => replaceAccentedCharacters(b.PlayerName) == replaceAccentedCharacters(player.fullName));
-            // TODO: Add an additional qualifier in case players have the same name. 
+        // Check if this player is a batter
+        if (player.eligibleSlots?.includes(12)) { // UTIL slot indicates a batter
+            let batting = batting_projections.find(b => 
+                replaceAccentedCharacters(b.PlayerName) === replaceAccentedCharacters(player.fullName)
+            );
+            
             if (batting) {
                 projection = {
                     ...batting,
@@ -434,14 +564,18 @@ function buildAndStorePlayerProjections(projections: any[], playerlist: ESPNPlay
             }
         }
 
-        if (isPitcher(player)) {
-            let pitching = pitching_projections.find(p => replaceAccentedCharacters(p.PlayerName) == replaceAccentedCharacters(player.fullName));
+        // Check if this player is a pitcher
+        if (player.eligibleSlots?.includes(13)) { // P slot indicates a pitcher
+            let pitching = pitching_projections.find(p => 
+                replaceAccentedCharacters(p.PlayerName) === replaceAccentedCharacters(player.fullName)
+            );
+            
             if (pitching) {
                 projection = {
                     ...projection,
                     ...pitching,
-                    ['HR']: projection.HR,
-                    ['HRA']: pitching.HR
+                    ['HR']: projection.HR, // Keep batter HR if exists
+                    ['HRA']: pitching.HR  // Add pitcher HR allowed
                 };
             }
         }
@@ -463,30 +597,73 @@ function replaceAccentedCharacters(name: string) {
                .replace(/[\u0300-\u036f]/g, '');
 }
 /**
+ * Fetch historical stats for players (3-year history)
+ * This demonstrates how to fetch historical stats from Baseball Reference
+ * You may need to adjust based on the actual data source you choose
+ */
+async function fetchHistoricalStats(playerDetails: any[]) {
+    const historicalStats = {};
+    
+    // For demo purposes - in a real implementation you would fetch from a source
+    // Possible sources:
+    // - Baseball Reference via their API or scraping
+    // - FanGraphs historical data
+    // - MLB Stats API (requires key/authentication)
+    // - Baseball Savant (Statcast data)
+    
+    console.log("To implement historical stats, you could use one of these sources:");
+    console.log("1. Baseball Reference: https://www.baseball-reference.com/");
+    console.log("2. FanGraphs: https://www.fangraphs.com/");
+    console.log("3. MLB Stats API: https://statsapi.mlb.com/api/");
+    console.log("4. Baseball Savant (Statcast): https://baseballsavant.mlb.com/");
+    
+    // For now, return empty historical stats to not break the flow
+    // In a full implementation, you would iterate through players and fetch their stats
+    return historicalStats;
+}
+
+/**
+ * Store historical stats in KV store
+ */
+function storeHistoricalStats(historicalStats: any) {
+    for (const [playerId, stats] of Object.entries(historicalStats)) {
+        kv.set(['historical', parseInt(playerId)], stats);
+    }
+}
+
+/**
  * Create a player object in a shape that makes it easy to
  * sort & display info on the client.  
  */
 async function buildCustomPlayerStore(
     teams: Team[], 
     divisions: Division[], 
-    playerlist: ESPNPlayer[], 
-    stats: any[], 
-    projections: any[]
+    playerDetails: any[], 
+    stats: any, 
+    projections: any,
+    historicalStats: any = {}
 ) {
-    const players: Player[] = playerlist.map(player => {
+    const players: Player[] = playerDetails.map(player => {
         return { 
             id: player.id,
             name: player.fullName,
+            firstName: player.firstName,
+            lastName: player.lastName,
             team_id: player.proTeamId, 
             pos: formatPositionEligibility(player.eligibleSlots),
             stats: formatPlayerStats(stats[player.id]),
             projections: formatProjections(projections[player.id]),
             headshot: `https://a.espncdn.com/combiner/i?img=/i/headshots/mlb/players/full/${player.id}.png?w=96&h=70&cb=1`,
-            ownership: player?.ownership?.percentOwned || 0,
+            ownership: player.ownership || 0,
+            averageDraftPosition: player.averageDraftPosition || null,
+            percentChange: player.percentChange || null,
+            injuryStatus: player.injuryStatus || null,
+            age: player.age || null,
+            birthDate: player.birthDate || null
         }
     });
+    
     await players.sort((a,b) => b.ownership - a.ownership);
-
     return players;
 }
 
@@ -556,17 +733,37 @@ function formatPositionEligibility(eligible_slots: string[]) {
         .map(p => POS_MAP[p]);
 }
 
+/**
+ * Format player stats from ESPN data
+ * Extracts stats for multiple years if available
+ */
 function formatPlayerStats(stats) {
-    const stats_2023 = stats?.find(ps => ps.id == "002023")?.stats;
-    const stats_2024 = stats?.find(ps => ps.id == "002024")?.stats;
-
-    let player_stats = {};
-    if (stats_2023) {
-        player_stats[2023] = getApplicableStats(stats_2023);
+    if (!stats || !Array.isArray(stats)) {
+        return {};
     }
-    if (stats_2024) {
-        player_stats[2024] = getApplicableStats(stats_2024);
-    }
+    
+    const player_stats = {};
+    
+    // Look for stats from multiple years (ESPN format uses "00YYYY" for year identifiers)
+    // Regular season stats usually use "00" prefix while playoff stats use other prefixes
+    const yearPattern = /^00(\d{4})$/;
+    
+    // Find all available years in the stats data
+    const availableYears = stats
+        .filter(ps => ps && ps.id && yearPattern.test(ps.id))
+        .map(ps => {
+            const match = ps.id.match(yearPattern);
+            return match ? parseInt(match[1]) : null;
+        })
+        .filter(year => year !== null);
+    
+    // Process each year's stats
+    availableYears.forEach(year => {
+        const yearStats = stats.find(ps => ps.id === `00${year}`)?.stats;
+        if (yearStats) {
+            player_stats[year] = getApplicableStats(yearStats);
+        }
+    });
     
     return player_stats;
 }

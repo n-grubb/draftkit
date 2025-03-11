@@ -1,7 +1,18 @@
+import { useContext } from 'react'
+import { StoreContext } from '~/data/store'
+import ShareRanking from './ShareRanking'
+
 const AppFooter = () => {
+    const { mode } = useContext(StoreContext);
+    
     return (
         <footer>
-            <p>Player data sourced from ESPN | 2025 Projections sourced from Fangraphs </p>
+            {/* Show share ranking button in edit mode */}
+            {mode === 'edit' && <ShareRanking />}
+            
+            <div className="footer-info">
+                <p>Player data sourced from ESPN | 2025 Projections sourced from Fangraphs</p>
+            </div>
         </footer>
     )
 }

@@ -89,7 +89,19 @@ interface Player {
     birthDate: string | null
 }
 
-interface Ranking {}
+interface Ranking {
+    id: string,             // 4-digit ID for sharing
+    author: string | null,  // Author name or null for anonymous
+    description: string | null, // Optional description
+    pin: string | null,     // Pin code for editing
+    createdAt: number,      // Timestamp
+    updatedAt: number,      // Timestamp
+    players: Record<string, {
+        rank: number,
+        ignore: boolean,
+        highlight: boolean
+    }>
+}
 
 /*
 
@@ -165,19 +177,140 @@ app.get('/metadata', async (c) => {
 });
 
 /**
+ * Generate a unique 4-digit ranking ID that doesn't exist yet
+ */
+function generateUniqueRankingId(): Promise<string> {
+    return new Promise(async (resolve) => {
+        let id: string;
+        let exists = true;
+        
+        // Keep trying until we find an unused ID
+        while (exists) {
+            // Generate a random 4-digit number
+            id = Math.floor(1000 + Math.random() * 9000).toString();
+            
+            // Check if this ID already exists
+            const entry = await kv.get(['rankings', id]);
+            exists = entry.value !== null;
+        }
+        
+        resolve(id);
+    });
+}
+
+/**
+ * Validates a PIN - must be 4-6 digits
+ */
+function isValidPin(pin: string): boolean {
+    return /^\d{4,6}$/.test(pin);
+}
+
+/**
  * Returns a specific user ranking by id as JSON
  */
-app.get('/ranking/:id', (c) => {
-    const id = c.req.param('id');    
+app.get('/ranking/:id', async (c) => {
+    const id = c.req.param('id');
+    
+    // Get the ranking
+    const entry = await kv.get(['rankings', id]);
+    if (!entry.value) {
+        return c.json({ error: 'Ranking not found' }, 404);
+    }
+    
+    // Remove the PIN before returning
+    const ranking = entry.value as Ranking;
+    const { pin, ...safeRanking } = ranking;
+    
+    return c.json(safeRanking);
 });
 
 /**
- * Update/create a ranking
- * Each ranking will have an ID and a pin number that acts as the admin password. 
+ * Create a new ranking
  */
-app.post('/ranking:id', (c) => {
-    const id = c.req.param('id');  
-    c.json({});
+app.post('/ranking', async (c) => {
+    try {
+        const body = await c.req.json();
+        const { players, author = 'Anonymous', description = '', pin = null } = body;
+        
+        // Basic validation
+        if (!players || typeof players !== 'object') {
+            return c.json({ error: 'Invalid players data' }, 400);
+        }
+        
+        // Validate PIN if provided
+        if (pin && !isValidPin(pin)) {
+            return c.json({ error: 'PIN must be 4-6 digits' }, 400);
+        }
+        
+        // Generate a new unique ID
+        const id = await generateUniqueRankingId();
+        const now = Date.now();
+        
+        // Create the ranking
+        const ranking: Ranking = {
+            id,
+            author: author || null,
+            description: description || null,
+            pin: pin || null,
+            createdAt: now,
+            updatedAt: now,
+            players
+        };
+        
+        // Store it
+        await kv.set(['rankings', id], ranking);
+        
+        // Return without the PIN
+        const { pin: _, ...safeRanking } = ranking;
+        return c.json(safeRanking);
+    } catch (error) {
+        console.error('Error creating ranking:', error);
+        return c.json({ error: 'Failed to create ranking' }, 500);
+    }
+});
+
+/**
+ * Update an existing ranking
+ * PIN is required for updates
+ */
+app.put('/ranking/:id', async (c) => {
+    try {
+        const id = c.req.param('id');
+        const body = await c.req.json();
+        const { players, author, description, pin } = body;
+        
+        // Get the existing ranking
+        const entry = await kv.get(['rankings', id]);
+        if (!entry.value) {
+            return c.json({ error: 'Ranking not found' }, 404);
+        }
+        
+        const existingRanking = entry.value as Ranking;
+        
+        // Check PIN
+        if (existingRanking.pin && existingRanking.pin !== pin) {
+            return c.json({ error: 'Invalid PIN' }, 403);
+        }
+        
+        // Update the ranking
+        const updatedRanking: Ranking = {
+            ...existingRanking,
+            author: author ?? existingRanking.author,
+            description: description ?? existingRanking.description,
+            players: players ?? existingRanking.players,
+            updatedAt: Date.now()
+        };
+        
+        // Store it
+        await kv.set(['rankings', id], updatedRanking);
+        
+        // Return without the PIN
+        const { pin: _, ...safeRanking } = updatedRanking;
+        return c.json(safeRanking);
+    } catch (error) {
+        console.error('Error updating ranking:', error);
+        return c.json({ error: 'Failed to update ranking' }, 500);
+    }
 });
 
 /** 

@@ -26,8 +26,15 @@ export const StoreProvider = ({ children }) => {
     const { teams, error: errorFetchingMLBTeams, isLoading: isLoadingMLBTeams } = useMLBTeams()
     const { players, error: errorFetchingPlayers, isLoading: isLoadingPlayers } = usePlayers()
 
-    // TODO: load ranking by PIN#
-    const { ranking, isLoading: isLoadingRanking, updateRanking, ignorePlayer, highlightPlayer } = useUserRanking(players)
+    // Use the enhanced user ranking hook that supports sharing
+    const userRanking = useUserRanking(players)
+    const { 
+        ranking, 
+        isLoading: isLoadingRanking, 
+        updateRanking, 
+        ignorePlayer, 
+        highlightPlayer 
+    } = userRanking
 
     const error = errorFetchingMLBTeams || errorFetchingPlayers
     const isLoading = isLoadingMLBTeams || isLoadingPlayers || isLoadingRanking
@@ -40,7 +47,8 @@ export const StoreProvider = ({ children }) => {
         updateMode,
         updateRanking,
         ignorePlayer,
-        highlightPlayer
+        highlightPlayer,
+        userRanking // Expose the full userRanking object for sharing functionality
     }
 
     if (error) {

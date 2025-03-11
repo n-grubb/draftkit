@@ -187,6 +187,15 @@ footer {
   margin-top: 3rem;
   border-top: 2px dashed var(--greybrown);
   padding: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-info {
+  margin-top: 1rem;
+  color: var(--greybrown);
+  font-size: 0.875rem;
+  text-align: center;
 }
 
 #app {
@@ -1483,6 +1492,135 @@ button {
   background-color: rgba(231, 221, 185, 0.2);
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Share Ranking */
+.share-ranking {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background-color: var(--soft-tan);
+  border: 4px solid white;
+  border-radius: 8px;
+}
+
+.share-ranking h3 {
+  margin-bottom: 1rem;
+  color: var(--brown);
+}
+
+.share-button {
+  background-color: var(--royal-blue);
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.share-button:hover {
+  background-color: var(--navy);
+}
+
+.share-url {
+  display: flex;
+  margin: 1rem 0;
+  width: 100%;
+}
+
+.share-url input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--greybrown);
+  border-radius: 4px 0 0 4px;
+  font-size: 0.875rem;
+}
+
+.share-url button {
+  padding: 0.5rem 1rem;
+  background-color: var(--royal-blue);
+  color: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+}
+
+.share-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: bold;
+  color: var(--brown);
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 0.5rem;
+  border: 1px solid var(--greybrown);
+  border-radius: 4px;
+  font-family: inherit;
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--greybrown);
+  margin-top: 0.25rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.cancel-button {
+  background-color: var(--grey);
+  color: var(--charcoal);
+}
+
+.submit-button {
+  background-color: var(--royal-blue);
+  color: white;
+}
+
+.edit-pin {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+}
+
+.pin-reminder {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: #fff3cd;
+  border-left: 4px solid var(--gold);
+  border-radius: 4px;
+}
+
+.pin-note {
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+  color: var(--charcoal);
+}
+
+.share-success {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .stats-legend h3 {

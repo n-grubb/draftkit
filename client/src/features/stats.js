@@ -50,7 +50,7 @@ const STAT_BENCHMARKS = {
     
     // Pitching stats
     'K':    180,
-    'W':    15,
+    'W':    14,
     'ERA':  [5.00, 2.70], // [min, max] - reversed
     'SVHD': 30,
     'WHIP': [1.40, 0.95], // [min, max] - reversed
@@ -228,6 +228,15 @@ export function evaluateStatQuality(statId, value, playerPosition) {
         if (value <= 1.25) return 'average';   // Average WHIP
         return 'below-average';                // Below average WHIP
     }
+    
+    // Strikeouts - absolute thresholds
+    if (statId === 'K' && playerPosition === 'SP') {
+        if (value >= 200) return 'elite';      // Elite K's - 200+ strikeouts
+        if (value >= 150) return 'good';       // Good K's - 150-199 strikeouts
+        if (value >= 120) return 'average';    // Average K's
+        return 'below-average';                // Below average K's
+    }
+    
     // Different thresholds based on pitching vs hitting stats
     else if (isPitchingStat) {
         // Pitching stats: top 10% for elite, 40% for average

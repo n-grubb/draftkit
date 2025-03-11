@@ -88,3 +88,35 @@ export const updateRanking = async (id, data, pin) => {
         throw error;
     }
 };
+
+/**
+ * Validate a PIN for a ranking
+ * @param {string} id - The ranking ID
+ * @param {string} pin - The PIN to validate
+ * @returns {Promise<boolean>} - True if PIN is valid
+ */
+export const validatePin = async (id, pin) => {
+    try {
+        // Try to update the ranking with just the PIN to validate it
+        const response = await fetch(`${API_URL}/ranking/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ pin }),
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            if (error.error === 'Invalid PIN') {
+                return false;
+            }
+            throw new Error(error.error || 'Failed to validate PIN');
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error validating PIN:', error);
+        throw error;
+    }
+};

@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { fetchRanking, createRanking, updateRanking as updateRemoteRanking } from './rankingService';
 
+const MAX_STORED_RANKINGS = 10;
+const RANKINGS_STORAGE_KEY = 'storedRankings';
+
 const useUserRanking = (players) => {
     // Get the ranking ID from URL if present
     const getUrlRankingId = () => {
@@ -8,8 +11,10 @@ const useUserRanking = (players) => {
         return urlParams.get('id');
     };
 
-    // State for the ranking
+    // State for the active ranking
     const [ranking, setRanking] = useState({});
+    // State for all saved rankings
+    const [savedRankings, setSavedRankings] = useState([]);
     // State for loading
     const [isLoading, setIsLoading] = useState(true);
     // State for error
@@ -22,58 +27,64 @@ const useUserRanking = (players) => {
     // Added a ref to track if we've done the initial load
     const initialLoadDone = useRef(false);
 
-    useEffect(() => {
-        // Only run this effect if players data exists and we haven't done the initial load
-        if (!players || Object.keys(players).length === 0 || initialLoadDone.current) {
-            return;
-        }
+    // Load all saved rankings from localStorage
+    const loadSavedRankings = () => {
+        const storedRankingsJson = localStorage.getItem(RANKINGS_STORAGE_KEY);
+        const storedRankings = storedRankingsJson ? JSON.parse(storedRankingsJson) : [];
+        setSavedRankings(storedRankings);
+        return storedRankings;
+    };
 
-        const initializeRanking = async () => {
-            setIsLoading(true);
-            setError(null);
-
-            try {
-                // Check if we have a ranking ID in the URL
-                const rankingId = getUrlRankingId();
-
-                // If rankingId is provided, fetch that ranking
-                if (rankingId) {
-                    const fetchedRanking = await fetchRanking(rankingId);
-                    setRanking(fetchedRanking);
-                    setIsShared(true);
-                    localStorage.setItem('ranking', JSON.stringify(fetchedRanking));
-                } else {
-                    // Otherwise, try to load from localStorage or create new
-                    let storedRanking = localStorage.getItem('ranking');
-                    
-                    if (storedRanking) {
-                        setRanking(JSON.parse(storedRanking));
-                    } else if (players && Object.keys(players).length > 0) {
-                        // Create a new ranking if none exists
-                        createNewRanking(players);
-                    }
-                }
-            } catch (err) {
-                console.error('Error initializing ranking:', err);
-                setError(err.message || 'Failed to load ranking');
-                
-                // If there was an error loading a shared ranking, fallback to localStorage
-                let storedRanking = localStorage.getItem('ranking');
-                if (storedRanking) {
-                    setRanking(JSON.parse(storedRanking));
-                }
-            } finally {
-                setIsLoading(false);
-                // Mark that we've completed the initial load
-                initialLoadDone.current = true;
-            }
+    // Save a ranking to the stored rankings list
+    const saveToRankingsList = (rankingToSave) => {
+        // Get current saved rankings
+        const currentRankings = loadSavedRankings();
+        
+        // Check if this ranking already exists in our list (by ID)
+        const existingIndex = currentRankings.findIndex(r => r.id === rankingToSave.id);
+        
+        // Create a light version of the ranking for the list (without all player data)
+        const rankingForList = {
+            id: rankingToSave.id,
+            author: rankingToSave.author,
+            description: rankingToSave.description,
+            isShared: rankingToSave.id !== 'local',
+            createdAt: rankingToSave.createdAt,
+            updatedAt: rankingToSave.updatedAt,
+            name: rankingToSave.name || (rankingToSave.author 
+                ? `${rankingToSave.author}'s Ranking` 
+                : `Ranking #${rankingToSave.id}`)
         };
-
-        initializeRanking();
-    }, [players]);
+        
+        let updatedRankings;
+        if (existingIndex >= 0) {
+            // Update existing entry
+            updatedRankings = [...currentRankings];
+            updatedRankings[existingIndex] = rankingForList;
+        } else {
+            // Check if we've reached the limit
+            if (currentRankings.length >= MAX_STORED_RANKINGS) {
+                // Remove the oldest ranking to make space
+                updatedRankings = [...currentRankings];
+                updatedRankings.pop(); // Remove the last (oldest) item
+            }
+            
+            // Add new ranking at the beginning (newest first)
+            updatedRankings = [rankingForList, ...(currentRankings || [])];
+        }
+        
+        // Save the updated list
+        localStorage.setItem(RANKINGS_STORAGE_KEY, JSON.stringify(updatedRankings));
+        setSavedRankings(updatedRankings);
+        
+        // Also save the full ranking separately (for quick access)
+        localStorage.setItem(`ranking_${rankingToSave.id}`, JSON.stringify(rankingToSave));
+        
+        return updatedRankings;
+    };
 
     // Create a new local ranking
-    const createNewRanking = (playersData) => {
+    const createNewRanking = (playersData, name = '') => {
         const playerIds = Object.keys(playersData);
         console.log('Creating initial ranking data...', { playerIds });
 
@@ -97,8 +108,12 @@ const useUserRanking = (players) => {
             };
         });
 
+        // Generate a unique local ID
+        const localId = `local_${Date.now()}`;
+        
         const initialRanking = {
-            id: 'local',
+            id: localId,
+            name: name || 'My Ranking',
             author: null,
             description: null,
             players: playersMap,
@@ -108,13 +123,161 @@ const useUserRanking = (players) => {
 
         setRanking(initialRanking);
         setIsShared(false);
+        setPin('');
 
-        // Save in local storage
-        localStorage.setItem('ranking', JSON.stringify(initialRanking));
+        // Save to our rankings list
+        saveToRankingsList(initialRanking);
+        
+        // Update URL to remove any ranking ID
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.delete('id');
+        window.history.pushState({}, '', newUrl);
+        
+        return initialRanking;
+    };
+
+    useEffect(() => {
+        // Only proceed if we have players data and haven't done the initial load yet
+        if (!players || Object.keys(players).length === 0 || initialLoadDone.current) {
+            return;
+        }
+
+        const initializeRanking = async () => {
+            setIsLoading(true);
+            setError(null);
+
+            try {
+                // Check if we have a ranking ID in the URL
+                const rankingId = getUrlRankingId();
+
+                // If rankingId is provided, fetch that ranking
+                if (rankingId) {
+                    // First check if we already have it locally
+                    const storedRanking = localStorage.getItem(`ranking_${rankingId}`);
+                    
+                    if (storedRanking) {
+                        // Use the stored version
+                        const parsedRanking = JSON.parse(storedRanking);
+                        setRanking(parsedRanking);
+                        setIsShared(rankingId !== 'local');
+                        return; // Exit early after loading the URL ranking
+                    } else {
+                        // Fetch from server
+                        const fetchedRanking = await fetchRanking(rankingId);
+                        setRanking(fetchedRanking);
+                        setIsShared(true);
+                        saveToRankingsList(fetchedRanking);
+                        return; // Exit early after loading the URL ranking
+                    }
+                }
+            
+                // No URL ranking, try to load most recent or create new
+                const savedRankings = loadSavedRankings();
+                
+                if (savedRankings && savedRankings.length > 0) {
+                    // Load the most recent ranking
+                    const mostRecentId = savedRankings[0].id;
+                    const storedRanking = localStorage.getItem(`ranking_${mostRecentId}`);
+                    
+                    if (storedRanking) {
+                        setRanking(JSON.parse(storedRanking));
+                        setIsShared(mostRecentId !== 'local');
+                    } else {
+                        // Create new if we can't find the stored data
+                        createNewRanking(players);
+                    }
+                } else {
+                    // Create a new ranking if none exists
+                    createNewRanking(players);
+                }
+            } catch (err) {
+                console.error('Error initializing ranking:', err);
+                setError(err.message || 'Failed to load ranking');
+                
+                // If there was an error loading a shared ranking, fallback to a new one
+                createNewRanking(players);
+            } finally {
+                setIsLoading(false);
+                initialLoadDone.current = true;
+            }
+        };
+
+        initializeRanking();
+    }, [players, setRanking, setIsShared, setError, setIsLoading, createNewRanking, saveToRankingsList, loadSavedRankings]);
+
+    // Remove a ranking from the list and its storage
+    const deleteRanking = (rankingId) => {
+        // Check if we're trying to delete the active ranking
+        if (ranking.id === rankingId) {
+            return false; // Can't delete the active ranking
+        }
+        
+        // Get current saved rankings
+        const currentRankings = loadSavedRankings();
+        
+        // Filter out the ranking to delete
+        const updatedRankings = currentRankings.filter(r => r.id !== rankingId);
+        
+        // Update the stored list
+        localStorage.setItem(RANKINGS_STORAGE_KEY, JSON.stringify(updatedRankings));
+        setSavedRankings(updatedRankings);
+        
+        // Remove the full ranking data
+        localStorage.removeItem(`ranking_${rankingId}`);
+        
+        return true;
+    };
+
+    // Switch to a different ranking
+    const switchRanking = async (rankingId) => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            
+            // Check if we have it locally first
+            const storedRanking = localStorage.getItem(`ranking_${rankingId}`);
+            
+            let targetRanking;
+            if (storedRanking) {
+                targetRanking = JSON.parse(storedRanking);
+            } else if (rankingId.startsWith('local')) {
+                // If it's a local ranking but we don't have it stored, create a new one
+                return createNewRanking(players);
+            } else {
+                // Fetch from server
+                targetRanking = await fetchRanking(rankingId);
+                // Save full ranking data
+                localStorage.setItem(`ranking_${rankingId}`, JSON.stringify(targetRanking));
+            }
+            
+            // Update state
+            setRanking(targetRanking);
+            setIsShared(!rankingId.startsWith('local'));
+            setPin(''); // Clear PIN when switching rankings
+            
+            // Add to the recent rankings list
+            saveToRankingsList(targetRanking);
+            
+            // Update URL with the ranking ID
+            const newUrl = new URL(window.location);
+            if (rankingId.startsWith('local')) {
+                newUrl.searchParams.delete('id');
+            } else {
+                newUrl.searchParams.set('id', rankingId);
+            }
+            window.history.pushState({}, '', newUrl);
+            
+            return targetRanking;
+        } catch (err) {
+            setError(`Failed to load ranking: ${err.message}`);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // Share a ranking
-    const shareRanking = async (author = '', description = '', newPin = '') => {
+    const shareRanking = async (author = '', description = '', newPin = '', name = '') => {
         try {
             setIsLoading(true);
             
@@ -126,13 +289,16 @@ const useUserRanking = (players) => {
                 newPin
             );
             
+            // Add name if provided
+            sharedRanking.name = name || (author ? `${author}'s Ranking` : `Ranking #${sharedRanking.id}`);
+            
             // Update state
             setRanking(sharedRanking);
             setIsShared(true);
             if (newPin) setPin(newPin);
             
-            // Save to localStorage
-            localStorage.setItem('ranking', JSON.stringify(sharedRanking));
+            // Save to our rankings list
+            saveToRankingsList(sharedRanking);
             
             // Update URL with the ranking ID without page reload
             const newUrl = new URL(window.location);
@@ -150,32 +316,7 @@ const useUserRanking = (players) => {
 
     // Load a specific shared ranking
     const loadRanking = async (id) => {
-        try {
-            setIsLoading(true);
-            
-            // Fetch the ranking
-            const loadedRanking = await fetchRanking(id);
-            
-            // Update state
-            setRanking(loadedRanking);
-            setIsShared(true);
-            setPin(''); // Clear PIN since we're loading a new ranking
-            
-            // Save to localStorage
-            localStorage.setItem('ranking', JSON.stringify(loadedRanking));
-            
-            // Update URL with the ranking ID without page reload
-            const newUrl = new URL(window.location);
-            newUrl.searchParams.set('id', id);
-            window.history.pushState({}, '', newUrl);
-            
-            return loadedRanking;
-        } catch (err) {
-            setError(err.message || 'Failed to load ranking');
-            throw err;
-        } finally {
-            setIsLoading(false);
-        }
+        return switchRanking(id);
     };
 
     // Takes a playerRanking (array of playerIds), 
@@ -209,11 +350,14 @@ const useUserRanking = (players) => {
         // Update state first for better UI responsiveness
         setRanking(newRanking);
         
-        // Always save to localStorage
-        localStorage.setItem('ranking', JSON.stringify(newRanking));
+        // Save to our rankings storage
+        localStorage.setItem(`ranking_${newRanking.id}`, JSON.stringify(newRanking));
+        
+        // Update the list entry with updated timestamp
+        saveToRankingsList(newRanking);
 
         // If this is a shared ranking and we have a PIN, update it remotely
-        if (isShared && ranking.id !== 'local' && pin) {
+        if (isShared && !ranking.id.startsWith('local') && pin) {
             try {
                 const updatedRemoteRanking = await updateRemoteRanking(
                     ranking.id,
@@ -222,8 +366,10 @@ const useUserRanking = (players) => {
                 );
                 
                 // Update with the response from server
+                updatedRemoteRanking.name = newRanking.name; // Preserve the name
                 setRanking(updatedRemoteRanking);
-                localStorage.setItem('ranking', JSON.stringify(updatedRemoteRanking));
+                localStorage.setItem(`ranking_${updatedRemoteRanking.id}`, JSON.stringify(updatedRemoteRanking));
+                saveToRankingsList(updatedRemoteRanking);
             } catch (err) {
                 console.error('Failed to update remote ranking:', err);
                 // Continue with local update even if remote update fails
@@ -254,11 +400,14 @@ const useUserRanking = (players) => {
         // Update state first for better UI responsiveness
         setRanking(newRanking);
         
-        // Always save to localStorage
-        localStorage.setItem('ranking', JSON.stringify(newRanking));
+        // Save to our rankings storage
+        localStorage.setItem(`ranking_${newRanking.id}`, JSON.stringify(newRanking));
+        
+        // Update the list entry with updated timestamp
+        saveToRankingsList(newRanking);
 
         // If this is a shared ranking and we have a PIN, update it remotely
-        if (isShared && ranking.id !== 'local' && pin) {
+        if (isShared && !ranking.id.startsWith('local') && pin) {
             try {
                 const updatedRemoteRanking = await updateRemoteRanking(
                     ranking.id,
@@ -267,8 +416,10 @@ const useUserRanking = (players) => {
                 );
                 
                 // Update with the response from server
+                updatedRemoteRanking.name = newRanking.name; // Preserve the name
                 setRanking(updatedRemoteRanking);
-                localStorage.setItem('ranking', JSON.stringify(updatedRemoteRanking));
+                localStorage.setItem(`ranking_${updatedRemoteRanking.id}`, JSON.stringify(updatedRemoteRanking));
+                saveToRankingsList(updatedRemoteRanking);
             } catch (err) {
                 console.error('Failed to update remote ranking:', err);
                 // Continue with local update even if remote update fails
@@ -299,11 +450,14 @@ const useUserRanking = (players) => {
         // Update state first for better UI responsiveness
         setRanking(newRanking);
         
-        // Always save to localStorage
-        localStorage.setItem('ranking', JSON.stringify(newRanking));
+        // Save to our rankings storage
+        localStorage.setItem(`ranking_${newRanking.id}`, JSON.stringify(newRanking));
+        
+        // Update the list entry with updated timestamp
+        saveToRankingsList(newRanking);
 
         // If this is a shared ranking and we have a PIN, update it remotely
-        if (isShared && ranking.id !== 'local' && pin) {
+        if (isShared && !ranking.id.startsWith('local') && pin) {
             try {
                 const updatedRemoteRanking = await updateRemoteRanking(
                     ranking.id,
@@ -312,8 +466,10 @@ const useUserRanking = (players) => {
                 );
                 
                 // Update with the response from server
+                updatedRemoteRanking.name = newRanking.name; // Preserve the name
                 setRanking(updatedRemoteRanking);
-                localStorage.setItem('ranking', JSON.stringify(updatedRemoteRanking));
+                localStorage.setItem(`ranking_${updatedRemoteRanking.id}`, JSON.stringify(updatedRemoteRanking));
+                saveToRankingsList(updatedRemoteRanking);
             } catch (err) {
                 console.error('Failed to update remote ranking:', err);
                 // Continue with local update even if remote update fails
@@ -323,7 +479,7 @@ const useUserRanking = (players) => {
 
     // Function to get the share URL for the current ranking
     const getShareUrl = () => {
-        if (!ranking || !ranking.id || ranking.id === 'local') {
+        if (!ranking || !ranking.id || ranking.id.startsWith('local')) {
             return null;
         }
         
@@ -332,8 +488,12 @@ const useUserRanking = (players) => {
         return url.toString();
     };
 
+    // Check if we've reached the storage limit
+    const isAtStorageLimit = savedRankings.length >= MAX_STORED_RANKINGS;
+
     return {
         ranking,
+        savedRankings,
         isLoading,
         error,
         isShared,
@@ -345,7 +505,11 @@ const useUserRanking = (players) => {
         shareRanking,
         loadRanking,
         createNewRanking,
-        getShareUrl
+        switchRanking,
+        deleteRanking,
+        getShareUrl,
+        isAtStorageLimit,
+        loadSavedRankings
     };
 };
 

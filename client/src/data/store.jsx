@@ -7,13 +7,7 @@ import useUserRanking from './useUserRanking'
  * Create a global store context that all components can access.
  * The values here are retrieved from localStorage when the app starts. 
  */
-export const StoreContext = createContext({
-    teams: [],
-    players: [],
-    ranking: {},
-    mode: 'view',
-    setMode: () => {}
-})
+export const StoreContext = createContext()
 
 export const StoreProvider = ({ children }) => {
     let initialMode = localStorage.getItem('mode') || 'view'

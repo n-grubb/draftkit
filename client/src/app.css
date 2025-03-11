@@ -154,6 +154,30 @@ header {
   color: white;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.ranking-metadata {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.ranking-description {
+  font-size: 0.875rem;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.ranking-author {
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
 .mode--view {
   & header {
     background: var(--royal-blue);
@@ -239,6 +263,67 @@ button[data-disabled] {
   justify-content: flex-end;
   align-items: center;
   gap: 2rem;
+}
+
+.ranking-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.ranking-id {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem; /* Reduced gap between ranking ID and controls */
+}
+
+.ranking-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.id-label {
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+.id-value {
+  font-weight: bold;
+  font-size: 1.125rem;
+}
+
+.ranking-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem; /* More spacing between links */
+}
+
+.ranking-controls.compact {
+  gap: 0.25rem; /* Minimal gap between links */
+  margin-top: -0.15rem; /* Bring it closer to the ranking ID */
+  display: inline-flex; /* Make it more compact */
+}
+
+.ranking-link {
+  color: white;
+  text-decoration: none;
+  font-size: 0.75rem; /* Smaller font size */
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.ranking-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.link-separator {
+  font-size: 0.75rem; /* Smaller separator */
+  opacity: 0.6;
+  margin: 0 0.25rem; /* Add some horizontal spacing */
 }
 
 .mode-selector {
@@ -1362,6 +1447,19 @@ button {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+}
+
+.modal-content {
+  background-color: var(--soft-tan);
+  border: 8px solid white;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .stats-prefs-modal {

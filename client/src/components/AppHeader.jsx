@@ -10,7 +10,7 @@ const MAX_STORED_RANKINGS = 10;
 const VALIDATED_PINS_KEY = 'validatedPins';
 
 const AppHeader = () => {
-    const { mode, updateMode, ranking, userRanking } = useContext(StoreContext);
+    const { mode, updateMode, ranking, userRanking, players } = useContext(StoreContext);
     const { 
         isShared, 
         pin, 
@@ -141,7 +141,7 @@ const AppHeader = () => {
         
         const confirmed = window.confirm("Create a new ranking? This will not affect your current saved rankings.");
         if (confirmed) {
-            createNewRanking(window.players);
+            createNewRanking(players);
             setShowRankingsDrawer(false);
         }
     };
@@ -394,15 +394,11 @@ const AppHeader = () => {
                                 <h4>Current Ranking</h4>
                                 <div className="ranking-name">
                                     {ranking.id && ranking.id.startsWith('local') 
-                                        ? 'My Ranking' 
+                                        ? `#${ranking.id.substr(6, 4)}`
                                         : (ranking.name || (ranking.author 
                                             ? `${ranking.author}'s Ranking` 
                                             : `Ranking #${ranking.id}`))}
                                 </div>
-                                
-                                {ranking.description && (
-                                    <div className="ranking-description">{ranking.description}</div>
-                                )}
                                 
                                 {ranking.author 
                                     ? <div className="ranking-author">by {ranking.author}</div>
@@ -410,6 +406,10 @@ const AppHeader = () => {
                                         ? <div className="ranking-author">Local Ranking</div> 
                                         : null
                                 }
+
+                                {ranking.description && (
+                                    <div className="ranking-description">{ranking.description}</div>
+                                )}
                                 
                                 {/* Share button for edit mode */}
                                 {mode === 'edit' && (
@@ -433,7 +433,7 @@ const AppHeader = () => {
                                 onClick={() => {
                                     const confirmed = window.confirm("Create a new ranking? This will not affect your current saved rankings.");
                                     if (confirmed) {
-                                        createNewRanking(window.players);
+                                        createNewRanking(players);
                                         setShowRankingsDrawer(false);
                                     }
                                 }}
@@ -457,18 +457,29 @@ const AppHeader = () => {
                                             }}
                                         >
                                             <div className="ranking-item-content">
-                                                <div className="ranking-item-name">
-                                                    {item.id && item.id.startsWith('local') 
-                                                        ? 'My Ranking' 
-                                                        : (item.name || (item.author 
-                                                            ? `${item.author}'s Ranking` 
-                                                            : `Ranking #${item.id}`))}
+                                                <div className="ranking-item-header">
+                                                    <div className="ranking-item-name">
+                                                        {item.id.startsWith('local') 
+                                                            ? `Local #${item.id.substr(-4)}` 
+                                                            : `Ranking #${item.id}`}
+                                                    </div>
+                                                    
                                                 </div>
+                                                {item.author && (
+                                                    <div className="ranking-item-author">
+                                                        by {item.author}
+                                                    </div>
+                                                )}
+                                                {item.description && (
+                                                    <div className="ranking-item-description">
+                                                        {item.description}
+                                                    </div>
+                                                )}
                                                 <div className="ranking-item-meta">
                                                     {item.id === ranking.id && (
                                                         <div className="active-indicator">Current</div>
                                                     )}
-                                                    {item.id && item.id.startsWith('local') 
+                                                    {item.id.startsWith('local') 
                                                         ? <div className="local-indicator">Local</div>
                                                         : <div className="shared-indicator">Shared</div>
                                                     }

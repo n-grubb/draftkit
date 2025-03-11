@@ -84,7 +84,12 @@ const useUserRanking = (players) => {
     };
 
     // Create a new local ranking
-    const createNewRanking = (playersData, name = '') => {
+    const createNewRanking = (playersData = players, name = '') => {
+        if (!playersData) {
+            console.error('No players data available for creating new ranking');
+            return;
+        }
+
         const playerIds = Object.keys(playersData);
         console.log('Creating initial ranking data...', { playerIds });
 

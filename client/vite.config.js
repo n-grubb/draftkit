@@ -10,5 +10,12 @@ export default defineConfig({
     alias: {
       '~': path.resolve(__dirname, './src')
     }
+  },
+  server: {
+    // Allow connections from network
+    host: true,
+    fs: {
+      strict: false
+    }
   }
 })

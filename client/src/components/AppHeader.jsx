@@ -15,13 +15,11 @@ const AppHeader = () => {
     } = userRanking;
 
     const [showShareModal, setShowShareModal] = useState(false);
-    const [showLoadModal, setShowLoadModal] = useState(false);
     const [author, setAuthor] = useState('');
     const [description, setDescription] = useState('');
     const [newPin, setNewPin] = useState('');
     const [shareUrl, setShareUrl] = useState('');
     const [isCopied, setIsCopied] = useState(false);
-    const [rankingIdToLoad, setRankingIdToLoad] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
 
@@ -34,16 +32,6 @@ const AppHeader = () => {
             setDescription('');
             setNewPin('');
             setShareUrl('');
-            setError('');
-        }
-    };
-
-    // Handle load modal toggle
-    const toggleLoadModal = () => {
-        setShowLoadModal(!showLoadModal);
-        // Reset form on open
-        if (!showLoadModal) {
-            setRankingIdToLoad('');
             setError('');
         }
     };
@@ -75,29 +63,7 @@ const AppHeader = () => {
         }
     };
 
-    // Handle load ranking
-    const handleLoad = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        setError('');
-
-        try {
-            // Validate ranking ID
-            if (!rankingIdToLoad || !/^\d{4}$/.test(rankingIdToLoad)) {
-                setError('Please enter a valid 4-digit ranking ID');
-                setIsSubmitting(false);
-                return;
-            }
-
-            // Load ranking
-            await loadRanking(rankingIdToLoad);
-            setShowLoadModal(false);
-        } catch (err) {
-            setError(err.message || 'Failed to load ranking');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+    // URL-based loading is now handled elsewhere
 
     // Copy share URL to clipboard
     const copyToClipboard = () => {
@@ -139,10 +105,6 @@ const AppHeader = () => {
                                 <div className="ranking-controls compact">
                                     <a href="#" onClick={(e) => { e.preventDefault(); toggleShareModal(); }} className="ranking-link">
                                         {isShared ? 'Share' : 'Share'}
-                                    </a>
-                                    <span className="link-separator">•</span>
-                                    <a href="#" onClick={(e) => { e.preventDefault(); toggleLoadModal(); }} className="ranking-link">
-                                        Load
                                     </a>
                                 </div>
                             )}
@@ -273,44 +235,7 @@ const AppHeader = () => {
                 </div>
             )}
             
-            {/* Load Modal */}
-            {showLoadModal && (
-                <div className="modal-overlay" onClick={() => setShowLoadModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <form onSubmit={handleLoad} className="load-form">
-                            <h3>Load Ranking</h3>
-                            <div className="form-group">
-                                <label htmlFor="ranking-id">Ranking ID:</label>
-                                <input
-                                    type="text"
-                                    id="ranking-id"
-                                    value={rankingIdToLoad}
-                                    onChange={(e) => setRankingIdToLoad(e.target.value)}
-                                    placeholder="Enter 4-digit ID"
-                                    maxLength={4}
-                                />
-                            </div>
-                            {error && <div className="error">{error}</div>}
-                            <div className="form-actions">
-                                <button 
-                                    type="button" 
-                                    onClick={toggleLoadModal} 
-                                    className="cancel-button small"
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    type="submit" 
-                                    className="submit-button small"
-                                    disabled={isSubmitting}
-                                >
-                                    {isSubmitting ? 'Loading...' : 'Load'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            {/* Rankings are now loaded via URL instead of modal */}
         </header>
     );
 };

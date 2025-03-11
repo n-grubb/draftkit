@@ -3,7 +3,7 @@ import {StoreContext} from '~/data/store'
 import {DraftContext} from '~/data/draftContext'
 import {StatsPrefsContext} from '~/data/statsPrefsContext'
 import {statsToDisplay} from '~/features/filtering/columns'
-import {formatStatValue} from '~/features/stats'
+import {formatStatValue, evaluateStatQuality} from '~/features/stats'
 
 const EXLUDED_POSITIONS = ['1B/3B', '2B/SS', 'P', 'UTIL']
 
@@ -20,18 +20,37 @@ const PlayerItem = (props) => {
 
     // Don't show specialty roster spots as POS
     let positions = player.pos.filter(position => !EXLUDED_POSITIONS.includes(position))
-    if (positions.length > 1) {
+    if (positions.length > 1 && !positions.includes('SP')) {
         positions = positions.filter(position => position != 'DH')
     }
 
     const renderCellValue = (player, columnId) => {
+        let value = null;
         if (player[columnId]) {
-            return player[columnId]
+            value = player[columnId];
+        } else if (projections && projections[columnId]) {
+            value = projections[columnId];
+        } else {
+            return 0;
         }
-        if (projections && projections[columnId]) {
-            return formatStatValue(columnId, projections[columnId])
+
+        // Get the primary position for pitchers (SP vs RP)
+        let primaryPosition = null;
+        if (player.pos.includes('SP')) {
+            primaryPosition = 'SP';
+        } else if (player.pos.includes('RP')) {
+            primaryPosition = 'RP';
         }
-        return 0 
+
+        // Get the quality class for styling
+        const quality = evaluateStatQuality(columnId, value, primaryPosition);
+        const formattedValue = formatStatValue(columnId, value);
+        
+        return (
+            <span className={`stat-${quality}`}>
+                {formattedValue}
+            </span>
+        );
     }
 
     const teamLogo = teams[player.team_id].logo?.href
@@ -73,6 +92,12 @@ const PlayerItem = (props) => {
                         >{position}</span>
                     ))}
                 </div>
+                {player.averageDraftPosition && (
+                    <div className="adp">
+                        <span className="adp-label">ADP</span> 
+                        <span className="adp-value">{Math.round(player.averageDraftPosition * 10) / 10}</span>
+                    </div>
+                )}
             </div>
             <div className="player-stats">
                 <table>

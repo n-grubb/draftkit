@@ -2,7 +2,7 @@ import { useContext } from 'react'
 import { StoreContext } from '~/data/store'
 import { StatsPrefsContext } from '~/data/statsPrefsContext'
 import { statsToDisplay } from '~/features/filtering/columns'
-import { formatStatValue, normalizeStatValue } from '~/features/stats'
+import { formatStatValue, normalizeStatValue, evaluateStatQuality } from '~/features/stats'
 import StatsLegend from '~/components/StatsLegend'
 import { 
     Radar, 
@@ -14,7 +14,7 @@ import {
     Tooltip
 } from 'recharts'
 
-const EXLUDED_POSITIONS = ['1B/3B', '2B/SS', 'P', 'UTIL']
+const EXLUDED_POSITIONS = ['P', 'UTIL']
 
 const PlayerCard = ({ playerId, onClose }) => {
     const { players, teams } = useContext(StoreContext);
@@ -51,12 +51,18 @@ const PlayerCard = ({ playerId, onClose }) => {
                         <h2>{player.name}</h2>
                         <div className="player-positions">
                             {player.pos.map(position => (
-                                <span key={position} className="position-chip">{position}</span>
+                                <span key={position} className="position-chip" data-pos={position}>{position}</span>
                             ))}
                         </div>
                         <div className="player-team" style={{ color: teams[player.team_id].color || 'var(--brown)' }}>
                             {teams[player.team_id].name}
                         </div>
+                        {player.averageDraftPosition && (
+                            <div className="adp">
+                                <span className="adp-label">Average Draft Position:</span> 
+                                <span className="adp-value">{Math.round(player.averageDraftPosition * 10) / 10}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
                 
@@ -75,37 +81,55 @@ const PlayerCard = ({ playerId, onClose }) => {
                             {/* 2023 Stats Row */}
                             <tr>
                                 <td className="year">2023</td>
-                                {columns.map(column => (
-                                    <td key={column.id}>
-                                        {stats && stats['2023'] && stats['2023'][column.id] 
-                                            ? formatStatValue(column.id, stats['2023'][column.id]) 
-                                            : '-'}
-                                    </td>
-                                ))}
+                                {columns.map(column => {
+                                    if (stats && stats['2023'] && stats['2023'][column.id]) {
+                                        const value = stats['2023'][column.id];
+                                        const formattedValue = formatStatValue(column.id, value);
+                                        return (
+                                            <td key={column.id}>
+                                                {formattedValue}
+                                            </td>
+                                        );
+                                    } else {
+                                        return <td key={column.id}>-</td>;
+                                    }
+                                })}
                             </tr>
                             
                             {/* 2024 Stats Row */}
                             <tr>
                                 <td className="year">2024</td>
-                                {columns.map(column => (
-                                    <td key={column.id}>
-                                        {stats && stats['2024'] && stats['2024'][column.id] 
-                                            ? formatStatValue(column.id, stats['2024'][column.id]) 
-                                            : '-'}
-                                    </td>
-                                ))}
+                                {columns.map(column => {
+                                    if (stats && stats['2024'] && stats['2024'][column.id]) {
+                                        const value = stats['2024'][column.id];
+                                        const formattedValue = formatStatValue(column.id, value);
+                                        return (
+                                            <td key={column.id}>
+                                                {formattedValue}
+                                            </td>
+                                        );
+                                    } else {
+                                        return <td key={column.id}>-</td>;
+                                    }
+                                })}
                             </tr>
                             
                             {/* 2025 Projections Row */}
                             <tr className="projections">
                                 <td className="year">2025 (Proj)</td>
-                                {columns.map(column => (
-                                    <td key={column.id}>
-                                        {projections && projections[column.id] 
-                                            ? formatStatValue(column.id, projections[column.id]) 
-                                            : '-'}
-                                    </td>
-                                ))}
+                                {columns.map(column => {
+                                    if (projections && projections[column.id]) {
+                                        const value = projections[column.id];
+                                        const formattedValue = formatStatValue(column.id, value);
+                                        return (
+                                            <td key={column.id}>
+                                                {formattedValue}
+                                            </td>
+                                        );
+                                    } else {
+                                        return <td key={column.id}>-</td>;
+                                    }
+                                })}
                             </tr>
                         </tbody>
                     </table>

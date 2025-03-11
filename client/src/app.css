@@ -292,7 +292,7 @@ button[data-disabled] {
   justify-content: flex-start;
   border: none;
   padding: .25rem;
-  gap: .25rem;
+  gap: 0; /* Removed gap as we now have margins on the filters */
 }
 
 .filter-bar legend {
@@ -311,7 +311,7 @@ button[data-disabled] {
 
 .draft-mode .filter-bar fieldset {
   padding: .125rem;
-  gap: .125rem;
+  gap: 0; /* Removed gap */
 }
 
 /* Position-specific colors */
@@ -325,6 +325,11 @@ button[data-disabled] {
   --c-ss: #00a0f0;    /* Shortstop - Bright Sky Blue */
   --c-of: #ffcc00;    /* Outfield - Vibrant Yellow */
   --c-dh: #5c5c5c;    /* Designated Hitter - Dark Gray */
+  --c-2b-ss: #008b8b; /* 2B/SS - Teal */
+  --c-1b-3b: #cd853f; /* 1B/3B - Peru Brown */
+  --c-util: #8a2be2;  /* UTIL - BlueViolet */
+  --c-p: #483d8b;     /* P - DarkSlateBlue */
+  --c-all: #213f65;   /* ALL - Navy */
 }
 
 .pos-filter {
@@ -336,10 +341,23 @@ button[data-disabled] {
   font-size: .875rem;
   line-height: 1.5rem;
   background-color: var(--brown); /* Default color */
+  opacity: 0.5; /* Default opacity for inactive filters */
+  transition: all 0.2s ease;
+  margin: 0.15rem;
 
   display: flex;
   justify-content: center;
   align-items: baseline;
+}
+
+.pos-filter:hover {
+  opacity: 0.85;
+}
+
+.pos-filter,
+.pos-filter label,
+.pos-filter input {
+  cursor: pointer;
 }
 
 /* Position-specific background colors */
@@ -352,6 +370,12 @@ button[data-disabled] {
 .pos-filter[data-pos="SS"] { background-color: var(--c-ss); }
 .pos-filter[data-pos="OF"] { background-color: var(--c-of); }
 .pos-filter[data-pos="DH"] { background-color: var(--c-dh); }
+.pos-filter[data-pos="2B/SS"] { background-color: var(--c-2b-ss); }
+.pos-filter[data-pos="1B/3B"] { background-color: var(--c-1b-3b); }
+.pos-filter[data-pos="UTIL"] { background-color: var(--c-util); }
+.pos-filter[data-pos="P"] { background-color: var(--c-p); }
+/* The "All" option has no data-pos attribute */
+.pos-filter:not([data-pos]) { background-color: var(--c-all); }
 
 .draft-mode .pos-filter {
   min-width: 32px;
@@ -359,6 +383,7 @@ button[data-disabled] {
   font-size: .75rem;
   line-height: 1.25rem;
   border-radius: .3rem;
+  margin: 0.1rem; /* Smaller margin for draft mode */
 }
 
 .pos-filter.symbol {
@@ -367,8 +392,9 @@ button[data-disabled] {
 }
 
 .pos-filter.active {
-  filter: brightness(1.2);
-  box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  opacity: 1; /* Full opacity for active filter */
+  transform: scale(1.08);
+  z-index: 1;
 }
 
 /* Hide the input (visually, not from screen readers) */
@@ -449,7 +475,7 @@ button[data-disabled] {
 
 ol {
   padding-left: 0;
-  padding-right: 2rem;
+  padding-right: 0;
   list-style: none;
   counter-reset: player-rank-counter;
   overflow-y: auto;
@@ -458,7 +484,7 @@ ol {
 ol li {
   position: relative;
   padding-left: 1rem;
-  padding-bottom: .5rem;
+  padding-bottom: .25rem;
   counter-increment: player-rank-counter;
   display: grid;
   grid-template: auto / 40px auto;
@@ -484,9 +510,9 @@ ol li::before {
 .player-item {
   vertical-align: middle;
   width: 100%;
-  padding: .5rem;
+  padding: .35rem .5rem;
   background: var(--soft-tan);
-  border: 4px solid white;
+  border: 3px solid white;
   border-radius: 8px;
 
   display: flex;
@@ -570,8 +596,27 @@ ol li::before {
 
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
+  justify-content: flex-start;
   align-items: flex-start;
+}
+
+.adp {
+  font-size: 0.7rem;
+  color: var(--greybrown);
+  background-color: rgba(134, 122, 101, 0.1);
+  padding: 0.1rem 0.25rem;
+  border-radius: 3px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.adp-label {
+  font-weight: bold;
+  margin-right: 0.25rem;
+}
+
+.adp-value {
+  color: var(--brown);
 }
 
 .player-name {
@@ -595,14 +640,42 @@ ol li::before {
   background: var(--greybrown);
   color: white;
   font-weight: 600;
-  font-size: .625rem;
+  font-size: .6rem;
   text-align: center;
+  padding: 0.15rem 0.2rem;
 }
 
 .player-stats td {
   text-align: center;
   width: 48px;
-  font-size: .875rem;
+  font-size: .8rem;
+  padding: 0.15rem 0.2rem;
+}
+
+/* Stat quality indicators */
+.stat-elite {
+  color: #e68e06; /* Gold for elite, matching var(--gold) */
+  font-weight: bold;
+  background-color: rgba(230, 142, 6, 0.1); /* Light gold background */
+}
+
+.stat-good {
+  color: #2e7d32; /* Green for good */
+  font-weight: bold;
+  background-color: rgba(46, 125, 50, 0.1); /* Light green background */
+}
+
+.stat-average {
+  color: var(--brown); /* Default text color */
+}
+
+.stat-below-average {
+  color: #d32f2f; /* Red for below average */
+  background-color: rgba(211, 47, 47, 0.1); /* Light red background */
+}
+
+.stat-neutral {
+  color: var(--greybrown); /* Neutral gray */
 }
 
 .player-actions {
@@ -967,7 +1040,7 @@ button {
 }
 
 .player-positions.small {
-  gap: 0.25rem;
+  gap: 0.15rem;
 }
 
 .position-chip {
@@ -989,16 +1062,26 @@ button {
 .position-chip[data-pos="SS"] { background-color: var(--c-ss); }
 .position-chip[data-pos="OF"] { background-color: var(--c-of); }
 .position-chip[data-pos="DH"] { background-color: var(--c-dh); }
+.position-chip[data-pos="2B/SS"] { background-color: var(--c-2b-ss); }
+.position-chip[data-pos="1B/3B"] { background-color: var(--c-1b-3b); }
+.position-chip[data-pos="UTIL"] { background-color: var(--c-util); }
+.position-chip[data-pos="P"] { background-color: var(--c-p); }
 
 .position-chip.small {
-  padding: 0.1rem 0.25rem;
-  font-size: 0.625rem;
+  padding: 0.05rem 0.2rem;
+  font-size: 0.6rem;
   border-radius: 3px;
 }
 
 .player-team {
   margin-bottom: 0.5rem;
   font-size: 1rem;
+}
+
+.player-card .adp {
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0.5rem;
 }
 
 .player-card-stats {

@@ -10,7 +10,15 @@ const useUserRanking = (players) => {
         if (playerIds.length > 0 && shouldCreateRanking) {
             console.log('Creating initial ranking data...', { playerIds })
 
-            playerIds.sort((a,b) => players[b].ownership - players[a].ownership)
+            // Sort by averageDraftPosition (lower is better)
+            playerIds.sort((a,b) => {
+                // If averageDraftPosition exists for both players, use that
+                if (players[a].averageDraftPosition && players[b].averageDraftPosition) {
+                    return players[a].averageDraftPosition - players[b].averageDraftPosition;
+                }
+                // Fall back to ownership percentage if averageDraftPosition is missing
+                return players[b].ownership - players[a].ownership;
+            })
             
             // Create a map of player info
             const playersMap = {}

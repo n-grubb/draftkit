@@ -7,11 +7,11 @@ const POSITION_FILTERS = [
         value: undefined
     },
     { 
-        label: '×',
+        label: 'B ×',
         value: 'UTIL'
     },
     { 
-        label: '*',
+        label: 'P *',
         value: 'P'
     },
     { 
@@ -29,6 +29,10 @@ const POSITION_FILTERS = [
     { 
         label: '3B',
         value: '3B'
+    },
+    { 
+        label: 'SS',
+        value: 'SS'
     },
     { 
         label: '2B/SS',
@@ -81,7 +85,7 @@ const FilterBar = (props) => {
                 <legend>Position</legend>
                 {POSITION_FILTERS.map(filterOption => (
                      <div 
-                        key={filterOption.value} 
+                        key={filterOption.value || 'all'} 
                         className={
                             `pos-filter${
                                 ['UTIL','P'].includes(filterOption.value) 
@@ -92,6 +96,7 @@ const FilterBar = (props) => {
                             }`
                         }
                         data-pos={filterOption.value}
+                        title={filterOption.label}
                     >
                         <label htmlFor={`pos-filter--${filterOption.value}`}>{filterOption.label}</label>
                         <input 

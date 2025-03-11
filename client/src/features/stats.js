@@ -181,6 +181,22 @@ export function evaluateStatQuality(statId, value, playerPosition) {
         return 'below-average';                // Below average command
     }
     
+    // Runs - absolute thresholds
+    if (statId === 'R') {
+        if (value >= 90) return 'elite';       // Elite runs
+        if (value >= 75) return 'good';        // Good runs
+        if (value >= 50) return 'average';     // Average runs
+        return 'below-average';                // Below average runs
+    }
+    
+    // RBIs - absolute thresholds
+    if (statId === 'RBI') {
+        if (value >= 90) return 'elite';       // Elite RBIs
+        if (value >= 75) return 'good';        // Good RBIs
+        if (value >= 50) return 'average';     // Average RBIs
+        return 'below-average';                // Below average RBIs
+    }
+    
     // ERA - absolute thresholds with SP/RP distinction
     if (statId === 'ERA') {
         // Different thresholds for SP vs RP

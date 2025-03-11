@@ -669,11 +669,6 @@ ol li::before {
   color: var(--brown); /* Default text color */
 }
 
-.stat-below-average {
-  color: #d32f2f; /* Red for below average */
-  background-color: rgba(211, 47, 47, 0.1); /* Light red background */
-}
-
 .stat-neutral {
   color: var(--greybrown); /* Neutral gray */
 }

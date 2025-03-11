@@ -46,8 +46,11 @@ const PlayerItem = (props) => {
         const quality = evaluateStatQuality(columnId, value, primaryPosition);
         const formattedValue = formatStatValue(columnId, value);
         
+        // Only apply highlighting for elite, good, and average - not for below-average
+        const className = quality !== 'below-average' ? `stat-${quality}` : '';
+        
         return (
-            <span className={`stat-${quality}`}>
+            <span className={className}>
                 {formattedValue}
             </span>
         );

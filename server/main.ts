@@ -574,7 +574,8 @@ function buildAndStorePlayerProjections(projections: any[], playerDetails: any[]
                 projection = {
                     ...projection,
                     ...pitching,
-                    ['HR']: projection.HR, // Keep batter HR if exists
+                    ['R']: projection?.R || 0,
+                    ['HR']: projection?.HR || 0, // Keep batter HR if exists
                     ['HRA']: pitching.HR  // Add pitcher HR allowed
                 };
             }

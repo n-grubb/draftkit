@@ -33,10 +33,10 @@ export function formatStatValue(column, value) {
 // Reference values for stat benchmarks (more reasonable values)
 const STAT_BENCHMARKS = {
     // Batting stats - max values for normalization
-    'R':    80,
-    'HR':   30,
-    'RBI':  90,
-    'SB':   20,
+    'R':    95,
+    'HR':   35,
+    'RBI':  95,
+    'SB':   32,
     'OBP':  .400, // Increased from .370 to better differentiate elite (>.360) from good (>.335)
     'AB':   550,
     'PA':   600,
@@ -122,6 +122,15 @@ export function evaluateStatQuality(statId, value, playerPosition) {
         if (value >= .360) return 'elite';
         if (value >= .335) return 'good';
         if (value >= .315) return 'average';
+        return 'below-average';
+    }
+
+    // Special handling for SB with custom thresholds
+    if (statId === 'SB') {
+        // Based on specified thresholds:
+        if (value >= 30) return 'elite';
+        if (value >= 15) return 'good';
+        if (value >= 10) return 'average';
         return 'below-average';
     }
     

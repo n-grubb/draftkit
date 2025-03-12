@@ -1875,9 +1875,10 @@ button {
   border-radius: 8px;
 }
 
-.share-ranking h3 {
+.share-ranking h3,
+.share-form h3 {
   margin-bottom: 1rem;
-  color: var(--brown);
+  color: var(--green-monster);
 }
 
 .share-button {
@@ -1956,16 +1957,18 @@ button {
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 1rem;
-}
 
-.cancel-button {
-  background-color: var(--grey);
-  color: var(--charcoal);
-}
-
-.submit-button {
-  background-color: var(--royal-blue);
-  color: white;
+  .cancel-button {
+    background-color: var(--grey);
+    color: var(--charcoal);
+  }
+  
+  .submit-button {
+    background-color: var(--royal-blue);
+    color: white;
+    flex: 1;
+    font-size: 1rem;
+  }
 }
 
 .edit-pin {
@@ -2114,7 +2117,125 @@ button {
 }
 
 .rankings-drawer .delete-ranking:hover {
-    color: var(--danger-color);
-    background-color: var(--danger-bg);
+    color: var(--notification-red);
+    background-color: var(--maroon);
+}
+
+/* Toast styles */
+.toast {
+    position: fixed;
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Toast positions */
+.toast-top {
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.toast-top-left {
+    top: 24px;
+    left: 24px;
+}
+
+.toast-top-right {
+    top: 24px;
+    right: 24px;
+}
+
+.toast-bottom {
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.toast-bottom-left {
+    bottom: 24px;
+    left: 24px;
+}
+
+.toast-bottom-right {
+    bottom: 24px;
+    right: 24px;
+}
+
+.toast-content {
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 300px;
+    max-width: 500px;
+
+
+    & .toast-action-button {
+      background-color: var(--royal-blue);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      white-space: nowrap;
+      opacity: 1;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background-color: var(--navy);
+        transform: translateY(-1px);
+      }
+
+      &:disabled {
+        background-color: var(--grey);
+        cursor: not-allowed;
+        transform: none;
+      }
+    }  
+
+    &.toast-primary {
+      background-color: var(--teal);
+      color: white;
+
+      & .toast-action-button {
+        background-color: var(--teal-dark);
+      }
+    }
+
+    &.toast-info {
+      background-color: var(--border);
+      color: black;
+    }
+    
+    &.toast-warning {
+      background-color: var(--gold);
+      color: white;
+    }
+    
+    &.toast-danger {
+      background-color: var(--notification-red);
+      color: white;
+    }
+}
+
+
+.toast span {
+    font-weight: 500;
+    flex: 1;
+}
+
+
+@keyframes slideIn {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 

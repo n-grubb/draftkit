@@ -353,18 +353,18 @@ const AppHeader = () => {
                                 {error && <div className="error">{error}</div>}
                                 <div className="form-actions">
                                     <button 
+                                        type="submit" 
+                                        className="submit-button"
+                                        disabled={isSubmitting}
+                                    >
+                                        {isSubmitting ? 'Sharing...' : 'Share'}
+                                    </button>
+                                    <button 
                                         type="button" 
                                         onClick={toggleShareModal} 
                                         className="cancel-button small"
                                     >
                                         Cancel
-                                    </button>
-                                    <button 
-                                        type="submit" 
-                                        className="submit-button small"
-                                        disabled={isSubmitting}
-                                    >
-                                        {isSubmitting ? 'Sharing...' : 'Share'}
                                     </button>
                                 </div>
                             </form>

@@ -18,6 +18,7 @@ import FilterBar from '~/components/FilterBar'
 import DraggableItem from './DraggableItem'
 import PlayerItem from './PlayerItem'
 import PlayerCard from './PlayerCard'
+import Toast from '~/components/Toast'
 import {StoreContext} from '~/data/store'
 import {DraftContext} from '~/data/draftContext'
 
@@ -161,15 +162,14 @@ function UnsavedChangesPrompt ({ rankedPlayerIds }) {
 
     const hasUnsavedChanges = rankedPlayerIds.length > 0 ? isDifferentThanStoredOrder() : false
 
-    if (!hasUnsavedChanges) {
-        return <></>
-    }
-
     return (
-        <div className="notice">
-            <span>Unsaved changes. Update ranking?</span>
-            <button onClick={() => updateRanking(rankedPlayerIds)}>Save</button>
-        </div>
+        <Toast 
+            isVisible={hasUnsavedChanges}
+            message="You have unsaved changes to your ranking order."
+            actionLabel="Save Changes"
+            onAction={() => updateRanking(rankedPlayerIds)}
+            position="bottom"
+        />
     )
 }
 

@@ -95,12 +95,24 @@ const PlayerItem = (props) => {
                         >{position}</span>
                     ))}
                 </div>
-                {player.averageDraftPosition && (
-                    <div className="adp">
-                        <span className="adp-label">ADP</span> 
-                        <span className="adp-value">{Math.round(player.averageDraftPosition * 10) / 10}</span>
-                    </div>
-                )}
+                <div className="player-status">
+                    {player.averageDraftPosition && (
+                        <div className="adp">
+                            <span className="adp-label">ADP</span> 
+                            <span className="adp-value">{Math.round(player.averageDraftPosition * 10) / 10}</span>
+                            {player.adpChange && (
+                                <span className={`adp-change ${player.adpChange > 0 ? 'positive' : 'negative'}`}>
+                                    ({player.adpChange > 0 ? '+' : ''}{player.adpChange}%)
+                                </span>
+                            )}
+                        </div>
+                    )}
+                    {player.injuryStatus && player.injuryStatus !== "ACTIVE" && (
+                        <div className="injury-status">
+                            {player.injuryStatus === "DAY_TO_DAY" ? "D2D" : player.injuryStatus}
+                        </div>
+                    )}
+                </div>
             </div>
             <div className="player-stats">
                 <table>

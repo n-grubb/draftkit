@@ -963,6 +963,12 @@ ol li::before {
   align-items: flex-start;
 }
 
+.player-status {
+  display: flex;
+  justify-content: flex-start;
+  align-items: cenfter;
+}
+
 .adp {
   font-size: 0.7rem;
   color: var(--greybrown);
@@ -974,12 +980,35 @@ ol li::before {
 }
 
 .adp-label {
-  font-weight: bold;
   margin-right: 0.25rem;
 }
 
 .adp-value {
   color: var(--brown);
+}
+
+.adp-change {
+  color: var(--brown);
+  font-size: 0.85em;
+  margin-left: 0.25rem;
+}
+
+.adp-change.positive {
+  color: var(--forest);
+}
+
+.adp-change.negative {
+  color: var(--notification-red);
+}
+
+.injury-status {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.25rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  background-color: rgba(255, 84, 74, 0.1);
+  color: var(--notification-red);
 }
 
 .player-name {

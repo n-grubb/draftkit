@@ -17,6 +17,7 @@ export const DraftContext = createContext({
     setTotalRounds: () => {},
     setShowDraftSettings: () => {},
     getTeamStats: () => {},
+    getLeagueAverages: () => {},
 })
 
 export const DraftProvider = ({ children }) => {
@@ -105,10 +106,28 @@ export const DraftProvider = ({ children }) => {
             totals[stat] = 0;
         });
         
+        // Track number of batters and pitchers
+        let batterCount = 0;
+        let pitcherCount = 0;
+        
+        // First pass to count batters and pitchers
+        teamPlayerIds.forEach(playerId => {
+            const player = players[playerId];
+            if (!player) return;
+            
+            if (player.pos.includes('SP') || player.pos.includes('RP')) {
+                pitcherCount++;
+            } else {
+                batterCount++;
+            }
+        });
+        
         // Sum up projections for each player
         teamPlayerIds.forEach(playerId => {
             const player = players[playerId];
             if (!player || !player.projections) return;
+            
+            const isPitcher = player.pos.includes('SP') || player.pos.includes('RP');
             
             Object.entries(player.projections).forEach(([stat, value]) => {
                 if (totals[stat] !== undefined && value) {
@@ -124,14 +143,31 @@ export const DraftProvider = ({ children }) => {
                             }
                             totals[`${stat}_IP`] += player.projections.IP;
                         }
-                    } else if (stat === 'OBP' || stat === 'AVG' || stat === 'SLG' || stat === 'OPS') {
-                        totals[stat] = totals[stat] + value / teamPlayerIds.length 
+                    } else if (['OBP', 'AVG', 'SLG', 'OPS'].includes(stat)) {
+                        // Only add batting rate stats from non-pitchers, and just add the raw value
+                        if (!isPitcher) {
+                            totals[stat] += value;
+                        }
+                    } else if (stat === 'K') {
+                        // Only add K stats from pitchers
+                        if (isPitcher) {
+                            totals[stat] += value;
+                        }
                     } else {
                         totals[stat] += value;
                     }
                 }
             });
         });
+        
+        // Calculate averages for batting rate stats
+        if (batterCount > 0) {
+            ['OBP', 'AVG', 'SLG', 'OPS'].forEach(stat => {
+                if (totals[stat] !== undefined) {
+                    totals[stat] = totals[stat] / batterCount;
+                }
+            });
+        }
         
         // Calculate weighted averages for ERA and WHIP
         if (totals.ERA && totals.ERA_IP) {
@@ -145,6 +181,42 @@ export const DraftProvider = ({ children }) => {
         }
         
         return totals;
+    };
+
+    // Function to get league averages excluding my team
+    const getLeagueAverages = () => {
+        if (!myDraftSlot) return null;
+
+        let leagueStats = {};
+        let teamsWithStats = 0;
+
+        // Calculate stats for each team except mine
+        for (let team = 1; team <= totalTeams; team++) {
+            if (team === myDraftSlot) continue;
+            
+            const teamStats = getTeamStats(team);
+            if (!teamStats) continue;
+
+            teamsWithStats++;
+            
+            // Add each team's stats to the league totals
+            Object.entries(teamStats).forEach(([stat, value]) => {
+                if (!leagueStats[stat]) {
+                    leagueStats[stat] = 0;
+                }
+                leagueStats[stat] += value;
+            });
+        }
+
+        // If no other teams have stats, return null
+        if (teamsWithStats === 0) return null;
+
+        // Calculate averages
+        Object.keys(leagueStats).forEach(stat => {
+            leagueStats[stat] = leagueStats[stat] / teamsWithStats;
+        });
+
+        return leagueStats;
     };
 
     // Exposed context value
@@ -163,7 +235,8 @@ export const DraftProvider = ({ children }) => {
         setTotalRounds,
         setShowDraftSettings,
         restartDraft,
-        getTeamStats
+        getTeamStats,
+        getLeagueAverages
     }
     
     return (

@@ -14,12 +14,13 @@ import {
 } from 'recharts';
 
 const TeamRadarChart = () => {
-    const { myDraftSlot, getTeamStats } = useContext(DraftContext);
+    const { myDraftSlot, getTeamStats, getLeagueAverages } = useContext(DraftContext);
     
     if (!myDraftSlot) return null;
     
-    // Get team stats
+    // Get team stats and league averages
     const teamStats = getTeamStats(myDraftSlot);
+    const leagueAvg = getLeagueAverages();
     
     if (!teamStats) {
         return (
@@ -36,11 +37,15 @@ const TeamRadarChart = () => {
     const battingData = DEFAULT_BATTING_COLUMNS.map(column => {
         const rawValue = teamStats[column.id];
         const normalizedValue = rawValue ? normalizeStatValue(column.id, rawValue) : 0;
+        const leagueValue = leagueAvg ? leagueAvg[column.id] : null;
+        const normalizedLeagueValue = leagueValue ? normalizeStatValue(column.id, leagueValue) : 0;
         
         return {
             stat: column.name,
             value: normalizedValue,
-            fullStat: `${column.name}: ${rawValue ? formatStatValue(column.id, rawValue) : '-'}`
+            league: normalizedLeagueValue,
+            fullStat: `${column.name}: ${rawValue ? formatStatValue(column.id, rawValue) : '-'}`,
+            leagueStat: leagueValue ? `League Avg: ${formatStatValue(column.id, leagueValue)}` : null
         };
     });
     
@@ -48,13 +53,30 @@ const TeamRadarChart = () => {
     const pitchingData = DEFAULT_PITCHING_COLUMNS.map(column => {
         const rawValue = teamStats[column.id];
         const normalizedValue = rawValue ? normalizeStatValue(column.id, rawValue) : 0;
+        const leagueValue = leagueAvg ? leagueAvg[column.id] : null;
+        const normalizedLeagueValue = leagueValue ? normalizeStatValue(column.id, leagueValue) : 0;
         
         return {
             stat: column.name,
             value: normalizedValue,
-            fullStat: `${column.name}: ${rawValue ? formatStatValue(column.id, rawValue) : '-'}`
+            league: normalizedLeagueValue,
+            fullStat: `${column.name}: ${rawValue ? formatStatValue(column.id, rawValue) : '-'}`,
+            leagueStat: leagueValue ? `League Avg: ${formatStatValue(column.id, leagueValue)}` : null
         };
     });
+
+    const CustomTooltip = ({ active, payload }) => {
+        if (active && payload && payload.length > 0) {
+            const data = payload[0].payload;
+            return (
+                <div className="radar-tooltip">
+                    <p>{data.fullStat}</p>
+                    {data.leagueStat && <p>{data.leagueStat}</p>}
+                </div>
+            );
+        }
+        return null;
+    };
     
     return (
         <div className="team-radar-chart">
@@ -73,20 +95,21 @@ const TeamRadarChart = () => {
                                 axisLine={false}
                                 tick={false}
                             />
-                            <Tooltip 
-                                formatter={(value, name, props) => [props.payload.fullStat, 'Rating']}
-                                contentStyle={{
-                                    backgroundColor: 'var(--soft-tan)',
-                                    borderColor: 'var(--brown)',
-                                    color: 'var(--brown)'
-                                }}
-                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Legend />
                             <Radar 
-                                name="Batting" 
+                                name="Your Team" 
                                 dataKey="value" 
                                 stroke="var(--teal)" 
                                 fill="var(--teal)" 
                                 fillOpacity={0.5}
+                            />
+                            <Radar 
+                                name="League Average" 
+                                dataKey="league" 
+                                stroke="var(--grey)" 
+                                fill="var(--grey)" 
+                                fillOpacity={0.3}
                             />
                         </RadarChart>
                     </ResponsiveContainer>
@@ -104,20 +127,21 @@ const TeamRadarChart = () => {
                                 axisLine={false}
                                 tick={false}
                             />
-                            <Tooltip 
-                                formatter={(value, name, props) => [props.payload.fullStat, 'Rating']}
-                                contentStyle={{
-                                    backgroundColor: 'var(--soft-tan)',
-                                    borderColor: 'var(--brown)',
-                                    color: 'var(--brown)'
-                                }}
-                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Legend />
                             <Radar 
-                                name="Pitching" 
+                                name="Your Team" 
                                 dataKey="value" 
                                 stroke="var(--maroon)" 
                                 fill="var(--maroon)" 
                                 fillOpacity={0.5}
+                            />
+                            <Radar 
+                                name="League Average" 
+                                dataKey="league" 
+                                stroke="var(--grey)" 
+                                fill="var(--grey)" 
+                                fillOpacity={0.3}
                             />
                         </RadarChart>
                     </ResponsiveContainer>
@@ -128,21 +152,47 @@ const TeamRadarChart = () => {
                 <div className="batting-stats">
                     {DEFAULT_BATTING_COLUMNS.map(column => {
                         const value = teamStats[column.id];
+                        const leagueValue = leagueAvg ? leagueAvg[column.id] : null;
+                        const diff = value && leagueValue ? value - leagueValue : null;
+                        const isPositive = (column.id === 'ERA' || column.id === 'WHIP') ? diff < 0 : diff > 0;
+                        const diffClass = isPositive ? 'positive' : 'negative';
+                        
                         return (
                             <div className="stat-item" key={`batting-${column.id}`}>
                                 <span className="stat-name">{column.name}</span>
-                                <span className="stat-value">{value ? formatStatValue(column.id, value) : '-'}</span>
+                                <span className="stat-value">
+                                    {value ? formatStatValue(column.id, value) : '-'}
+                                    {diff && (
+                                        <span className={`stat-diff ${diffClass}`}>
+                                            {isPositive ? '+' : ''}{formatStatValue(column.id, diff)}
+                                        </span>
+                                    )}
+                                </span>
                             </div>
                         );
                     })}
                 </div>
                 <div className="pitching-stats">
                     {DEFAULT_PITCHING_COLUMNS.map(column => {
-                        const value = teamStats[column.id];
+                        const value = teamStats && teamStats[column.id] ? teamStats[column.id] : 0;
+                        const leagueValue = leagueAvg && leagueAvg[column.id] ? leagueAvg[column.id] : 0
+                        const diff = value - leagueValue
+                        const isPositive = (column.id === 'ERA' || column.id === 'WHIP') ? diff < 0 : diff > 0;
+                        const diffClass = diff == 0 ? 'neutral' : isPositive ? 'positive' : 'negative';
+                        
+                        console.log({ value, leagueValue, diff, isPositive, diffClass })
+
                         return (
                             <div className="stat-item" key={`pitching-${column.id}`}>
                                 <span className="stat-name">{column.name}</span>
-                                <span className="stat-value">{value ? formatStatValue(column.id, value) : '-'}</span>
+                                <span className="stat-value">
+                                    {formatStatValue(column.id, value)}
+                                    {
+                                        <span className={`stat-diff ${diffClass}`}>
+                                            {diff == 0 || isPositive ? '+' : ''}{formatStatValue(column.id, diff)}
+                                        </span>
+                                    }
+                                </span>
                             </div>
                         );
                     })}

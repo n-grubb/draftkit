@@ -1599,9 +1599,8 @@ button {
 }
 
 .stat-total-display {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
+  display: grid;
+  grid-template: auto / auto auto;
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid rgba(134, 122, 101, 0.2);
@@ -1609,7 +1608,8 @@ button {
 
 .batting-stats, .pitching-stats {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: space-evenly;
+  flex-wrap: no-wrap;
   gap: 0.5rem;
   margin: 0 0.5rem;
 }
@@ -1625,12 +1625,54 @@ button {
 }
 
 .stat-name {
-  font-weight: bold;
   color: var(--brown);
 }
 
 .stat-value {
   color: var(--charcoal);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.stat-diff {
+  font-size: 0.75em;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+}
+
+.stat-diff.neutral {
+  color: var(--greybrown);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.stat-diff.positive {
+  color: var(--forest);
+  background-color: rgba(0, 162, 56, 0.1);
+}
+
+.stat-diff.negative {
+  color: var(--notification-red);
+  background-color: rgba(255, 84, 74, 0.1);
+}
+
+.radar-tooltip {
+  background-color: var(--soft-tan);
+  border: 1px solid var(--brown);
+  padding: 0.5rem;
+  border-radius: 4px;
+  color: var(--brown);
+}
+
+.radar-tooltip p {
+  margin: 0;
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+}
+
+.radar-tooltip p:first-child {
+  font-weight: bold;
 }
 
 /* Starters Remaining Component */

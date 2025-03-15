@@ -124,6 +124,8 @@ export const DraftProvider = ({ children }) => {
                             }
                             totals[`${stat}_IP`] += player.projections.IP;
                         }
+                    } else if (stat === 'OBP' || stat === 'AVG' || stat === 'SLG' || stat === 'OPS') {
+                        totals[stat] = totals[stat] + value / teamPlayerIds.length 
                     } else {
                         totals[stat] += value;
                     }

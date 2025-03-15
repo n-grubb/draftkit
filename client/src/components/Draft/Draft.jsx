@@ -209,13 +209,14 @@ const Draft = () => {
                                 <TeamRadarChart />
                             </div>
                         )}
-                        
-                        <div className="starters-tracker">
-                            <StartersRemaining />
-                        </div>
                     </div>
                 </div>
                 <div className="draft-player-list">
+
+                    <div className="starters-tracker">
+                        <StartersRemaining />
+                    </div>
+
                     <PlayerList 
                         editable={false} 
                         draftMode={true}

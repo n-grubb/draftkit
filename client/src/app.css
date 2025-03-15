@@ -909,8 +909,9 @@ ol li::before {
 }
 
 .draft-mode .player-details {
-  width: 150px;
+  width: 160px;
   padding-left: 0.5rem;
+  font-size: .75rem;
 }
 
 .draft-mode .player-stats table {
@@ -1071,6 +1072,7 @@ ol li::before {
   justify-content: flex-end;
   gap: .5rem;
   justify-self: flex-end;
+  margin-right: 1rem;
 }
 
 button {
@@ -1145,13 +1147,14 @@ button {
 
 .draft-container {
   display: grid;
-  grid-template-columns: 60% 40%;
+  grid-template-columns: 50% 50%;
   gap: 1rem;
 }
 
 .draft-board-container {
   max-width: 100%;
   overflow-x: auto;
+  padding: 0 2rem;
 }
 
 .draft-board {
@@ -1171,18 +1174,21 @@ button {
 .draft-cell {
   border: none;
   padding: 0.5rem;
-  width: 70px;
-  height: 70px;
+  width: 10%;
+  height: 10%;
+  min-width: 80px;
+  min-height: 80px;
   text-align: center;
   position: relative;
   box-sizing: border-box;
 }
 
 .draft-cell.header {
+  height: 40px; 
+  min-height: 40px;
   font-weight: bold;
   background-color: var(--navy);
   color: white;
-  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1194,7 +1200,7 @@ button {
 }
 
 .draft-cell.header.empty {
-  width: 100px;
+  width: 120px;
   background-color: transparent;
   border: none;
 }
@@ -1203,11 +1209,11 @@ button {
   font-weight: normal;
   background-color: transparent;
   color: var(--greybrown);
-  width: 100px;
+  width: 120px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   padding-left: 1rem;
   border: none;
 }
@@ -1234,13 +1240,11 @@ button {
 }
 
 .mini-headshot {
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   object-fit: cover;
   border-radius: 50%;
-  margin-bottom: 0.25rem;
   border: 3px solid transparent;  /* Default transparent border */
-  box-sizing: border-box;
 }
 
 /* Position-specific borders for headshots */
@@ -1356,6 +1360,10 @@ button {
 .start-draft-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.draft-player-list {
+  padding: 0 2rem;
 }
 
 /* Player Card Modal */
@@ -1627,7 +1635,6 @@ button {
 
 /* Starters Remaining Component */
 .starters-remaining-container {
-  margin-top: 2rem;
   padding: 1rem;
   background-color: rgba(231, 221, 185, 0.2);
   border-radius: 8px;
@@ -1635,14 +1642,14 @@ button {
 
 .starters-remaining-container h3 {
   text-align: center;
-  margin-bottom: 1rem;
-  color: var(--brown);
+  margin-bottom: .5rem;
+  color: var(--charcoal);
+  font-size: 1.125rem;
 }
 
 .position-categories {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
+  display: grid;
+  grid-template: auto / auto auto;
   gap: 1.5rem;
 }
 

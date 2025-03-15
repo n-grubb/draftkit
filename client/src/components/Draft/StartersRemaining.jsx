@@ -4,29 +4,27 @@ import { DraftContext } from '~/data/draftContext';
 import { STARTER_THRESHOLDS, getAdjustedThreshold } from '~/features/positions';
 
 const DISPLAY_POSITIONS = [
-    { id: 'C', label: 'C', category: 'Infield' },
-    { id: '1B', label: '1B', category: 'Infield' },
-    { id: '2B', label: '2B', category: 'Infield' },
-    { id: '3B', label: '3B', category: 'Infield' },
-    { id: 'SS', label: 'SS', category: 'Infield' },
-    { id: 'OF', label: 'OF', category: 'Outfield' },
+    { id: 'C', label: 'C', category: 'Batters' },
+    { id: '1B', label: '1B', category: 'Batters' },
+    { id: '2B', label: '2B', category: 'Batters' },
+    { id: '3B', label: '3B', category: 'Batters' },
+    { id: 'SS', label: 'SS', category: 'Batters' },
+    { id: 'OF', label: 'OF', category: 'Batters' },
+    { id: '1B/3B', label: 'CI', category: 'Batters' },
+    { id: '2B/SS', label: 'MI', category: 'Batters' },
+    // { id: 'UTIL', label: 'UTIL', category: 'Batters' },
     { id: 'SP', label: 'SP', category: 'Pitchers' },
     { id: 'RP', label: 'RP', category: 'Pitchers' },
-    { id: '1B/3B', label: 'CI', category: 'Combo' },
-    { id: '2B/SS', label: 'MI', category: 'Combo' },
-    { id: 'UTIL', label: 'UTIL', category: 'Combo' },
 ];
 
 // Helper to group positions by category
 const POSITION_CATEGORIES = {
-    'Infield': ['C', '1B', '2B', '3B', 'SS'],
-    'Outfield': ['OF'],
+    'Batters': ['C', '1B', '2B', '3B', 'SS', 'OF', '1B/3B', '2B/SS'],
     'Pitchers': ['SP', 'RP'],
-    'Combo': ['1B/3B', '2B/SS', 'UTIL'],
 };
 
 // Circular progress component
-const CircularProgress = ({ value, size = 70, strokeWidth = 6, position }) => {
+const CircularProgress = ({ value, size = 50, strokeWidth = 5, position }) => {
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (value / 100) * circumference;
@@ -161,6 +159,8 @@ const StartersRemaining = () => {
         };
     });
     
+    console.log({ positionsByCategory, startersRemainingByPosition });
+
     return (
         <div className="starters-remaining-container">
             <h3>Starters Remaining</h3>

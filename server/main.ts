@@ -745,11 +745,11 @@ async function fetchHistoricalStats(playerDetails: any[]) {
     // - MLB Stats API (requires key/authentication)
     // - Baseball Savant (Statcast data)
     
-    console.log("To implement historical stats, you could use one of these sources:");
-    console.log("1. Baseball Reference: https://www.baseball-reference.com/");
-    console.log("2. FanGraphs: https://www.fangraphs.com/");
-    console.log("3. MLB Stats API: https://statsapi.mlb.com/api/");
-    console.log("4. Baseball Savant (Statcast): https://baseballsavant.mlb.com/");
+    // console.log("To implement historical stats, you could use one of these sources:");
+    // console.log("1. Baseball Reference: https://www.baseball-reference.com/");
+    // console.log("2. FanGraphs: https://www.fangraphs.com/");
+    // console.log("3. MLB Stats API: https://statsapi.mlb.com/api/");
+    // console.log("4. Baseball Savant (Statcast): https://baseballsavant.mlb.com/");
     
     // For now, return empty historical stats to not break the flow
     // In a full implementation, you would iterate through players and fetch their stats
@@ -1002,9 +1002,9 @@ function formatProjections(projection) {
     formatted_projection['W']    = projection['W']    || 0;
     formatted_projection['ERA']  = projection['ERA']  || 0;
     formatted_projection['WHIP'] = projection['WHIP'] || 0;
-    formatted_projection['SVHD'] = (projection['SV'] + projection['HD']) || 0;
-    formatted_projection['HD']   = projection['HD']   || 0;
     formatted_projection['SV']   = projection['SV']   || 0;
+    formatted_projection['HD']   = projection['HLD']  || 0;
+    formatted_projection['SVHD'] = (projection['SV'] + projection['HLD']) || 0;
     formatted_projection['QS']   = projection['QS']   || 0;
     formatted_projection['BB']   = projection['BB']   || 0;
     formatted_projection['K/9']  = projection['K/9']  || 0;

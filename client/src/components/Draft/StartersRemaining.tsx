@@ -91,7 +91,7 @@ const StartersRemaining = () => {
     
     // Calculate starters remaining for each position
     const startersRemainingByPosition = useMemo(() => {
-        const positionCounts = {};
+        const positionCounts: Record<string, any> = {};
         
         // Initialize position counts
         DISPLAY_POSITIONS.forEach(({ id }) => {
@@ -104,8 +104,8 @@ const StartersRemaining = () => {
         });
         
         // Count total players by position
-        Object.values(players).forEach(player => {
-            player.pos.forEach(position => {
+        Object.values(players).forEach((player: any) => {
+            player.pos.forEach((position: any) => {
                 if (positionCounts[position]) {
                     positionCounts[position].total++;
                 }
@@ -113,7 +113,7 @@ const StartersRemaining = () => {
         });
         
         // Count drafted players by position
-        draftedPlayerIds.forEach(playerId => {
+        draftedPlayerIds.forEach((playerId: any) => {
             const player = players[playerId];
             if (player) {
                 player.pos.forEach(position => {

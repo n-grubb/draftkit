@@ -201,7 +201,7 @@ const AppHeader = () => {
             if (result && result.id) {
                 setShareUrl(getShareUrl());
             }
-        } catch (err) {
+        } catch (err: any) {
             setError(err.message || 'Failed to share ranking');
         } finally {
             setIsSubmitting(false);
@@ -265,7 +265,7 @@ const AppHeader = () => {
                                         type="text" 
                                         readOnly 
                                         value={shareUrl} 
-                                        onClick={(e) => e.target.select()}
+                                        onClick={(e) => (e.target as HTMLInputElement).select()}
                                     />
                                     <button onClick={copyToClipboard}>
                                         {isCopied ? 'Copied!' : 'Copy'}
@@ -290,7 +290,7 @@ const AppHeader = () => {
                                         type="text" 
                                         readOnly 
                                         value={getShareUrl() || ''} 
-                                        onClick={(e) => e.target.select()}
+                                        onClick={(e) => (e.target as HTMLInputElement).select()}
                                     />
                                     <button onClick={() => {
                                         navigator.clipboard.writeText(getShareUrl() || '');
@@ -336,7 +336,7 @@ const AppHeader = () => {
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Add a description..."
-                                        rows="2"
+                                        rows={2}
                                     />
                                 </div>
                                 <div className="form-group">

@@ -12,7 +12,7 @@ const useUserRanking = (players) => {
     };
 
     // State for the active ranking
-    const [ranking, setRanking] = useState({});
+    const [ranking, setRanking] = useState<any>({});
     // State for all saved rankings
     const [savedRankings, setSavedRankings] = useState([]);
     // State for loading
@@ -134,7 +134,7 @@ const useUserRanking = (players) => {
         saveToRankingsList(initialRanking);
         
         // Update URL to remove any ranking ID
-        const newUrl = new URL(window.location);
+        const newUrl = new URL(window.location.href);
         newUrl.searchParams.delete('id');
         window.history.pushState({}, '', newUrl);
         
@@ -195,7 +195,7 @@ const useUserRanking = (players) => {
                     // Create a new ranking if none exists
                     createNewRanking(players);
                 }
-            } catch (err) {
+            } catch (err: any) {
                 console.error('Error initializing ranking:', err);
                 setError(err.message || 'Failed to load ranking');
                 
@@ -264,7 +264,7 @@ const useUserRanking = (players) => {
             saveToRankingsList(targetRanking);
             
             // Update URL with the ranking ID
-            const newUrl = new URL(window.location);
+            const newUrl = new URL(window.location.href);
             if (rankingId.startsWith('local')) {
                 newUrl.searchParams.delete('id');
             } else {
@@ -273,7 +273,7 @@ const useUserRanking = (players) => {
             window.history.pushState({}, '', newUrl);
             
             return targetRanking;
-        } catch (err) {
+        } catch (err: any) {
             setError(`Failed to load ranking: ${err.message}`);
             throw err;
         } finally {
@@ -306,12 +306,12 @@ const useUserRanking = (players) => {
             saveToRankingsList(sharedRanking);
             
             // Update URL with the ranking ID without page reload
-            const newUrl = new URL(window.location);
+            const newUrl = new URL(window.location.href);
             newUrl.searchParams.set('id', sharedRanking.id);
             window.history.pushState({}, '', newUrl);
             
             return sharedRanking;
-        } catch (err) {
+        } catch (err: any) {
             setError(err.message || 'Failed to share ranking');
             throw err;
         } finally {

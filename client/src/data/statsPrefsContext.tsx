@@ -2,7 +2,7 @@ import { createContext, useState, useEffect } from 'react';
 import { DEFAULT_BATTING_COLUMNS, DEFAULT_PITCHING_COLUMNS } from '~/features/filtering/columns';
 
 // Create context
-export const StatsPrefsContext = createContext({
+export const StatsPrefsContext = createContext<any>({
     selectedBattingStats: DEFAULT_BATTING_COLUMNS.map(col => col.id),
     selectedPitchingStats: DEFAULT_PITCHING_COLUMNS.map(col => col.id),
     expandedStatsView: false,

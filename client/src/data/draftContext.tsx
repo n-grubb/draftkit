@@ -2,7 +2,7 @@ import { createContext, useState, useContext } from 'react'
 import { StoreContext } from './store'
 import { statsToDisplay } from '~/features/filtering/columns'
 
-export const DraftContext = createContext({
+export const DraftContext = createContext<any>({
     myDraftSlot: null,
     totalTeams: 10,
     totalRounds: 26,
@@ -28,7 +28,7 @@ export const DraftProvider = ({ children }) => {
     const [totalTeams, setTotalTeams] = useState(10)
     const [totalRounds, setTotalRounds] = useState(26)
     const [currentPick, setCurrentPick] = useState(1)
-    const [draftedPlayers, setDraftedPlayers] = useState({})
+    const [draftedPlayers, setDraftedPlayers] = useState<Record<string, any>>({})
     const [showDraftSettings, setShowDraftSettings] = useState(true)
     
     // Calculate whose turn it is based on the current pick
@@ -89,10 +89,10 @@ export const DraftProvider = ({ children }) => {
         if (teamPlayerIds.length === 0) return null;
         
         // Initialize totals object with all potential stats
-        const totals = {};
+        const totals: Record<string, any> = {};
         
         // Get unique stat categories from all players
-        const allStatColumns = new Set();
+        const allStatColumns = new Set<string>();
         teamPlayerIds.forEach(playerId => {
             const player = players[playerId];
             if (!player) return;
@@ -129,7 +129,7 @@ export const DraftProvider = ({ children }) => {
             
             const isPitcher = player.pos.includes('SP') || player.pos.includes('RP');
             
-            Object.entries(player.projections).forEach(([stat, value]) => {
+            Object.entries(player.projections).forEach(([stat, value]: [string, any]) => {
                 if (totals[stat] !== undefined && value) {
                     // For ERA and WHIP, we need weighted averages based on IP
                     if (stat === 'ERA' || stat === 'WHIP') {
@@ -187,7 +187,7 @@ export const DraftProvider = ({ children }) => {
     const getLeagueAverages = () => {
         if (!myDraftSlot) return null;
 
-        let leagueStats = {};
+        let leagueStats: Record<string, any> = {};
         let teamsWithStats = 0;
 
         // Calculate stats for each team except mine

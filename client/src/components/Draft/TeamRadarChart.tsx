@@ -65,7 +65,7 @@ const TeamRadarChart = () => {
         };
     });
 
-    const CustomTooltip = ({ active, payload }) => {
+    const CustomTooltip = ({ active, payload }: any) => {
         if (active && payload && payload.length > 0) {
             const data = payload[0].payload;
             return (

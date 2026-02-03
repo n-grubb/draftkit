@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 
-const Toast = ({ 
-    isVisible, 
+const Toast = ({
+    isVisible,
     message,
     actionLabel,
     onAction,
-    isLoading,
+    isLoading = false,
     position = 'bottom', // 'top' | 'top-left' | 'top-right' | 'bottom' | 'bottom-left' | 'bottom-right'
     variant = 'primary' // 'primary' | 'info' | 'warning' | 'danger'
-}) => {
+}: any) => {
     const [show, setShow] = useState(false)
 
     useEffect(() => {

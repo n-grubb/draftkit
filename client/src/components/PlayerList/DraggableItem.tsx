@@ -18,7 +18,7 @@ const DraggableItem = ({ id, children }) => {
         transition: transition,
         opacity: isDragging ? 0.8 : 1,
         zIndex: isDragging ? 1 : 0,
-        position: 'relative',
+        position: 'relative' as const,
     }
 
     return (

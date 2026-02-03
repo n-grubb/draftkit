@@ -51,7 +51,7 @@ export const PITCHING_COLUMNS = DEFAULT_PITCHING_COLUMNS
 
 // Gets the appropriate columns for a position 
 // Optional parameters for custom stat selection and expanded view
-export function statsToDisplay(positions, customBattingStats, customPitchingStats, expanded = false) {
+export function statsToDisplay(positions, customBattingStats?, customPitchingStats?, expanded = false) {
     let battingColumns = [];
     let pitchingColumns = [];
 

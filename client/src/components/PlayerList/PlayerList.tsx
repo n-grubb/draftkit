@@ -22,7 +22,7 @@ import Toast from '~/components/Toast'
 import {StoreContext} from '~/data/store'
 import {DraftContext} from '~/data/draftContext'
 
-const PlayerList = ({ editable }) => {
+const PlayerList = ({ editable }: any) => {
     const {players, ranking, mode} = useContext(StoreContext);
     const {isMyTurn, draftPlayer, draftedPlayers} = useContext(DraftContext);
     

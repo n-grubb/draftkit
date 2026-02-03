@@ -57,7 +57,7 @@ const ShareRanking = () => {
             if (result && result.id) {
                 setShareUrl(getShareUrl());
             }
-        } catch (err) {
+        } catch (err: any) {
             setError(err.message || 'Failed to share ranking');
         } finally {
             setIsSubmitting(false);
@@ -84,7 +84,7 @@ const ShareRanking = () => {
                         type="text" 
                         readOnly 
                         value={url} 
-                        onClick={(e) => e.target.select()}
+                        onClick={(e) => (e.target as HTMLInputElement).select()}
                     />
                     <button onClick={() => {
                         navigator.clipboard.writeText(url);
@@ -134,7 +134,7 @@ const ShareRanking = () => {
                                     type="text" 
                                     readOnly 
                                     value={shareUrl} 
-                                    onClick={(e) => e.target.select()}
+                                    onClick={(e) => (e.target as HTMLInputElement).select()}
                                 />
                                 <button onClick={copyToClipboard}>
                                     {isCopied ? 'Copied!' : 'Copy URL'}
@@ -170,7 +170,7 @@ const ShareRanking = () => {
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="Add a description for your ranking..."
-                                    rows="3"
+                                    rows={3}
                                 />
                             </div>
                             <div className="form-group">

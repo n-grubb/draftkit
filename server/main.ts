@@ -880,10 +880,13 @@ async function buildCustomPlayerStore(
     historicalStats: any = {}
 ) {
     const players: Player[] = playerDetails.map(player => {
-        // Merge current season stats with historical stats
+        // Merge current season stats with historical stats.
+        // Historical (FanGraphs) takes precedence for past years;
+        // ESPN current-season stats (2026) are preserved since
+        // historical only contains 2024/2025.
         const currentStats = formatPlayerStats(stats[player.id]);
         const historical = historicalStats[player.id] || {};
-        const mergedStats = { ...historical, ...currentStats };
+        const mergedStats = { ...currentStats, ...historical };
 
         return {
             id: player.id,

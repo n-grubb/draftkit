@@ -730,6 +730,42 @@ function replaceAccentedCharacters(name: string) {
                .replace(/[\u0300-\u036f]/g, '');
 }
 /**
+ * Fetch all pages from a FanGraphs leaders API endpoint.
+ * The API caps results per page, so we paginate until we have everything.
+ */
+async function fetchAllFangraphsLeaders(baseUrl: string): Promise<any[]> {
+    const PAGE_SIZE = 1000;
+    let allData = [];
+    let pageNum = 1;
+    let totalCount = Infinity;
+
+    while (allData.length < totalCount) {
+        const url = `${baseUrl}&pagenum=${pageNum}&pageitems=${PAGE_SIZE}`;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) break;
+            const json = await response.json();
+            const pageData = json.data || json || [];
+            if (!Array.isArray(pageData) || pageData.length === 0) break;
+            allData = allData.concat(pageData);
+            // Use totalcount from the response to know when we're done
+            if (json.totalcount !== undefined) {
+                totalCount = json.totalcount;
+            } else {
+                // No totalcount — if we got fewer than PAGE_SIZE, we're done
+                if (pageData.length < PAGE_SIZE) break;
+            }
+            pageNum++;
+        } catch (e) {
+            console.error(`Failed to fetch FanGraphs leaders page ${pageNum}:`, e);
+            break;
+        }
+    }
+
+    return allData;
+}
+
+/**
  * Fetch historical stats for players from the FanGraphs leaders API.
  * Fetches 2024 and 2025 season data, matching players by name.
  */
@@ -738,31 +774,11 @@ async function fetchHistoricalStats(playerDetails: any[]) {
     const seasons = [2024, 2025];
 
     for (const season of seasons) {
-        // Fetch batting leaders
-        const batUrl = `https://www.fangraphs.com/api/leaders/major-league/data?pos=all&stats=bat&lg=all&qual=0&season=${season}&season1=${season}&month=0&ind=0&pagenum=1&pageitems=2000`;
-        let batData = [];
-        try {
-            const batResponse = await fetch(batUrl);
-            if (batResponse.ok) {
-                const batJson = await batResponse.json();
-                batData = batJson.data || batJson || [];
-            }
-        } catch (e) {
-            console.error(`Failed to fetch ${season} batting leaders from FanGraphs:`, e);
-        }
+        const batBaseUrl = `https://www.fangraphs.com/api/leaders/major-league/data?pos=all&stats=bat&lg=all&qual=0&season=${season}&season1=${season}&month=0&ind=0`;
+        const batData = await fetchAllFangraphsLeaders(batBaseUrl);
 
-        // Fetch pitching leaders
-        const pitUrl = `https://www.fangraphs.com/api/leaders/major-league/data?pos=all&stats=pit&lg=all&qual=0&season=${season}&season1=${season}&month=0&ind=0&pagenum=1&pageitems=2000`;
-        let pitData = [];
-        try {
-            const pitResponse = await fetch(pitUrl);
-            if (pitResponse.ok) {
-                const pitJson = await pitResponse.json();
-                pitData = pitJson.data || pitJson || [];
-            }
-        } catch (e) {
-            console.error(`Failed to fetch ${season} pitching leaders from FanGraphs:`, e);
-        }
+        const pitBaseUrl = `https://www.fangraphs.com/api/leaders/major-league/data?pos=all&stats=pit&lg=all&qual=0&season=${season}&season1=${season}&month=0&ind=0`;
+        const pitData = await fetchAllFangraphsLeaders(pitBaseUrl);
 
         console.log(`FanGraphs ${season}: ${batData.length} batters, ${pitData.length} pitchers`);
 
@@ -770,19 +786,13 @@ async function fetchHistoricalStats(playerDetails: any[]) {
         for (const player of playerDetails) {
             const normalizedName = replaceAccentedCharacters(player.fullName);
 
-            let batting = null;
-            if (Array.isArray(batData)) {
-                batting = batData.find(b =>
-                    replaceAccentedCharacters(b.PlayerName) === normalizedName
-                );
-            }
+            const batting = batData.find(b =>
+                replaceAccentedCharacters(b.PlayerName) === normalizedName
+            );
 
-            let pitching = null;
-            if (Array.isArray(pitData)) {
-                pitching = pitData.find(p =>
-                    replaceAccentedCharacters(p.PlayerName) === normalizedName
-                );
-            }
+            const pitching = pitData.find(p =>
+                replaceAccentedCharacters(p.PlayerName) === normalizedName
+            );
 
             if (batting || pitching) {
                 // Merge batting and pitching data, then format using the same

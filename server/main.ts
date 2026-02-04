@@ -29,7 +29,7 @@ import { cors } from "jsr:@hono/hono/cors";
  *    - Limited to recent years only
  *    - Doesn't provide full player histories
  *
- * TODO: Implement comprehensive historical stats from one of the above sources
+ * Historical stats are currently fetched from ESPN Fantasy API (2025 season)
  */
 
 const app = new Hono();
@@ -329,7 +329,7 @@ app.get('/admin', (c) => c.html())
  */
 app.get('/admin/refresh', async (c) => {
     const VALID_SOURCES = ['teams', 'stats', 'projections', 'historical'];
-    const sources_to_update = ['teams', 'stats', 'projections'];
+    const sources_to_update = ['teams', 'stats', 'projections', 'historical'];
 
     // Validate sources_to_update
     if (sources_to_update.length < 1) {
@@ -493,8 +493,7 @@ function storeTeamsAndDivisions(teams: Team[], divisions: Division[]) {
  * Retrieve MLB players from ESPN. 
  */
 async function fetchMLBPlayerList() {
-    // TODO: update to 2025?
-    const url = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2025/players?scoringPeriodId=0&view=players_wl';
+    const url = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/players?scoringPeriodId=0&view=players_wl';
     let response = await fetch(url, {
         headers: {
             'x-fantasy-filter': '{"filterActive":{"value":true}}'
@@ -532,7 +531,7 @@ function storePlayerList(playerlist: ESPNPlayer[] ) {
  * @returns {Object} - Returns object with player stats and additional player data
  */
 async function fetchPlayerStats() {
-    const url = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2025/segments/0/leagues/3850?view=kona_player_info`;
+    const url = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/3850?view=kona_player_info`;
     
     // First fetch batters
     let response = await fetch(url, {
@@ -654,14 +653,14 @@ function storePlayerStats(playerData: { stats: any, playerDetails: any }) {
 async function fetchFangraphProjections() {
     // We dont have a map of ESPN -> MLBIDs, so we can build this information off full name.
     // If there are more than one occurence of the same name.. use a second qualifies (TEAM/AGE/POS?)  
-    let batter_projections_url = 'https://www.fangraphs.com/api/projections?pos=all&stats=bat&type=steamer';
+    let batter_projections_url = 'https://www.fangraphs.com/api/projections?pos=all&stats=bat&type=steamer&season=2026';
     let response = await fetch(batter_projections_url);
     if (!response.ok) {
         throw new Error('Failed to fetch batter projections.', {response});
     }
     let batter_projections = await response.json();
 
-    let pitcher_projections_url = 'https://www.fangraphs.com/api/projections?pos=all&stats=pit&type=steamer';
+    let pitcher_projections_url = 'https://www.fangraphs.com/api/projections?pos=all&stats=pit&type=steamer&season=2026';
     response = await fetch(pitcher_projections_url);
     if (!response.ok) {
         throw new Error('Failed to fetch pitcher projections.', {response});
@@ -731,28 +730,44 @@ function replaceAccentedCharacters(name: string) {
                .replace(/[\u0300-\u036f]/g, '');
 }
 /**
- * Fetch historical stats for players (3-year history)
- * This demonstrates how to fetch historical stats from Baseball Reference
- * You may need to adjust based on the actual data source you choose
+ * Fetch historical stats for players from the ESPN Fantasy API.
+ * Fetches the 2025 season data so we have prior-year stats available.
  */
 async function fetchHistoricalStats(playerDetails: any[]) {
     const historicalStats = {};
-    
-    // For demo purposes - in a real implementation you would fetch from a source
-    // Possible sources:
-    // - Baseball Reference via their API or scraping
-    // - FanGraphs historical data
-    // - MLB Stats API (requires key/authentication)
-    // - Baseball Savant (Statcast data)
-    
-    // console.log("To implement historical stats, you could use one of these sources:");
-    // console.log("1. Baseball Reference: https://www.baseball-reference.com/");
-    // console.log("2. FanGraphs: https://www.fangraphs.com/");
-    // console.log("3. MLB Stats API: https://statsapi.mlb.com/api/");
-    // console.log("4. Baseball Savant (Statcast): https://baseballsavant.mlb.com/");
-    
-    // For now, return empty historical stats to not break the flow
-    // In a full implementation, you would iterate through players and fetch their stats
+    const url = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2025/segments/0/leagues/3850?view=kona_player_info`;
+
+    // Fetch batter stats for 2025
+    let response = await fetch(url, {
+        headers: {
+            'x-fantasy-filter': '{"players":{"filterSlotIds":{"value":[0,1,2,3,4,5,6,7,8,9,10,11,12,17]},"filterRanksForScoringPeriodIds":{"value":[162]},"sortPercOwned":{"sortPriority":1,"sortAsc":false},"limit":500}}'
+        }
+    });
+    if (!response.ok) {
+        console.error('Failed to fetch historical batter stats.');
+        return historicalStats;
+    }
+    const batterData = await response.json();
+
+    // Fetch pitcher stats for 2025
+    response = await fetch(url, {
+        headers: {
+            'x-fantasy-filter': '{"players":{"filterSlotIds":{"value":[13,14,15,17]},"filterRanksForScoringPeriodIds":{"value":[162]},"sortPercOwned":{"sortPriority":1,"sortAsc":false},"limit":400}}'
+        }
+    });
+    if (!response.ok) {
+        console.error('Failed to fetch historical pitcher stats.');
+        return historicalStats;
+    }
+    const pitcherData = await response.json();
+
+    // Process historical stats from both batters and pitchers
+    const allPlayers = [...(batterData.players || []), ...(pitcherData.players || [])];
+    for (const entry of allPlayers) {
+        if (!entry.player?.stats) continue;
+        historicalStats[entry.id] = formatPlayerStats(entry.player.stats);
+    }
+
     return historicalStats;
 }
 
@@ -778,14 +793,19 @@ async function buildCustomPlayerStore(
     historicalStats: any = {}
 ) {
     const players: Player[] = playerDetails.map(player => {
-        return { 
+        // Merge current season stats with historical stats
+        const currentStats = formatPlayerStats(stats[player.id]);
+        const historical = historicalStats[player.id] || {};
+        const mergedStats = { ...historical, ...currentStats };
+
+        return {
             id: player.id,
             name: player.fullName,
             firstName: player.firstName,
             lastName: player.lastName,
-            team_id: player.proTeamId, 
+            team_id: player.proTeamId,
             pos: formatPositionEligibility(player.eligibleSlots),
-            stats: formatPlayerStats(stats[player.id]),
+            stats: mergedStats,
             projections: formatProjections(projections[player.id]),
             headshot: `https://a.espncdn.com/combiner/i?img=/i/headshots/mlb/players/full/${player.id}.png?w=96&h=70&cb=1`,
             ownership: player.ownership || 0,

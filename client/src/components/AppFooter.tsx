@@ -11,7 +11,7 @@ const AppFooter = () => {
             {mode === 'edit' && <ShareRanking />}
             
             <div className="footer-info">
-                <p>Player data sourced from ESPN | 2025 Projections sourced from Fangraphs</p>
+                <p>Player data sourced from ESPN | 2026 Projections sourced from Fangraphs</p>
             </div>
         </footer>
     )

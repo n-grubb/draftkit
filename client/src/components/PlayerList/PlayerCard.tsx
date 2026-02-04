@@ -78,24 +78,6 @@ const PlayerCard = ({ playerId, onClose }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {/* 2023 Stats Row */}
-                            <tr>
-                                <td className="year">2023</td>
-                                {columns.map(column => {
-                                    if (stats && stats['2023'] && stats['2023'][column.id]) {
-                                        const value = stats['2023'][column.id];
-                                        const formattedValue = formatStatValue(column.id, value);
-                                        return (
-                                            <td key={column.id}>
-                                                {formattedValue}
-                                            </td>
-                                        );
-                                    } else {
-                                        return <td key={column.id}>-</td>;
-                                    }
-                                })}
-                            </tr>
-                            
                             {/* 2024 Stats Row */}
                             <tr>
                                 <td className="year">2024</td>
@@ -113,10 +95,28 @@ const PlayerCard = ({ playerId, onClose }) => {
                                     }
                                 })}
                             </tr>
-                            
-                            {/* 2025 Projections Row */}
+
+                            {/* 2025 Stats Row */}
+                            <tr>
+                                <td className="year">2025</td>
+                                {columns.map(column => {
+                                    if (stats && stats['2025'] && stats['2025'][column.id]) {
+                                        const value = stats['2025'][column.id];
+                                        const formattedValue = formatStatValue(column.id, value);
+                                        return (
+                                            <td key={column.id}>
+                                                {formattedValue}
+                                            </td>
+                                        );
+                                    } else {
+                                        return <td key={column.id}>-</td>;
+                                    }
+                                })}
+                            </tr>
+
+                            {/* 2026 Projections Row */}
                             <tr className="projections">
-                                <td className="year">2025 (Proj)</td>
+                                <td className="year">2026 (Proj)</td>
                                 {columns.map(column => {
                                     if (projections && projections[column.id]) {
                                         const value = projections[column.id];

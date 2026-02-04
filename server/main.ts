@@ -29,7 +29,7 @@ import { cors } from "jsr:@hono/hono/cors";
  *    - Limited to recent years only
  *    - Doesn't provide full player histories
  *
- * Historical stats are currently fetched from ESPN Fantasy API (2025 season)
+ * Historical stats are currently fetched from FanGraphs leaders API (2024, 2025 seasons)
  */
 
 const app = new Hono();
@@ -653,14 +653,14 @@ function storePlayerStats(playerData: { stats: any, playerDetails: any }) {
 async function fetchFangraphProjections() {
     // We dont have a map of ESPN -> MLBIDs, so we can build this information off full name.
     // If there are more than one occurence of the same name.. use a second qualifies (TEAM/AGE/POS?)  
-    let batter_projections_url = 'https://www.fangraphs.com/api/projections?pos=all&stats=bat&type=steamer&season=2026';
+    let batter_projections_url = 'https://www.fangraphs.com/api/projections?pos=all&stats=bat&type=steamer';
     let response = await fetch(batter_projections_url);
     if (!response.ok) {
         throw new Error('Failed to fetch batter projections.', {response});
     }
     let batter_projections = await response.json();
 
-    let pitcher_projections_url = 'https://www.fangraphs.com/api/projections?pos=all&stats=pit&type=steamer&season=2026';
+    let pitcher_projections_url = 'https://www.fangraphs.com/api/projections?pos=all&stats=pit&type=steamer';
     response = await fetch(pitcher_projections_url);
     if (!response.ok) {
         throw new Error('Failed to fetch pitcher projections.', {response});
@@ -730,42 +730,83 @@ function replaceAccentedCharacters(name: string) {
                .replace(/[\u0300-\u036f]/g, '');
 }
 /**
- * Fetch historical stats for players from the ESPN Fantasy API.
- * Fetches the 2025 season data so we have prior-year stats available.
+ * Fetch historical stats for players from the FanGraphs leaders API.
+ * Fetches 2024 and 2025 season data, matching players by name.
  */
 async function fetchHistoricalStats(playerDetails: any[]) {
     const historicalStats = {};
-    const url = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2025/segments/0/leagues/3850?view=kona_player_info`;
+    const seasons = [2024, 2025];
 
-    // Fetch batter stats for 2025
-    let response = await fetch(url, {
-        headers: {
-            'x-fantasy-filter': '{"players":{"filterSlotIds":{"value":[0,1,2,3,4,5,6,7,8,9,10,11,12,17]},"filterRanksForScoringPeriodIds":{"value":[162]},"sortPercOwned":{"sortPriority":1,"sortAsc":false},"limit":500}}'
+    for (const season of seasons) {
+        // Fetch batting leaders
+        const batUrl = `https://www.fangraphs.com/api/leaders/major-league/data?pos=all&stats=bat&lg=all&qual=0&season=${season}&season1=${season}&month=0&ind=0&pagenum=1&pageitems=2000`;
+        let batData = [];
+        try {
+            const batResponse = await fetch(batUrl);
+            if (batResponse.ok) {
+                const batJson = await batResponse.json();
+                batData = batJson.data || batJson || [];
+            }
+        } catch (e) {
+            console.error(`Failed to fetch ${season} batting leaders from FanGraphs:`, e);
         }
-    });
-    if (!response.ok) {
-        console.error('Failed to fetch historical batter stats.');
-        return historicalStats;
-    }
-    const batterData = await response.json();
 
-    // Fetch pitcher stats for 2025
-    response = await fetch(url, {
-        headers: {
-            'x-fantasy-filter': '{"players":{"filterSlotIds":{"value":[13,14,15,17]},"filterRanksForScoringPeriodIds":{"value":[162]},"sortPercOwned":{"sortPriority":1,"sortAsc":false},"limit":400}}'
+        // Fetch pitching leaders
+        const pitUrl = `https://www.fangraphs.com/api/leaders/major-league/data?pos=all&stats=pit&lg=all&qual=0&season=${season}&season1=${season}&month=0&ind=0&pagenum=1&pageitems=2000`;
+        let pitData = [];
+        try {
+            const pitResponse = await fetch(pitUrl);
+            if (pitResponse.ok) {
+                const pitJson = await pitResponse.json();
+                pitData = pitJson.data || pitJson || [];
+            }
+        } catch (e) {
+            console.error(`Failed to fetch ${season} pitching leaders from FanGraphs:`, e);
         }
-    });
-    if (!response.ok) {
-        console.error('Failed to fetch historical pitcher stats.');
-        return historicalStats;
-    }
-    const pitcherData = await response.json();
 
-    // Process historical stats from both batters and pitchers
-    const allPlayers = [...(batterData.players || []), ...(pitcherData.players || [])];
-    for (const entry of allPlayers) {
-        if (!entry.player?.stats) continue;
-        historicalStats[entry.id] = formatPlayerStats(entry.player.stats);
+        console.log(`FanGraphs ${season}: ${batData.length} batters, ${pitData.length} pitchers`);
+
+        // Match to players by name and format stats
+        for (const player of playerDetails) {
+            const normalizedName = replaceAccentedCharacters(player.fullName);
+
+            let batting = null;
+            if (Array.isArray(batData)) {
+                batting = batData.find(b =>
+                    replaceAccentedCharacters(b.PlayerName) === normalizedName
+                );
+            }
+
+            let pitching = null;
+            if (Array.isArray(pitData)) {
+                pitching = pitData.find(p =>
+                    replaceAccentedCharacters(p.PlayerName) === normalizedName
+                );
+            }
+
+            if (batting || pitching) {
+                // Merge batting and pitching data, then format using the same
+                // mapping as projections (FanGraphs uses the same field names)
+                let merged = {};
+                if (batting) {
+                    merged = { ...batting, 'bBB': batting['BB'], 'KO': batting['SO'] };
+                }
+                if (pitching) {
+                    merged = {
+                        ...merged,
+                        ...pitching,
+                        ['R']: merged?.R || 0,
+                        ['HR']: merged?.HR || 0,
+                        ['HRA']: pitching.HR
+                    };
+                }
+
+                if (!historicalStats[player.id]) {
+                    historicalStats[player.id] = {};
+                }
+                historicalStats[player.id][season] = formatProjections(merged);
+            }
+        }
     }
 
     return historicalStats;

@@ -493,7 +493,7 @@ function storeTeamsAndDivisions(teams: Team[], divisions: Division[]) {
  * Retrieve MLB players from ESPN. 
  */
 async function fetchMLBPlayerList() {
-    const url = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/players?scoringPeriodId=0&view=players_wl';
+    const url = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2025/players?scoringPeriodId=0&view=players_wl';
     let response = await fetch(url, {
         headers: {
             'x-fantasy-filter': '{"filterActive":{"value":true}}'
@@ -531,7 +531,7 @@ function storePlayerList(playerlist: ESPNPlayer[] ) {
  * @returns {Object} - Returns object with player stats and additional player data
  */
 async function fetchPlayerStats() {
-    const url = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/3850?view=kona_player_info`;
+    const url = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2025/segments/0/leagues/3850?view=kona_player_info`;
     
     // First fetch batters
     let response = await fetch(url, {

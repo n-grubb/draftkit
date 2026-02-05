@@ -5,7 +5,7 @@
 - Dev server: `npm run dev` (client directory)
 - Lint: `npm run lint` (client directory)
 - Preview: `npm run preview` (client directory)
-- Server: `deno run --allow-net main.ts` (server directory)
+- Server: `deno run --allow-net --unstable-kv main.ts` (server directory)
 
 ## Code Style
 - **Components:** Functional React components with hooks (no classes)

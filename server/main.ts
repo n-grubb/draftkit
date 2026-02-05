@@ -536,7 +536,7 @@ async function fetchPlayerStats() {
     // First fetch batters
     let response = await fetch(url, {
         headers: {
-            'x-fantasy-filter': '{"players":{"filterSlotIds":{"value":[0,1,2,3,4,5,6,7,8,9,10,11,12,17]},"filterRanksForScoringPeriodIds":{"value":[162]},"sortPercOwned":{"sortPriority":1,"sortAsc":false},"limit":500}}'
+            'x-fantasy-filter': '{"players":{"filterSlotIds":{"value":[0,1,2,3,4,5,6,7,8,9,10,11,12,19]},"filterRanksForScoringPeriodIds":{"value":[162]},"sortPercOwned":{"sortPriority":1,"sortAsc":false},"sortDraftRanks":{"sortPriority":100,"sortAsc":true,"value":"STANDARD"},"limit":500}}'
         } 
     });
     if (!response.ok) {
@@ -711,6 +711,11 @@ function buildAndStorePlayerProjections(projections: any[], playerDetails: any[]
                     ['HRA']: pitching.HR  // Add pitcher HR allowed
                 };
             }
+        }
+
+        if (player.name == 'Aaron Judge') {
+            console.log('Aaron Judge projection')
+            console.log(projection)
         }
 
         if (Object.keys(projection).length < 1) {

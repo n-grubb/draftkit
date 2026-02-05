@@ -713,11 +713,6 @@ function buildAndStorePlayerProjections(projections: any[], playerDetails: any[]
             }
         }
 
-        if (player.name == 'Aaron Judge') {
-            console.log('Aaron Judge projection')
-            console.log(projection)
-        }
-
         if (Object.keys(projection).length < 1) {
             kv.delete(['projections', player.id]);
         } else {

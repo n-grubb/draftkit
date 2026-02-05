@@ -328,8 +328,8 @@ app.get('/admin', (c) => c.html())
  * TODO: Setup criteria
  */
 app.get('/admin/refresh', async (c) => {
-    const VALID_SOURCES = ['teams', 'players', 'stats', 'projections', 'historical'];
-    const sources_to_update = ['teams', 'players', 'stats', 'projections', 'historical'];
+    const VALID_SOURCES = ['teams', 'stats', 'projections', 'historical'];
+    const sources_to_update = ['teams', 'stats', 'projections', 'historical'];
 
     // Validate sources_to_update
     if (sources_to_update.length < 1) {
@@ -361,19 +361,6 @@ app.get('/admin/refresh', async (c) => {
     console.log(`Teams found: ${teams.length}`);
     console.log(`Divisions found: ${divisions.length}`);
 
-    // Fetch the broad player list from ESPN
-    let playerList = [];
-    if (sources_to_update.includes('players')) {
-        playerList = await fetchMLBPlayerList();
-        storePlayerList(playerList);
-        console.log(`Player list refreshed: ${playerList.length} players`);
-    } else {
-        let entries = kv.list({ prefix: ['playerlist'] });
-        for await (let entry of entries) {
-            playerList.push(entry.value);
-        }
-    }
-
     // Fetch player stats and details - this now includes both stats and player data
     let playerStats = {};
     let playerDetails = {};
@@ -396,29 +383,6 @@ app.get('/admin/refresh', async (c) => {
             playerDetails[entry.key[1]] = entry.value;
         }
     }
-
-    // Supplement playerDetails with any players from the broad player list
-    // that weren't captured by fetchPlayerStats (which has limited results)
-    for (const player of playerList) {
-        if (!playerDetails[player.id]) {
-            playerDetails[player.id] = {
-                id: player.id,
-                fullName: player.fullName,
-                firstName: player.firstName,
-                lastName: player.lastName,
-                injuryStatus: player.injuryStatus || null,
-                defaultPositionId: player.defaultPositionId,
-                eligibleSlots: player.eligibleSlots || [],
-                proTeamId: player.proTeamId,
-                ownership: player.ownership?.percentOwned || 0,
-                averageDraftPosition: player.ownership?.averageDraftPosition || null,
-                percentChange: player.ownership?.percentChange || null,
-                birthDate: player.dateOfBirth || null,
-                age: calculateAge(player.dateOfBirth)
-            };
-        }
-    }
-
     console.log(`Stats found for players: ${Object.keys(playerStats).length}`);
     console.log(`Player details found: ${Object.keys(playerDetails).length}`);
 
@@ -880,10 +844,13 @@ async function buildCustomPlayerStore(
     historicalStats: any = {}
 ) {
     const players: Player[] = playerDetails.map(player => {
-        // Merge current season stats with historical stats
+        // Merge current season stats with historical stats.
+        // Historical (FanGraphs) takes precedence for past years;
+        // ESPN current-season stats (2026) are preserved since
+        // historical only contains 2024/2025.
         const currentStats = formatPlayerStats(stats[player.id]);
         const historical = historicalStats[player.id] || {};
-        const mergedStats = { ...historical, ...currentStats };
+        const mergedStats = { ...currentStats, ...historical };
 
         return {
             id: player.id,

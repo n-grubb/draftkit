@@ -432,6 +432,45 @@ const useUserRanking = (players) => {
         }
     };
 
+    const updatePlayerNote = async (playerId, note) => {
+        const currentPlayerInfo = ranking.players[playerId] || { rank: 0, ignore: false, highlight: false };
+
+        const updatedPlayers = {
+            ...ranking.players,
+            [playerId]: {
+                ...currentPlayerInfo,
+                note: note || undefined
+            }
+        };
+
+        const now = Date.now();
+        const newRanking = {
+            ...ranking,
+            players: updatedPlayers,
+            updatedAt: now
+        };
+
+        setRanking(newRanking);
+        localStorage.setItem(`ranking_${newRanking.id}`, JSON.stringify(newRanking));
+        saveToRankingsList(newRanking);
+
+        if (isShared && !ranking.id.startsWith('local') && pin) {
+            try {
+                const updatedRemoteRanking = await updateRemoteRanking(
+                    ranking.id,
+                    { players: updatedPlayers },
+                    pin
+                );
+                updatedRemoteRanking.name = newRanking.name;
+                setRanking(updatedRemoteRanking);
+                localStorage.setItem(`ranking_${updatedRemoteRanking.id}`, JSON.stringify(updatedRemoteRanking));
+                saveToRankingsList(updatedRemoteRanking);
+            } catch (err) {
+                console.error('Failed to update remote ranking:', err);
+            }
+        }
+    };
+
     const ignorePlayer = async (playerId) => {
         const currentPlayerInfo = ranking.players[playerId] || { rank: 0, ignore: false, highlight: false };
         const isCurrentlyIgnored = currentPlayerInfo.ignore || false;
@@ -507,6 +546,7 @@ const useUserRanking = (players) => {
         updateRanking,
         highlightPlayer,
         ignorePlayer,
+        updatePlayerNote,
         shareRanking,
         loadRanking,
         createNewRanking,

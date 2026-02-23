@@ -22,26 +22,28 @@ export const StoreProvider = ({ children }) => {
 
     // Use the enhanced user ranking hook that supports sharing
     const userRanking = useUserRanking(players)
-    const { 
-        ranking, 
-        isLoading: isLoadingRanking, 
-        updateRanking, 
-        ignorePlayer, 
-        highlightPlayer 
+    const {
+        ranking,
+        isLoading: isLoadingRanking,
+        updateRanking,
+        ignorePlayer,
+        highlightPlayer,
+        updatePlayerNote
     } = userRanking
 
     const error = errorFetchingMLBTeams || errorFetchingPlayers
     const isLoading = isLoadingMLBTeams || isLoadingPlayers || isLoadingRanking
 
-    const context = { 
+    const context = {
         teams,
         players,
         mode,
-        ranking, 
+        ranking,
         updateMode,
         updateRanking,
         ignorePlayer,
         highlightPlayer,
+        updatePlayerNote,
         userRanking // Expose the full userRanking object for sharing functionality
     }
 

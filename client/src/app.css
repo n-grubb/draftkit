@@ -833,8 +833,60 @@ button[data-disabled] {
 }
 
 /**
- * PlayerItem 
+ * PlayerItem
  */
+
+.player-item-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+}
+
+.player-note {
+  padding: 0.25rem 0.5rem 0.25rem calc(0.5rem + 64px + 0.5rem + 0.5rem);
+}
+
+.player-note-input {
+  width: 100%;
+  resize: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.75rem;
+  color: var(--greybrown);
+  padding: 0.2rem 0.4rem;
+  line-height: 1.4;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  overflow: hidden;
+
+  &::placeholder {
+    color: var(--faded);
+    font-style: italic;
+  }
+
+  &:hover {
+    border-color: var(--tan-dark);
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--greybrown);
+    background: white;
+    color: var(--brown);
+    resize: vertical;
+  }
+}
+
+.player-note--readonly .player-note-text {
+  font-size: 0.75rem;
+  color: var(--greybrown);
+  font-style: italic;
+  padding: 0.2rem 0.4rem;
+  margin: 0;
+}
 
 ol {
   padding-left: 0;
@@ -879,8 +931,8 @@ ol li::before {
   border-radius: 8px;
 
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
 
   &.highlighted {
     border-color: var(--gold);

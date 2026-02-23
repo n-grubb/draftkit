@@ -49,6 +49,7 @@ export interface Ranking {
         rank: number;
         ignore: boolean;
         highlight: boolean;
+        note?: string;
     }>;
 }
 

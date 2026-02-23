@@ -34,7 +34,10 @@ const PlayerList = ({ editable }: any) => {
     const isDraftMode = mode === 'draft';
     const draftedPlayerIds = isDraftMode ? Object.values(draftedPlayers) : [];
 
-    // Initialize and update the ordered player list based on rank
+    // Initialize and update the ordered player list based on rank.
+    // Only re-initialize when the ranking itself changes (different ranking loaded),
+    // not when player properties like ignore/highlight change within the same ranking —
+    // those updates must not overwrite unsaved drag-and-drop reordering.
     useEffect(() => {
         if (ranking.players && Object.keys(ranking.players).length > 0) {
             // Convert the players object to an ordered array
@@ -42,10 +45,10 @@ const PlayerList = ({ editable }: any) => {
             const orderedIds = [...playerIds].sort((a, b) => {
                 return ranking.players[a].rank - ranking.players[b].rank
             });
-            
+
             setRankedPlayerIds(orderedIds);
         }
-    }, [ranking.players]);
+    }, [ranking.id]);
 
     /* DND-KIT config */
     // Setup sensors, needed to support touch events on mobile.

@@ -232,8 +232,8 @@ const AppHeader = () => {
                             <div className="ranking-header">
                                 <span className="id-label">Ranking:</span>
                                 <span className="id-value">
-                                    {ranking.id && ranking.id.startsWith('local') 
-                                        ? '#0000' 
+                                    {ranking.id && ranking.id.startsWith('local')
+                                        ? `#${ranking.id.substr(-4)}`
                                         : `#${ranking.id}`}
                                 </span>
                             </div>
@@ -393,9 +393,9 @@ const AppHeader = () => {
                             <div className="current-ranking-details">
                                 <h4>Current Ranking</h4>
                                 <div className="ranking-name">
-                                    {ranking.id && ranking.id.startsWith('local') 
-                                        ? `#${ranking.id.substr(6, 4)}`
-                                        : (ranking.name || (ranking.author 
+                                    {ranking.id && ranking.id.startsWith('local')
+                                        ? `#${ranking.id.substr(-4)}`
+                                        : (ranking.name || (ranking.author
                                             ? `${ranking.author}'s Ranking` 
                                             : `Ranking #${ranking.id}`))}
                                 </div>

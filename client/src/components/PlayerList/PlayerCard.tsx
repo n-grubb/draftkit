@@ -45,7 +45,7 @@ const PlayerCard = ({ playerId, onClose }) => {
                 <div className="player-card-header">
                     <div className="player-photos large">
                         { teamLogo && (<img className="team-logo" src={teamLogo} width="48" />) }
-                        <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="180" /> 
+                        <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="180" onError={(e) => { (e.target as HTMLImageElement).src = '/assets/images/player-fallback.png'; }} />
                     </div>
                     <div className="player-info">
                         <h2>{player.name}</h2>

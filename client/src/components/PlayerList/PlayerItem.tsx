@@ -75,7 +75,7 @@ const PlayerItem = (props) => {
             <td className="player-identity-cell">
                 <div className="player-photos">
                     {teamLogo && <img className="team-logo" src={teamLogo} width="32" />}
-                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="96" />
+                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="96" onError={(e) => { (e.target as HTMLImageElement).src = '/assets/images/player-fallback.png'; }} />
                 </div>
                 <div className="player-identity">
                     <span className="player-name" onClick={onNameClick}>{player.name}</span>

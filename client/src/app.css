@@ -670,7 +670,7 @@ button[data-disabled] {
 
 .search-icon {
   position: absolute;
-  left: 0.5rem;
+  left: 0.65rem;
   color: var(--greybrown);
   pointer-events: none;
   display: flex;
@@ -679,21 +679,21 @@ button[data-disabled] {
 
 .search-input {
   border: 1.5px solid var(--tan-dark);
-  border-radius: 6px;
+  border-radius: 9999px;
   background: white;
-  padding: 0.2rem 0.5rem 0.2rem 1.75rem;
+  padding: 0.3rem 1rem 0.3rem 2rem;
   font-family: inherit;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--brown);
-  width: 160px;
+  width: 220px;
   transition: border-color 0.15s ease, width 0.2s ease;
-  height: 1.9rem;
+  height: 2.1rem;
 }
 
 .search-input:focus {
   outline: none;
   border-color: var(--greybrown);
-  width: 200px;
+  width: 270px;
 }
 
 .search-input::placeholder {
@@ -760,15 +760,9 @@ button[data-disabled] {
   line-height: 1.25rem;
 }
 
-.pos-filter.symbol {
-  font-family: "Grandsans";
-  font-feature-settings: 'ss01';
-}
-
 .pos-filter.active {
-  background: rgba(134, 122, 101, 0.18);
+  background: rgba(26, 58, 92, 0.12);
   color: var(--brown);
-  font-weight: 600;
   transform: none;
   opacity: 1;
 }
@@ -908,7 +902,7 @@ button[data-disabled] {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--greybrown);
+  color: #2a4a6b;
   padding: 0.3rem 0.5rem;
   border-bottom: 1px solid var(--tan-dark);
   white-space: nowrap;
@@ -929,9 +923,14 @@ button[data-disabled] {
 }
 
 .player-row td {
-  padding: 0.3rem 0.5rem;
+  padding: 0.2rem 0.4rem;
   background: var(--soft-tan);
   vertical-align: middle;
+}
+
+/* Zebra striping */
+.player-table tbody tr:nth-child(even) td {
+  background: #e0d3b0;
 }
 
 .player-row td:first-child { border-radius: 6px 0 0 6px; }
@@ -941,33 +940,33 @@ button[data-disabled] {
 .player-row.ignored td { opacity: 0.5; }
 
 /* Draft mode compact rows */
-.draft-mode .player-row td { padding: 0.2rem 0.4rem; }
+.draft-mode .player-row td { padding: 0.15rem 0.3rem; }
 
 .draft-mode .player-photos {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
 }
 
 .draft-mode .player-headshot {
-  width: 64px;
+  width: 48px;
 }
 
 /* Rank cell */
 .rank-cell {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: var(--brown);
-  width: 36px;
+  color: #1a3a5c;
+  width: 30px;
   text-align: right;
-  padding-right: 0.75rem !important;
+  padding-right: 0.5rem !important;
 }
 
 /* Player identity cell */
 .player-identity-cell {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  min-width: 200px;
+  gap: 0.5rem;
+  min-width: 190px;
 }
 
 .player-identity {
@@ -975,27 +974,63 @@ button[data-disabled] {
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
+  gap: 0.1rem;
+}
+
+/* Inline note inside identity cell */
+.player-note-input {
+  width: 100%;
+  resize: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.7rem;
+  color: var(--greybrown);
+  padding: 0.1rem 0.3rem;
+  line-height: 1.3;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  overflow: hidden;
+  margin-top: 0.1rem;
+
+  &::placeholder {
+    color: var(--faded);
+    font-style: italic;
+  }
+
+  &:hover {
+    border-color: var(--tan-dark);
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--greybrown);
+    background: white;
+    color: var(--brown);
+    resize: vertical;
+  }
+}
+
+.player-note-text {
+  font-size: 0.7rem;
+  color: var(--greybrown);
+  font-style: italic;
+  padding: 0.1rem 0.3rem;
+  margin: 0;
 }
 
 /* Stat cell */
 .stat-cell {
   text-align: center;
   font-size: 0.8rem;
-  width: 48px;
+  width: 44px;
 }
 
 /* ADP cell */
 .adp-cell {
   white-space: nowrap;
 }
-
-/* Note row */
-.note-row td {
-  background: var(--soft-tan);
-  padding: 0 0.5rem 0.25rem;
-}
-
-.note-row td:last-child { border-radius: 0 0 6px 6px; }
 
 /* Actions cell — hover reveal */
 .actions-cell {
@@ -1022,8 +1057,8 @@ button[data-disabled] {
   border: none;
   box-shadow: none;
   background: transparent;
-  padding: 0.2rem;
-  border-radius: 4px;
+  padding: 0.3rem;
+  border-radius: 5px;
   color: var(--greybrown);
   opacity: 0.6;
   cursor: pointer;
@@ -1036,29 +1071,39 @@ button[data-disabled] {
 .icon-btn:hover { opacity: 1; color: var(--brown); }
 .icon-btn.highlight-btn.active { color: var(--gold); opacity: 1; }
 .icon-btn.ignore-btn.active { color: var(--charcoal); opacity: 1; }
+.icon-btn.note-btn.active { color: var(--brown); opacity: 0.9; }
+
+/* Gear button in filter bar */
+.gear-btn {
+  opacity: 0.7;
+  font-size: 0;
+}
+
+.gear-btn:hover { opacity: 1; }
 
 .player-photos {
-  margin-left: .5rem;
-  position: relative; 
+  margin-left: 0.25rem;
+  flex-shrink: 0;
+  position: relative;
   overflow: hidden;
-  width: 64px;
-  height: 64px;
-  background: #867a654a; /* greybrown with some opacity applied */
+  width: 40px;
+  height: 40px;
+  background: #867a654a;
   border-radius: 50%;
 }
 
 .team-logo {
   position: absolute;
-  top: 4px;
-  left: 6px;
+  top: 3px;
+  left: 4px;
   z-index: 0;
   opacity: .5;
-} 
+}
 
 .player-headshot {
   position: absolute;
-  bottom: -4px;
-  left: -12px;
+  bottom: -3px;
+  left: -8px;
   z-index: 1;
 }
 
@@ -1113,6 +1158,8 @@ button[data-disabled] {
 .player-name {
   cursor: pointer;
   font-weight: bold;
+  font-size: 0.85rem;
+  line-height: 1.2;
 }
 
 .player-name:hover {
@@ -1122,17 +1169,17 @@ button[data-disabled] {
 
 /* Stat quality indicators */
 .stat-elite {
-  color: #e68e06;
+  color: #c97a00;
   font-weight: bold;
 }
 
 .stat-good {
-  color: #2e7d32;
+  color: #4a9e5c;
   font-weight: bold;
 }
 
 .stat-average {
-  color: var(--brown);
+  color: var(--greybrown);
 }
 
 .stat-neutral {

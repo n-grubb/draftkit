@@ -1,35 +1,46 @@
-import {useContext} from 'react'
+import {useContext, useState, useRef} from 'react'
 import {StoreContext} from '~/data/store'
 import {DraftContext} from '~/data/draftContext'
 import {formatStatValue, evaluateStatQuality} from '~/features/stats'
 
 const EXCLUDED_POSITIONS = ['1B/3B', '2B/SS', 'P', 'UTIL']
 
-// Inline SVG icons
 const IgnoreIcon = () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/>
         <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
     </svg>
 )
 
 const HighlightIcon = () => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+)
+
+const NoteIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="2" x2="22" y2="6"/>
+        <path d="M7.5 20.5 19 9l-4-4L3.5 16.5 2 22z"/>
     </svg>
 )
 
 const PlayerItem = (props) => {
     const {playerId, playerRanking, editable, onNameClick, columns, rank} = props
-    const {players, teams, mode, ignorePlayer, highlightPlayer} = useContext(StoreContext);
+    const {players, teams, mode, ignorePlayer, highlightPlayer, updatePlayerNote, userRanking} = useContext(StoreContext);
     const {isMyTurn, draftPlayer} = useContext(DraftContext);
 
     const isDraftMode = mode === 'draft';
+    const notesEditable = editable && (!userRanking?.isShared || !!userRanking?.pin);
+    const hasNote = !!playerRanking?.note;
+
+    const [noteText, setNoteText] = useState(playerRanking?.note || '');
+    const [showNote, setShowNote] = useState(hasNote);
+    const noteRef = useRef<HTMLTextAreaElement>(null);
 
     const player = players[playerId]
     const projections = player.projections
 
-    // Don't show specialty roster spots as POS
     let positions = player.pos.filter(position => !EXCLUDED_POSITIONS.includes(position))
     if (positions.length > 1 && !positions.includes('SP')) {
         positions = positions.filter(position => position != 'DH')
@@ -45,7 +56,6 @@ const PlayerItem = (props) => {
             return <span className="stat-neutral">—</span>;
         }
 
-        // Get the primary position for pitchers (SP vs RP)
         let primaryPosition = null;
         if (player.pos.includes('SP')) {
             primaryPosition = 'SP';
@@ -66,6 +76,15 @@ const PlayerItem = (props) => {
     const onIgnore = () => ignorePlayer(playerId)
     const onDraft = () => draftPlayer(playerId)
 
+    const onToggleNote = () => {
+        const next = !showNote;
+        setShowNote(next);
+        if (next) {
+            // Focus the textarea on the next render tick
+            setTimeout(() => noteRef.current?.focus(), 0);
+        }
+    }
+
     const isHighlighted = !!playerRanking?.highlight
     const isIgnored = !!playerRanking?.ignore
 
@@ -74,8 +93,8 @@ const PlayerItem = (props) => {
             <td className="rank-cell">{rank}.</td>
             <td className="player-identity-cell">
                 <div className="player-photos">
-                    {teamLogo && <img className="team-logo" src={teamLogo} width="32" />}
-                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="96" onError={(e) => { (e.target as HTMLImageElement).src = '/assets/images/player-fallback.png'; }} />
+                    {teamLogo && <img className="team-logo" src={teamLogo} width="24" />}
+                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="72" onError={(e) => { (e.target as HTMLImageElement).src = '/assets/images/player-fallback.png'; }} />
                 </div>
                 <div className="player-identity">
                     <span className="player-name" onClick={onNameClick}>{player.name}</span>
@@ -88,6 +107,20 @@ const PlayerItem = (props) => {
                             >{position}</span>
                         ))}
                     </div>
+                    {notesEditable && showNote && (
+                        <textarea
+                            ref={noteRef}
+                            className="player-note-input"
+                            placeholder="Add a note…"
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            onBlur={() => updatePlayerNote(playerId, noteText)}
+                            rows={1}
+                        />
+                    )}
+                    {!notesEditable && hasNote && (
+                        <p className="player-note-text">{playerRanking.note}</p>
+                    )}
                 </div>
             </td>
             <td className="adp-cell">
@@ -115,6 +148,15 @@ const PlayerItem = (props) => {
             ))}
             {editable && !isDraftMode && (
                 <td className="actions-cell">
+                    {notesEditable && (
+                        <button
+                            className={`icon-btn note-btn${(hasNote || showNote) ? ' active' : ''}`}
+                            onClick={onToggleNote}
+                            title={showNote ? 'Hide note' : 'Add note'}
+                        >
+                            <NoteIcon />
+                        </button>
+                    )}
                     <button
                         className={`icon-btn ignore-btn${isIgnored ? ' active' : ''}`}
                         onClick={onIgnore}

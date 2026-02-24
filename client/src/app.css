@@ -929,9 +929,14 @@ button[data-disabled] {
 }
 
 .player-row td {
-  padding: 0.3rem 0.5rem;
+  padding: 0.2rem 0.4rem;
   background: var(--soft-tan);
   vertical-align: middle;
+}
+
+/* Zebra striping */
+.player-table tbody tr:nth-child(even) td {
+  background: #e8dcc0;
 }
 
 .player-row td:first-child { border-radius: 6px 0 0 6px; }
@@ -941,33 +946,33 @@ button[data-disabled] {
 .player-row.ignored td { opacity: 0.5; }
 
 /* Draft mode compact rows */
-.draft-mode .player-row td { padding: 0.2rem 0.4rem; }
+.draft-mode .player-row td { padding: 0.15rem 0.3rem; }
 
 .draft-mode .player-photos {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
 }
 
 .draft-mode .player-headshot {
-  width: 64px;
+  width: 48px;
 }
 
 /* Rank cell */
 .rank-cell {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--brown);
-  width: 36px;
+  width: 30px;
   text-align: right;
-  padding-right: 0.75rem !important;
+  padding-right: 0.5rem !important;
 }
 
 /* Player identity cell */
 .player-identity-cell {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  min-width: 200px;
+  gap: 0.5rem;
+  min-width: 190px;
 }
 
 .player-identity {
@@ -975,27 +980,63 @@ button[data-disabled] {
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
+  gap: 0.1rem;
+}
+
+/* Inline note inside identity cell */
+.player-note-input {
+  width: 100%;
+  resize: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.7rem;
+  color: var(--greybrown);
+  padding: 0.1rem 0.3rem;
+  line-height: 1.3;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  overflow: hidden;
+  margin-top: 0.1rem;
+
+  &::placeholder {
+    color: var(--faded);
+    font-style: italic;
+  }
+
+  &:hover {
+    border-color: var(--tan-dark);
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--greybrown);
+    background: white;
+    color: var(--brown);
+    resize: vertical;
+  }
+}
+
+.player-note-text {
+  font-size: 0.7rem;
+  color: var(--greybrown);
+  font-style: italic;
+  padding: 0.1rem 0.3rem;
+  margin: 0;
 }
 
 /* Stat cell */
 .stat-cell {
   text-align: center;
   font-size: 0.8rem;
-  width: 48px;
+  width: 44px;
 }
 
 /* ADP cell */
 .adp-cell {
   white-space: nowrap;
 }
-
-/* Note row */
-.note-row td {
-  background: var(--soft-tan);
-  padding: 0 0.5rem 0.25rem;
-}
-
-.note-row td:last-child { border-radius: 0 0 6px 6px; }
 
 /* Actions cell — hover reveal */
 .actions-cell {
@@ -1038,27 +1079,28 @@ button[data-disabled] {
 .icon-btn.ignore-btn.active { color: var(--charcoal); opacity: 1; }
 
 .player-photos {
-  margin-left: .5rem;
-  position: relative; 
+  margin-left: 0.25rem;
+  flex-shrink: 0;
+  position: relative;
   overflow: hidden;
-  width: 64px;
-  height: 64px;
-  background: #867a654a; /* greybrown with some opacity applied */
+  width: 40px;
+  height: 40px;
+  background: #867a654a;
   border-radius: 50%;
 }
 
 .team-logo {
   position: absolute;
-  top: 4px;
-  left: 6px;
+  top: 3px;
+  left: 4px;
   z-index: 0;
   opacity: .5;
-} 
+}
 
 .player-headshot {
   position: absolute;
-  bottom: -4px;
-  left: -12px;
+  bottom: -3px;
+  left: -8px;
   z-index: 1;
 }
 
@@ -1113,6 +1155,8 @@ button[data-disabled] {
 .player-name {
   cursor: pointer;
   font-weight: bold;
+  font-size: 0.85rem;
+  line-height: 1.2;
 }
 
 .player-name:hover {

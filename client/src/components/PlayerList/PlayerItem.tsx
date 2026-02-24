@@ -1,4 +1,4 @@
-import {useContext} from 'react'
+import {useContext, useState} from 'react'
 import {StoreContext} from '~/data/store'
 import {DraftContext} from '~/data/draftContext'
 import {formatStatValue, evaluateStatQuality} from '~/features/stats'
@@ -21,10 +21,13 @@ const HighlightIcon = () => (
 
 const PlayerItem = (props) => {
     const {playerId, playerRanking, editable, onNameClick, columns, rank} = props
-    const {players, teams, mode, ignorePlayer, highlightPlayer} = useContext(StoreContext);
+    const {players, teams, mode, ignorePlayer, highlightPlayer, updatePlayerNote, userRanking} = useContext(StoreContext);
     const {isMyTurn, draftPlayer} = useContext(DraftContext);
 
     const isDraftMode = mode === 'draft';
+    const notesEditable = editable && (!userRanking?.isShared || !!userRanking?.pin);
+    const hasNote = !!playerRanking?.note;
+    const [noteText, setNoteText] = useState(playerRanking?.note || '');
 
     const player = players[playerId]
     const projections = player.projections
@@ -45,7 +48,6 @@ const PlayerItem = (props) => {
             return <span className="stat-neutral">—</span>;
         }
 
-        // Get the primary position for pitchers (SP vs RP)
         let primaryPosition = null;
         if (player.pos.includes('SP')) {
             primaryPosition = 'SP';
@@ -74,8 +76,8 @@ const PlayerItem = (props) => {
             <td className="rank-cell">{rank}.</td>
             <td className="player-identity-cell">
                 <div className="player-photos">
-                    {teamLogo && <img className="team-logo" src={teamLogo} width="32" />}
-                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="96" onError={(e) => { (e.target as HTMLImageElement).src = '/assets/images/player-fallback.png'; }} />
+                    {teamLogo && <img className="team-logo" src={teamLogo} width="24" />}
+                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="72" onError={(e) => { (e.target as HTMLImageElement).src = '/assets/images/player-fallback.png'; }} />
                 </div>
                 <div className="player-identity">
                     <span className="player-name" onClick={onNameClick}>{player.name}</span>
@@ -88,6 +90,19 @@ const PlayerItem = (props) => {
                             >{position}</span>
                         ))}
                     </div>
+                    {notesEditable && (
+                        <textarea
+                            className="player-note-input"
+                            placeholder="Add a note…"
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            onBlur={() => updatePlayerNote(playerId, noteText)}
+                            rows={1}
+                        />
+                    )}
+                    {!notesEditable && hasNote && (
+                        <p className="player-note-text">{playerRanking.note}</p>
+                    )}
                 </div>
             </td>
             <td className="adp-cell">

@@ -627,38 +627,45 @@ button[data-disabled] {
 }
 
 /*
-/*
- * FilterBar
+ * Player Controls — unified sticky toolbar
  */
-.filter-bar {
-  margin: 0.5rem 0 0.75rem;
-  padding: 0.5rem 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+
+/* Height token — keeps controls bar and sticky thead in sync */
+:root {
+  --controls-height: 48px;
 }
 
-.filter-bar-left {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+.draft-mode {
+  --controls-height: 40px;
 }
 
-/* Compact filter bar in draft mode */
-.draft-mode .filter-bar {
-  margin: 0.25rem 0 0.5rem;
-  padding: 0.25rem 0;
+.player-controls {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: stretch;
+  height: var(--controls-height);
+  background: var(--soft-tan);
+  border-bottom: 1.5px solid var(--tan-dark);
+  margin: 0.5rem 0 0;
+  overflow: visible; /* let modals escape */
 }
 
-.filter-bar fieldset {
+/* Position-filter fieldset — borderless scrollable strip */
+.player-controls fieldset {
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  border: 1.5px solid var(--tan-dark);
-  border-radius: 6px;
+  align-items: stretch;
+  border: none;
   padding: 0;
-  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.player-controls fieldset::-webkit-scrollbar {
+  display: none;
 }
 
 /* Search bar */
@@ -666,6 +673,8 @@ button[data-disabled] {
   position: relative;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+  padding: 0 0.25rem;
 }
 
 .search-icon {
@@ -678,27 +687,45 @@ button[data-disabled] {
 }
 
 .search-input {
-  border: 1.5px solid var(--tan-dark);
-  border-radius: 9999px;
-  background: white;
-  padding: 0.3rem 1rem 0.3rem 2rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  padding: 0.3rem 0.75rem 0.3rem 2rem;
   font-family: inherit;
   font-size: 0.85rem;
   color: var(--brown);
-  width: 220px;
-  transition: border-color 0.15s ease, width 0.2s ease;
-  height: 2.1rem;
+  width: 175px;
+  transition: background 0.15s ease, width 0.2s ease;
+  height: 2rem;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: var(--greybrown);
-  width: 270px;
+  background: rgba(255, 255, 255, 0.65);
+  width: 235px;
 }
 
 .search-input::placeholder {
   color: var(--faded);
   font-style: italic;
+}
+
+/* Thin vertical rule between search and filter strip */
+.controls-divider {
+  width: 1px;
+  background: var(--tan-dark);
+  flex-shrink: 0;
+  align-self: stretch;
+  margin: 8px 0;
+}
+
+/* Gear/settings pushed to the far right */
+.controls-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  flex-shrink: 0;
 }
 
 /* Position-specific colors */
@@ -726,16 +753,16 @@ button[data-disabled] {
   border-radius: 0;
   color: var(--greybrown);
   min-width: unset;
-  padding: 0.2rem 0.55rem;
+  padding: 0 0.55rem;
   font-size: 0.8rem;
-  line-height: 1.4rem;
   margin: 0;
   opacity: 1;
   transition: background 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
 
   display: flex;
   justify-content: center;
-  align-items: baseline;
+  align-items: center;
 }
 
 .pos-filter:last-child {
@@ -755,20 +782,18 @@ button[data-disabled] {
 }
 
 .draft-mode .pos-filter {
-  padding: 0.15rem 0.4rem;
+  padding: 0 0.4rem;
   font-size: 0.75rem;
-  line-height: 1.25rem;
 }
 
 .pos-filter.active {
   background: rgba(26, 58, 92, 0.12);
   color: var(--brown);
-  transform: none;
   opacity: 1;
 }
 
-/* Hide the input (visually, not from screen readers) */
-.filter-bar .pos-filter input {
+/* Hide the radio input visually */
+.player-controls .pos-filter input {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -907,6 +932,11 @@ button[data-disabled] {
   border-bottom: 1px solid var(--tan-dark);
   white-space: nowrap;
   cursor: default;
+  /* Sticky — sits just below the controls toolbar */
+  position: sticky;
+  top: var(--controls-height);
+  background: var(--soft-tan);
+  z-index: 10;
 }
 
 .player-table th.stat-header {

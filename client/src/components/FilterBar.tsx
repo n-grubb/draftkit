@@ -37,46 +37,46 @@ const FilterBar = (props) => {
     const [showStatsModal, setShowStatsModal] = useState(false);
 
     return (
-        <div className="filter-bar">
-            <div className="filter-bar-left">
-                <div className="search-bar">
-                    <span className="search-icon"><SearchIcon /></span>
-                    <input
-                        className="search-input"
-                        type="text"
-                        placeholder="Search players…"
-                        value={searchQuery || ''}
-                        onChange={e => onSearchChange(e.target.value)}
-                    />
-                </div>
-
-                <fieldset className="position-filters">
-                    {POSITION_FILTERS.map(filterOption => (
-                        <div
-                            key={filterOption.value || 'all'}
-                            className={`pos-filter${posFilter === filterOption.value ? ' active' : ''}`}
-                            data-pos={filterOption.value}
-                            title={filterOption.label}
-                        >
-                            <label htmlFor={`pos-filter--${filterOption.value}`}>{filterOption.label}</label>
-                            <input
-                                type="radio"
-                                id={`pos-filter--${filterOption.value}`}
-                                name="pos-filter"
-                                value={filterOption.value}
-                                checked={posFilter == filterOption.value}
-                                onChange={() => {
-                                    const currentlyChecked = posFilter == filterOption.value
-                                    onPosChange(currentlyChecked ? undefined : filterOption.value)
-                                }}
-                            />
-                        </div>
-                    ))}
-                </fieldset>
+        <div className="player-controls">
+            <div className="search-bar">
+                <span className="search-icon"><SearchIcon /></span>
+                <input
+                    className="search-input"
+                    type="text"
+                    placeholder="Search players…"
+                    value={searchQuery || ''}
+                    onChange={e => onSearchChange(e.target.value)}
+                />
             </div>
 
+            <div className="controls-divider" />
+
+            <fieldset className="position-filters">
+                {POSITION_FILTERS.map(filterOption => (
+                    <div
+                        key={filterOption.value || 'all'}
+                        className={`pos-filter${posFilter === filterOption.value ? ' active' : ''}`}
+                        data-pos={filterOption.value}
+                        title={filterOption.label}
+                    >
+                        <label htmlFor={`pos-filter--${filterOption.value}`}>{filterOption.label}</label>
+                        <input
+                            type="radio"
+                            id={`pos-filter--${filterOption.value}`}
+                            name="pos-filter"
+                            value={filterOption.value}
+                            checked={posFilter == filterOption.value}
+                            onChange={() => {
+                                const currentlyChecked = posFilter == filterOption.value
+                                onPosChange(currentlyChecked ? undefined : filterOption.value)
+                            }}
+                        />
+                    </div>
+                ))}
+            </fieldset>
+
             {!draftMode && (
-                <div className="stats-customizer">
+                <div className="controls-actions">
                     <button
                         className="icon-btn gear-btn"
                         onClick={() => setShowStatsModal(true)}

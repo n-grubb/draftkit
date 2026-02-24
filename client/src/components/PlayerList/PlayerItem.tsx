@@ -1,29 +1,36 @@
-import {useContext, useState} from 'react'
+import {useContext} from 'react'
 import {StoreContext} from '~/data/store'
 import {DraftContext} from '~/data/draftContext'
-import {StatsPrefsContext} from '~/data/statsPrefsContext'
-import {statsToDisplay} from '~/features/filtering/columns'
 import {formatStatValue, evaluateStatQuality} from '~/features/stats'
 
-const EXLUDED_POSITIONS = ['1B/3B', '2B/SS', 'P', 'UTIL']
+const EXCLUDED_POSITIONS = ['1B/3B', '2B/SS', 'P', 'UTIL']
+
+// Inline SVG icons
+const IgnoreIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+    </svg>
+)
+
+const HighlightIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+)
 
 const PlayerItem = (props) => {
-    const {playerId, playerRanking, editable, onNameClick} = props
-    const {players, teams, mode, ignorePlayer, highlightPlayer, updatePlayerNote, userRanking} = useContext(StoreContext);
+    const {playerId, playerRanking, editable, onNameClick, columns, rank} = props
+    const {players, teams, mode, ignorePlayer, highlightPlayer} = useContext(StoreContext);
     const {isMyTurn, draftPlayer} = useContext(DraftContext);
-    const {selectedBattingStats, selectedPitchingStats} = useContext(StatsPrefsContext);
-    
-    const isDraftMode = mode === 'draft';
 
-    // Notes are editable when the ranking is yours (local, or shared with PIN)
-    const notesEditable = !userRanking?.isShared || !!userRanking?.pin;
-    const [noteText, setNoteText] = useState(playerRanking?.note || '');
+    const isDraftMode = mode === 'draft';
 
     const player = players[playerId]
     const projections = player.projections
 
     // Don't show specialty roster spots as POS
-    let positions = player.pos.filter(position => !EXLUDED_POSITIONS.includes(position))
+    let positions = player.pos.filter(position => !EXCLUDED_POSITIONS.includes(position))
     if (positions.length > 1 && !positions.includes('SP')) {
         positions = positions.filter(position => position != 'DH')
     }
@@ -35,7 +42,7 @@ const PlayerItem = (props) => {
         } else if (projections && projections[columnId]) {
             value = projections[columnId];
         } else {
-            return 0;
+            return <span className="stat-neutral">—</span>;
         }
 
         // Get the primary position for pitchers (SP vs RP)
@@ -46,53 +53,32 @@ const PlayerItem = (props) => {
             primaryPosition = 'RP';
         }
 
-        // Get the quality class for styling
         const quality = evaluateStatQuality(columnId, value, primaryPosition);
         const formattedValue = formatStatValue(columnId, value);
-        
-        // Only apply highlighting for elite, good, and average - not for below-average
         const className = quality !== 'below-average' ? `stat-${quality}` : '';
-        
-        return (
-            <span className={className}>
-                {formattedValue}
-            </span>
-        );
+
+        return <span className={className}>{formattedValue}</span>;
     }
 
     const teamLogo = teams[player.team_id].logo?.href
-    
-    // Use custom stats in view/edit mode, default in draft mode
-    const columns = isDraftMode 
-        ? statsToDisplay(player.pos) 
-        : statsToDisplay(player.pos, selectedBattingStats, selectedPitchingStats);
-    
-    const onHighlight = () => {
-        console.log('running highlight action...', playerId)
-        highlightPlayer(playerId)
-    }
 
-    const onIgnore = () => {
-        ignorePlayer(playerId)
-    }
-    
-    const onDraft = () => {
-        draftPlayer(playerId)
-    }
+    const onHighlight = () => highlightPlayer(playerId)
+    const onIgnore = () => ignorePlayer(playerId)
+    const onDraft = () => draftPlayer(playerId)
 
-    const className = `player-item ${playerRanking?.highlight ? 'highlighted' : playerRanking?.ignore ? 'ignored' : ''}`
-
-    const hasNote = !!playerRanking?.note;
+    const isHighlighted = !!playerRanking?.highlight
+    const isIgnored = !!playerRanking?.ignore
 
     return (
-        <div className={className}>
-            <div className="player-item-row">
+        <>
+            <td className="rank-cell">{rank}.</td>
+            <td className="player-identity-cell">
                 <div className="player-photos">
-                    { teamLogo && (<img className="team-logo" src={teamLogo} width="32" />) }
+                    {teamLogo && <img className="team-logo" src={teamLogo} width="32" />}
                     <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="96" />
                 </div>
-                <div className="player-details">
-                    <p className="player-name" onClick={onNameClick}>{player.name}</p>
+                <div className="player-identity">
+                    <span className="player-name" onClick={onNameClick}>{player.name}</span>
                     <div className="player-positions small">
                         {positions.map(position => (
                             <span
@@ -102,94 +88,59 @@ const PlayerItem = (props) => {
                             >{position}</span>
                         ))}
                     </div>
-                    <div className="player-status">
-                        {player.averageDraftPosition && (
-                            <div className="adp">
-                                <span className="adp-label">ADP</span>
-                                <span className="adp-value">{Math.round(player.averageDraftPosition * 10) / 10}</span>
-                                {player.adpChange && (
-                                    <span className={`adp-change ${player.adpChange > 0 ? 'positive' : 'negative'}`}>
-                                        ({player.adpChange > 0 ? '+' : ''}{player.adpChange}%)
-                                    </span>
-                                )}
-                            </div>
-                        )}
-                        {player.injuryStatus && player.injuryStatus !== "ACTIVE" && (
-                            <div className="injury-status">
-                                {player.injuryStatus === "DAY_TO_DAY" ? "D2D" : player.injuryStatus}
-                            </div>
-                        )}
-                    </div>
                 </div>
-                <div className="player-stats">
-                    <table>
-                        <thead>
-                            <tr>
-                                { columns.map(column => (<th key={column.id}>{column.name}</th>))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                { columns.map(column => (<td key={column.id}>{renderCellValue(player, column.id)}</td>))}
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                {editable && !isDraftMode && (
-                    <div className="player-actions">
-                        <button
-                            onClick={onIgnore}
-                            className={playerRanking?.ignore ? 'ignored' : ''}
-                        >
-                            {playerRanking?.ignore ? 'unignore' : 'ignore'}
-                        </button>
-                        <button
-                            onClick={onHighlight}
-                            className={playerRanking?.highlight ? 'highlighted' : ''}
-                        >
-                            {playerRanking?.highlight ? 'unhighlight' : 'highlight'}
-                        </button>
-                    </div>
-                )}
-
-                {isDraftMode && (
-                    <div className="player-actions">
-                        {isMyTurn() ? (
-                            <button
-                                onClick={onDraft}
-                                className="draft-button"
-                            >
-                                Draft
-                            </button>
-                        ) : (
-                            <button
-                                onClick={onDraft}
-                                className="drafted-button"
-                            >
-                                Drafted
-                            </button>
+            </td>
+            <td className="adp-cell">
+                {player.averageDraftPosition && (
+                    <div className="adp">
+                        <span className="adp-label">ADP</span>
+                        <span className="adp-value">{Math.round(player.averageDraftPosition * 10) / 10}</span>
+                        {player.adpChange && (
+                            <span className={`adp-change ${player.adpChange > 0 ? 'positive' : 'negative'}`}>
+                                ({player.adpChange > 0 ? '+' : ''}{player.adpChange}%)
+                            </span>
                         )}
                     </div>
                 )}
-            </div>
-
-            {notesEditable ? (
-                <div className="player-note">
-                    <textarea
-                        className="player-note-input"
-                        placeholder="Add a note..."
-                        value={noteText}
-                        onChange={(e) => setNoteText(e.target.value)}
-                        onBlur={() => updatePlayerNote(playerId, noteText)}
-                        rows={1}
-                    />
-                </div>
-            ) : hasNote ? (
-                <div className="player-note player-note--readonly">
-                    <p className="player-note-text">{playerRanking.note}</p>
-                </div>
-            ) : null}
-        </div>
+                {player.injuryStatus && player.injuryStatus !== "ACTIVE" && (
+                    <div className="injury-status">
+                        {player.injuryStatus === "DAY_TO_DAY" ? "D2D" : player.injuryStatus}
+                    </div>
+                )}
+            </td>
+            {columns.map(column => (
+                <td key={column.id} className="stat-cell">
+                    {renderCellValue(player, column.id)}
+                </td>
+            ))}
+            {editable && !isDraftMode && (
+                <td className="actions-cell">
+                    <button
+                        className={`icon-btn ignore-btn${isIgnored ? ' active' : ''}`}
+                        onClick={onIgnore}
+                        title={isIgnored ? 'Unignore' : 'Ignore'}
+                    >
+                        <IgnoreIcon />
+                    </button>
+                    <button
+                        className={`icon-btn highlight-btn${isHighlighted ? ' active' : ''}`}
+                        onClick={onHighlight}
+                        title={isHighlighted ? 'Unhighlight' : 'Highlight'}
+                    >
+                        <HighlightIcon />
+                    </button>
+                </td>
+            )}
+            {isDraftMode && (
+                <td className="actions-cell">
+                    {isMyTurn() ? (
+                        <button onClick={onDraft} className="draft-button">Draft</button>
+                    ) : (
+                        <button onClick={onDraft} className="drafted-button">Drafted</button>
+                    )}
+                </td>
+            )}
+        </>
     )
 }
 

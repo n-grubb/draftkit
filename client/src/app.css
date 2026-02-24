@@ -670,7 +670,7 @@ button[data-disabled] {
 
 .search-icon {
   position: absolute;
-  left: 0.5rem;
+  left: 0.65rem;
   color: var(--greybrown);
   pointer-events: none;
   display: flex;
@@ -679,21 +679,21 @@ button[data-disabled] {
 
 .search-input {
   border: 1.5px solid var(--tan-dark);
-  border-radius: 6px;
+  border-radius: 9999px;
   background: white;
-  padding: 0.2rem 0.5rem 0.2rem 1.75rem;
+  padding: 0.3rem 1rem 0.3rem 2rem;
   font-family: inherit;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--brown);
-  width: 160px;
+  width: 220px;
   transition: border-color 0.15s ease, width 0.2s ease;
-  height: 1.9rem;
+  height: 2.1rem;
 }
 
 .search-input:focus {
   outline: none;
   border-color: var(--greybrown);
-  width: 200px;
+  width: 270px;
 }
 
 .search-input::placeholder {
@@ -760,15 +760,9 @@ button[data-disabled] {
   line-height: 1.25rem;
 }
 
-.pos-filter.symbol {
-  font-family: "Grandsans";
-  font-feature-settings: 'ss01';
-}
-
 .pos-filter.active {
   background: rgba(134, 122, 101, 0.18);
   color: var(--brown);
-  font-weight: 600;
   transform: none;
   opacity: 1;
 }
@@ -1063,8 +1057,8 @@ button[data-disabled] {
   border: none;
   box-shadow: none;
   background: transparent;
-  padding: 0.2rem;
-  border-radius: 4px;
+  padding: 0.3rem;
+  border-radius: 5px;
   color: var(--greybrown);
   opacity: 0.6;
   cursor: pointer;
@@ -1077,6 +1071,15 @@ button[data-disabled] {
 .icon-btn:hover { opacity: 1; color: var(--brown); }
 .icon-btn.highlight-btn.active { color: var(--gold); opacity: 1; }
 .icon-btn.ignore-btn.active { color: var(--charcoal); opacity: 1; }
+.icon-btn.note-btn.active { color: var(--brown); opacity: 0.9; }
+
+/* Gear button in filter bar */
+.gear-btn {
+  opacity: 0.7;
+  font-size: 0;
+}
+
+.gear-btn:hover { opacity: 1; }
 
 .player-photos {
   margin-left: 0.25rem;

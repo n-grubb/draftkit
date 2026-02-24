@@ -15,8 +15,8 @@ const PlayerItem = (props) => {
     
     const isDraftMode = mode === 'draft';
 
-    // Notes are editable when the ranking is yours (local, or shared with PIN)
-    const notesEditable = !userRanking?.isShared || !!userRanking?.pin;
+    // Notes are editable when in edit mode and the ranking is yours (local, or shared with PIN)
+    const notesEditable = editable && (!userRanking?.isShared || !!userRanking?.pin);
     const [noteText, setNoteText] = useState(playerRanking?.note || '');
 
     const player = players[playerId]
@@ -89,7 +89,7 @@ const PlayerItem = (props) => {
             <div className="player-item-row">
                 <div className="player-photos">
                     { teamLogo && (<img className="team-logo" src={teamLogo} width="32" />) }
-                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="96" />
+                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="96" onError={(e) => { (e.target as HTMLImageElement).src = '/assets/images/player-fallback.png'; }} />
                 </div>
                 <div className="player-details">
                     <p className="player-name" onClick={onNameClick}>{player.name}</p>

@@ -761,7 +761,7 @@ button[data-disabled] {
 }
 
 .pos-filter.active {
-  background: rgba(134, 122, 101, 0.18);
+  background: rgba(26, 58, 92, 0.12);
   color: var(--brown);
   transform: none;
   opacity: 1;
@@ -902,7 +902,7 @@ button[data-disabled] {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--greybrown);
+  color: #2a4a6b;
   padding: 0.3rem 0.5rem;
   border-bottom: 1px solid var(--tan-dark);
   white-space: nowrap;
@@ -930,7 +930,7 @@ button[data-disabled] {
 
 /* Zebra striping */
 .player-table tbody tr:nth-child(even) td {
-  background: #e8dcc0;
+  background: #e0d3b0;
 }
 
 .player-row td:first-child { border-radius: 6px 0 0 6px; }
@@ -955,7 +955,7 @@ button[data-disabled] {
 .rank-cell {
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--brown);
+  color: #1a3a5c;
   width: 30px;
   text-align: right;
   padding-right: 0.5rem !important;
@@ -1169,17 +1169,17 @@ button[data-disabled] {
 
 /* Stat quality indicators */
 .stat-elite {
-  color: #e68e06;
+  color: #c97a00;
   font-weight: bold;
 }
 
 .stat-good {
-  color: #2e7d32;
+  color: #4a9e5c;
   font-weight: bold;
 }
 
 .stat-average {
-  color: var(--brown);
+  color: var(--greybrown);
 }
 
 .stat-neutral {

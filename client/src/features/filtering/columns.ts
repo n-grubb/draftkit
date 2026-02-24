@@ -49,6 +49,17 @@ export const ALL_PITCHING_COLUMNS = [
 export const BATTING_COLUMNS = DEFAULT_BATTING_COLUMNS
 export const PITCHING_COLUMNS = DEFAULT_PITCHING_COLUMNS
 
+// Gets the appropriate columns for the current position filter (table-level, not per-row)
+const BATTER_FILTER_POSITIONS = ['C','1B','2B','SS','3B','OF','DH','UTIL','2B/SS','1B/3B'];
+const PITCHER_FILTER_POSITIONS = ['SP','RP','P'];
+
+export function statsForFilter(posFilter?, customBattingStats?, customPitchingStats?) {
+    const positions = [];
+    if (!posFilter || BATTER_FILTER_POSITIONS.includes(posFilter)) positions.push('OF');
+    if (!posFilter || PITCHER_FILTER_POSITIONS.includes(posFilter)) positions.push('SP');
+    return statsToDisplay(positions, customBattingStats, customPitchingStats);
+}
+
 // Gets the appropriate columns for a position 
 // Optional parameters for custom stat selection and expanded view
 export function statsToDisplay(positions, customBattingStats?, customPitchingStats?, expanded = false) {

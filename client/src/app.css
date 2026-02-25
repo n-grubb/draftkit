@@ -644,28 +644,25 @@ button[data-disabled] {
   top: 0;
   z-index: 20;
   display: flex;
-  align-items: stretch;
+  align-items: center;
+  gap: 0.65rem;
   height: var(--controls-height);
   background: var(--soft-tan);
   border-bottom: 1.5px solid var(--tan-dark);
   margin: 0.5rem 0 0;
+  padding: 0 0.5rem;
   overflow: visible; /* let modals escape */
 }
 
-/* Position-filter fieldset — borderless scrollable strip */
+/* Position-filter fieldset — bordered segmented group */
 .player-controls fieldset {
   display: flex;
-  align-items: stretch;
-  border: none;
+  align-items: center;
+  justify-content: flex-start;
+  border: 1.5px solid var(--tan-dark);
+  border-radius: 6px;
   padding: 0;
-  flex: 1;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.player-controls fieldset::-webkit-scrollbar {
-  display: none;
+  overflow: hidden;
 }
 
 /* Search bar */
@@ -674,7 +671,6 @@ button[data-disabled] {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  padding: 0 0.25rem;
 }
 
 .search-icon {
@@ -687,22 +683,22 @@ button[data-disabled] {
 }
 
 .search-input {
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  padding: 0.3rem 0.75rem 0.3rem 2rem;
+  border: 1.5px solid var(--tan-dark);
+  border-radius: 9999px;
+  background: white;
+  padding: 0.3rem 1rem 0.3rem 2rem;
   font-family: inherit;
   font-size: 0.85rem;
   color: var(--brown);
-  width: 175px;
-  transition: background 0.15s ease, width 0.2s ease;
-  height: 2rem;
+  width: 210px;
+  transition: border-color 0.15s ease, width 0.2s ease;
+  height: 2.1rem;
 }
 
 .search-input:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.65);
-  width: 235px;
+  border-color: var(--greybrown);
+  width: 265px;
 }
 
 .search-input::placeholder {
@@ -710,21 +706,11 @@ button[data-disabled] {
   font-style: italic;
 }
 
-/* Thin vertical rule between search and filter strip */
-.controls-divider {
-  width: 1px;
-  background: var(--tan-dark);
-  flex-shrink: 0;
-  align-self: stretch;
-  margin: 8px 0;
-}
-
 /* Gear/settings pushed to the far right */
 .controls-actions {
   margin-left: auto;
   display: flex;
   align-items: center;
-  padding: 0 0.5rem;
   flex-shrink: 0;
 }
 
@@ -753,16 +739,16 @@ button[data-disabled] {
   border-radius: 0;
   color: var(--greybrown);
   min-width: unset;
-  padding: 0 0.55rem;
+  padding: 0.2rem 0.55rem;
   font-size: 0.8rem;
+  line-height: 1.4rem;
   margin: 0;
   opacity: 1;
   transition: background 0.12s ease, color 0.12s ease;
-  white-space: nowrap;
 
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: baseline;
 }
 
 .pos-filter:last-child {
@@ -782,8 +768,9 @@ button[data-disabled] {
 }
 
 .draft-mode .pos-filter {
-  padding: 0 0.4rem;
+  padding: 0.15rem 0.4rem;
   font-size: 0.75rem;
+  line-height: 1.25rem;
 }
 
 .pos-filter.active {
@@ -1103,13 +1090,29 @@ button[data-disabled] {
 .icon-btn.ignore-btn.active { color: var(--charcoal); opacity: 1; }
 .icon-btn.note-btn.active { color: var(--brown); opacity: 0.9; }
 
-/* Gear button in filter bar */
+/* Settings button in controls bar */
 .gear-btn {
-  opacity: 0.7;
-  font-size: 0;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: 1.5px solid var(--tan-dark);
+  border-radius: 6px;
+  color: var(--greybrown);
+  font-family: inherit;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.55rem;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  line-height: 1.4rem;
 }
 
-.gear-btn:hover { opacity: 1; }
+.gear-btn:hover {
+  background: rgba(134, 122, 101, 0.1);
+  color: var(--brown);
+  border-color: var(--greybrown);
+}
 
 .player-photos {
   margin-left: 0.25rem;

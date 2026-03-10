@@ -150,29 +150,31 @@ const PlayerItem = (props) => {
             ))}
             {editable && !isDraftMode && (
                 <td className="actions-cell">
-                    {notesEditable && (
+                    <div className="actions-wrapper">
+                        {notesEditable && (
+                            <button
+                                className={`icon-btn note-btn${(hasNote || showNote) ? ' active' : ''}`}
+                                onClick={onToggleNote}
+                                title={showNote ? 'Hide note' : 'Add note'}
+                            >
+                                <NoteIcon />
+                            </button>
+                        )}
                         <button
-                            className={`icon-btn note-btn${(hasNote || showNote) ? ' active' : ''}`}
-                            onClick={onToggleNote}
-                            title={showNote ? 'Hide note' : 'Add note'}
+                            className={`icon-btn ignore-btn${isIgnored ? ' active' : ''}`}
+                            onClick={onIgnore}
+                            title={isIgnored ? 'Unignore' : 'Ignore'}
                         >
-                            <NoteIcon />
+                            <IgnoreIcon />
                         </button>
-                    )}
-                    <button
-                        className={`icon-btn ignore-btn${isIgnored ? ' active' : ''}`}
-                        onClick={onIgnore}
-                        title={isIgnored ? 'Unignore' : 'Ignore'}
-                    >
-                        <IgnoreIcon />
-                    </button>
-                    <button
-                        className={`icon-btn highlight-btn${isHighlighted ? ' active' : ''}`}
-                        onClick={onHighlight}
-                        title={isHighlighted ? 'Unhighlight' : 'Highlight'}
-                    >
-                        <HighlightIcon />
-                    </button>
+                        <button
+                            className={`icon-btn highlight-btn${isHighlighted ? ' active' : ''}`}
+                            onClick={onHighlight}
+                            title={isHighlighted ? 'Unhighlight' : 'Highlight'}
+                        >
+                            <HighlightIcon />
+                        </button>
+                    </div>
                 </td>
             )}
             {isDraftMode && (

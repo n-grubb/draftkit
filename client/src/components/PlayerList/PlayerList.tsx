@@ -172,7 +172,7 @@ const PlayerList = ({ editable }: any) => {
                                 const rowClass = `player-row${playerRanking?.highlight ? ' highlighted' : playerRanking?.ignore ? ' ignored' : ''}`;
 
                                 return editable ? (
-                                    <DraggableItem key={playerId} id={playerId}>
+                                    <DraggableItem key={playerId} id={playerId} className={rowClass}>
                                         <PlayerItem
                                             playerId={playerId}
                                             rank={rank}

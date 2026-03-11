@@ -953,7 +953,15 @@ button[data-disabled] {
 .player-row td:first-child { border-radius: 6px 0 0 6px; }
 .player-row td:last-child  { border-radius: 0 6px 6px 0; }
 
-.player-row.highlighted td { box-shadow: inset 0 0 0 1.5px var(--gold); }
+.player-row.highlighted td {
+  box-shadow: inset 0 1.5px 0 0 var(--gold), inset 0 -1.5px 0 0 var(--gold);
+}
+.player-row.highlighted td:first-child {
+  box-shadow: inset 1.5px 1.5px 0 0 var(--gold), inset 0 -1.5px 0 0 var(--gold);
+}
+.player-row.highlighted td:last-child {
+  box-shadow: inset -1.5px 1.5px 0 0 var(--gold), inset 0 -1.5px 0 0 var(--gold);
+}
 .player-row.ignored td { opacity: 0.5; }
 
 /* Draft mode compact rows */
@@ -1047,24 +1055,82 @@ button[data-disabled] {
 /* ADP cell */
 .adp-cell {
   white-space: nowrap;
+  width: 1%;
 }
 
-/* Actions cell — hover reveal */
+.adp-info {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Actions cell — zero-width overlay */
 .actions-cell {
+  width: 0;
+  padding: 0 !important;
+  position: relative;
+  overflow: visible;
+  background: none !important;
+  border-radius: 0 !important;
+}
+
+.actions-wrapper {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0 0.4rem 0 1.5rem;
+  white-space: nowrap;
   opacity: 0;
   transition: opacity 0.15s ease;
-  white-space: nowrap;
-  text-align: right;
-  padding-right: 0.5rem !important;
+  background: linear-gradient(to right, transparent, var(--soft-tan) 30%);
+  border-radius: 0 6px 6px 0;
 }
 
-.player-row:hover .actions-cell,
-.draggable-item:hover .actions-cell {
+.player-table tbody tr:nth-child(even) .actions-wrapper {
+  background: linear-gradient(to right, transparent, #e0d3b0 30%);
+}
+
+.player-row:hover .actions-wrapper,
+.draggable-item:hover .actions-wrapper {
   opacity: 1;
 }
 
-/* Always show actions-cell for active (highlighted/ignored) states */
-.player-row .actions-cell:has(.active) {
+/* Always show actions for active (highlighted/ignored) states */
+.actions-wrapper:has(.active) {
+  opacity: 1;
+}
+
+/* Border-radius on the cell before actions (the visual row end) */
+.player-row td:has(+ .actions-cell) { border-radius: 0 6px 6px 0; }
+
+/* Highlighted border on the cell before actions */
+.player-row.highlighted td:has(+ .actions-cell) {
+  box-shadow: inset -1.5px 1.5px 0 0 var(--gold), inset 0 -1.5px 0 0 var(--gold);
+}
+.player-row.highlighted td.actions-cell {
+  box-shadow: none;
+}
+
+.actions-header {
+  width: 0;
+  padding: 0 !important;
+}
+
+/* Draft mode: restore normal actions cell behavior */
+.draft-mode .actions-header {
+  width: auto;
+  padding: 0.3rem 0.5rem !important;
+}
+.draft-mode .actions-cell {
+  width: auto;
+  padding: 0.15rem 0.3rem !important;
+  position: static;
+  overflow: hidden;
+  background: var(--soft-tan) !important;
   opacity: 1;
 }
 
@@ -1179,7 +1245,6 @@ button[data-disabled] {
 }
 
 .injury-status {
-  margin-left: 0.5rem;
   padding: 0.1rem 0.25rem;
   border-radius: 3px;
   font-size: 0.7rem;

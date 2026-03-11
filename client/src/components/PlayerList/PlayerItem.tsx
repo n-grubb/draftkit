@@ -124,22 +124,24 @@ const PlayerItem = (props) => {
                 </div>
             </td>
             <td className="adp-cell">
-                {player.averageDraftPosition && (
-                    <div className="adp">
-                        <span className="adp-label">ADP</span>
-                        <span className="adp-value">{Math.round(player.averageDraftPosition * 10) / 10}</span>
-                        {player.adpChange && (
-                            <span className={`adp-change ${player.adpChange > 0 ? 'positive' : 'negative'}`}>
-                                ({player.adpChange > 0 ? '+' : ''}{player.adpChange}%)
-                            </span>
-                        )}
-                    </div>
-                )}
-                {player.injuryStatus && player.injuryStatus !== "ACTIVE" && (
-                    <div className="injury-status">
-                        {player.injuryStatus === "DAY_TO_DAY" ? "D2D" : player.injuryStatus}
-                    </div>
-                )}
+                <div className="adp-info">
+                    {player.averageDraftPosition && (
+                        <div className="adp">
+                            <span className="adp-label">ADP</span>
+                            <span className="adp-value">{Math.round(player.averageDraftPosition * 10) / 10}</span>
+                            {player.adpChange && (
+                                <span className={`adp-change ${player.adpChange > 0 ? 'positive' : 'negative'}`}>
+                                    ({player.adpChange > 0 ? '+' : ''}{player.adpChange}%)
+                                </span>
+                            )}
+                        </div>
+                    )}
+                    {player.injuryStatus && player.injuryStatus !== "ACTIVE" && (
+                        <div className="injury-status">
+                            {player.injuryStatus === "DAY_TO_DAY" ? "D2D" : player.injuryStatus}
+                        </div>
+                    )}
+                </div>
             </td>
             {columns.map(column => (
                 <td key={column.id} className="stat-cell">
@@ -148,29 +150,31 @@ const PlayerItem = (props) => {
             ))}
             {editable && !isDraftMode && (
                 <td className="actions-cell">
-                    {notesEditable && (
+                    <div className="actions-wrapper">
+                        {notesEditable && (
+                            <button
+                                className={`icon-btn note-btn${(hasNote || showNote) ? ' active' : ''}`}
+                                onClick={onToggleNote}
+                                title={showNote ? 'Hide note' : 'Add note'}
+                            >
+                                <NoteIcon />
+                            </button>
+                        )}
                         <button
-                            className={`icon-btn note-btn${(hasNote || showNote) ? ' active' : ''}`}
-                            onClick={onToggleNote}
-                            title={showNote ? 'Hide note' : 'Add note'}
+                            className={`icon-btn ignore-btn${isIgnored ? ' active' : ''}`}
+                            onClick={onIgnore}
+                            title={isIgnored ? 'Unignore' : 'Ignore'}
                         >
-                            <NoteIcon />
+                            <IgnoreIcon />
                         </button>
-                    )}
-                    <button
-                        className={`icon-btn ignore-btn${isIgnored ? ' active' : ''}`}
-                        onClick={onIgnore}
-                        title={isIgnored ? 'Unignore' : 'Ignore'}
-                    >
-                        <IgnoreIcon />
-                    </button>
-                    <button
-                        className={`icon-btn highlight-btn${isHighlighted ? ' active' : ''}`}
-                        onClick={onHighlight}
-                        title={isHighlighted ? 'Unhighlight' : 'Highlight'}
-                    >
-                        <HighlightIcon />
-                    </button>
+                        <button
+                            className={`icon-btn highlight-btn${isHighlighted ? ' active' : ''}`}
+                            onClick={onHighlight}
+                            title={isHighlighted ? 'Unhighlight' : 'Highlight'}
+                        >
+                            <HighlightIcon />
+                        </button>
+                    </div>
                 </td>
             )}
             {isDraftMode && (

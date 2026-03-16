@@ -77,7 +77,11 @@ const PlayerList = ({ editable }: any) => {
         const player = players?.[playerId]
         if (!player) { return false }
         if (isDraftMode && draftedPlayerIds.includes(playerId)) { return false; }
-        return posFilter ? player.pos.includes(posFilter) : true
+        if (!posFilter) return true
+        if (posFilter === 'DH') {
+            return player.pos.every(p => p === 'DH' || p === 'UTIL')
+        }
+        return player.pos.includes(posFilter)
     }
 
     const columns = isDraftMode

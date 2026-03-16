@@ -120,6 +120,7 @@ const PlayerItem = (props) => {
                     </div>
                 </div>
             </td>
+            <td className="spacer-cell"></td>
             <td className="adp-cell">
                 <div className="adp-info">
                     {player.averageDraftPosition && (
@@ -151,6 +152,7 @@ const PlayerItem = (props) => {
                     return <span className={className}>{diff > 0 ? '+' : ''}{diff}</span>;
                 })() : <span className="stat-neutral">—</span>}
             </td>
+            <td className="spacer-cell"></td>
             {columns.map(column => (
                 <td key={column.id} className="stat-cell">
                     {renderCellValue(player, column.id)}

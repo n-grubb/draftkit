@@ -199,8 +199,8 @@ const PlayerItem = (props) => {
 }
 
 const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEven }) => {
-    const {updatePlayerNote, userRanking} = useContext(StoreContext);
-    const notesEditable = editable && (!userRanking?.isShared || !!userRanking?.pin);
+    const {updatePlayerNote} = useContext(StoreContext);
+    const notesEditable = editable;
     const [noteText, setNoteText] = useState(playerRanking?.note || '');
     const noteRef = useRef<HTMLTextAreaElement>(null);
 

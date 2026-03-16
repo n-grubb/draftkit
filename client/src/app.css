@@ -907,7 +907,7 @@ button[data-disabled] {
 .player-table {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 0;
+  border-spacing: 0 2px;
 }
 
 .player-table thead th {
@@ -944,13 +944,6 @@ button[data-disabled] {
   padding: 0.2rem 0.4rem;
   background: var(--soft-tan);
   vertical-align: middle;
-  border-bottom: 2px solid transparent;
-}
-
-/* Remove bottom gap when note row follows */
-.player-row:has(+ .note-row) td,
-.draggable-item:has(+ .note-row) td {
-  border-bottom: none;
 }
 
 /* Zebra striping — class-based to handle note rows */
@@ -962,7 +955,18 @@ button[data-disabled] {
 .player-row td:last-child  { border-radius: 0 6px 6px 0; }
 
 .player-row.highlighted td:first-child {
-  box-shadow: inset 5px 0 0 0 var(--highlight-blue);
+  position: relative;
+}
+
+.player-row.highlighted td:first-child::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: var(--highlight-blue);
+  border-radius: 3px 0 0 3px;
 }
 .player-row.ignored td { opacity: 0.5; }
 
@@ -1052,21 +1056,12 @@ button[data-disabled] {
 .note-row .note-row-cell {
   background: var(--soft-tan);
   padding: 0.2rem 0.5rem 0.4rem 3.5rem !important;
-  border-radius: 0 0 6px 6px;
-  border-bottom: 2px solid transparent;
+  border-radius: 6px;
 }
 
 .note-row.even-row .note-row-cell {
   background: #e0d3b0;
 }
-
-/* Remove bottom border-radius from player row when note row follows */
-.player-row:has(+ .note-row) td:first-child,
-.draggable-item:has(+ .note-row) td:first-child { border-radius: 6px 0 0 0; }
-.player-row:has(+ .note-row) td:last-child,
-.draggable-item:has(+ .note-row) td:last-child { border-radius: 0 6px 0 0; }
-.player-row:has(+ .note-row) td:has(+ .actions-cell),
-.draggable-item:has(+ .note-row) td:has(+ .actions-cell) { border-radius: 0; }
 
 .note-row .player-note-input {
   width: 100%;
@@ -1106,9 +1101,9 @@ button[data-disabled] {
 /* Column group spacers */
 .spacer-header,
 .spacer-cell {
-  width: 4px !important;
-  min-width: 4px;
-  max-width: 4px;
+  width: 10px !important;
+  min-width: 10px;
+  max-width: 10px;
   padding: 0 !important;
   background: transparent !important;
   border: none !important;

@@ -946,8 +946,8 @@ button[data-disabled] {
   vertical-align: middle;
 }
 
-/* Zebra striping */
-.player-table tbody tr:nth-child(even) td {
+/* Zebra striping — class-based to handle note rows */
+.player-table tbody tr.even-row td {
   background: #e0d3b0;
 }
 
@@ -1046,12 +1046,24 @@ button[data-disabled] {
   margin: 0;
 }
 
-/* Note accordion row */
+/* Note accordion row — seamless with parent */
 .note-row .note-row-cell {
-  background: rgba(134, 122, 101, 0.08);
-  padding: 0.3rem 0.5rem 0.3rem 3.5rem !important;
+  background: var(--soft-tan);
+  padding: 0 0.5rem 0.3rem 3.5rem !important;
   border-radius: 0 0 6px 6px;
 }
+
+.note-row.even-row .note-row-cell {
+  background: #e0d3b0;
+}
+
+/* Remove bottom border-radius from player row when note row follows */
+.player-row:has(+ .note-row) td:first-child,
+.draggable-item:has(+ .note-row) td:first-child { border-radius: 6px 0 0 0; }
+.player-row:has(+ .note-row) td:last-child,
+.draggable-item:has(+ .note-row) td:last-child { border-radius: 0 6px 0 0; }
+.player-row:has(+ .note-row) td:has(+ .actions-cell),
+.draggable-item:has(+ .note-row) td:has(+ .actions-cell) { border-radius: 0; }
 
 .note-row .player-note-input {
   width: 100%;
@@ -1128,7 +1140,7 @@ button[data-disabled] {
   border-radius: 0 6px 6px 0;
 }
 
-.player-table tbody tr:nth-child(even) .actions-wrapper {
+.player-table tbody tr.even-row .actions-wrapper {
   background: linear-gradient(to right, transparent, #e0d3b0 30%);
 }
 

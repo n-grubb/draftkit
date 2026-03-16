@@ -132,7 +132,11 @@ const PlayerList = ({ editable }: any) => {
         setAllNotesExpanded(next);
         if (next) {
             const all: Record<string, boolean> = {};
-            displayedPlayerIds.forEach(id => { all[id] = true; });
+            displayedPlayerIds.forEach(id => {
+                if (ranking.players[id]?.note) {
+                    all[id] = true;
+                }
+            });
             setExpandedNotes(all);
         } else {
             setExpandedNotes({});
@@ -197,12 +201,13 @@ const PlayerList = ({ editable }: any) => {
                             items={rankedPlayerIds}
                             strategy={verticalListSortingStrategy}
                         >
-                            {displayedPlayerIds.map(playerId => {
+                            {displayedPlayerIds.map((playerId, visualIndex) => {
                                 // Rank = 1-based position in the pre-sort filtered list
                                 // (reflects live drag order and position-filtered context)
                                 const rank = rankedBeforeSort.indexOf(playerId) + 1;
                                 const playerRanking = ranking.players[playerId];
-                                const rowClass = `player-row${playerRanking?.highlight ? ' highlighted' : playerRanking?.ignore ? ' ignored' : ''}`;
+                                const isEven = visualIndex % 2 === 1;
+                                const rowClass = `player-row${isEven ? ' even-row' : ''}${playerRanking?.highlight ? ' highlighted' : playerRanking?.ignore ? ' ignored' : ''}`;
 
                                 const noteVisible = isNoteExpanded(playerId);
 
@@ -226,6 +231,7 @@ const PlayerList = ({ editable }: any) => {
                                                 playerRanking={playerRanking}
                                                 colSpan={totalColumns}
                                                 editable={editable}
+                                                isEven={isEven}
                                             />
                                         )}
                                     </React.Fragment>
@@ -248,6 +254,7 @@ const PlayerList = ({ editable }: any) => {
                                                 playerRanking={playerRanking}
                                                 colSpan={totalColumns}
                                                 editable={editable}
+                                                isEven={isEven}
                                             />
                                         )}
                                     </React.Fragment>

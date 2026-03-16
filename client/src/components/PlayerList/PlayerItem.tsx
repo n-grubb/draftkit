@@ -43,11 +43,10 @@ const CommentIcon = () => (
 
 const PlayerItem = (props) => {
     const {playerId, playerRanking, editable, onNameClick, columns, rank, showNote, onToggleNote} = props
-    const {players, teams, mode, ignorePlayer, highlightPlayer, userRanking} = useContext(StoreContext);
+    const {players, teams, mode, ignorePlayer, highlightPlayer} = useContext(StoreContext);
     const {isMyTurn, draftPlayer} = useContext(DraftContext);
 
     const isDraftMode = mode === 'draft';
-    const notesEditable = editable && (!userRanking?.isShared || !!userRanking?.pin);
     const hasNote = !!playerRanking?.note;
 
     const player = players[playerId]
@@ -149,15 +148,13 @@ const PlayerItem = (props) => {
             {editable && !isDraftMode && (
                 <td className="actions-cell">
                     <div className="actions-wrapper">
-                        {notesEditable && (
-                            <button
-                                className={`icon-btn comment-btn${(hasNote || showNote) ? ' active' : ''}`}
-                                onClick={onToggleNote}
-                                title={showNote ? 'Hide comment' : 'Add comment'}
-                            >
-                                <CommentIcon />
-                            </button>
-                        )}
+                        <button
+                            className={`icon-btn comment-btn${(hasNote || showNote) ? ' active' : ''}`}
+                            onClick={onToggleNote}
+                            title={showNote ? 'Hide comment' : 'Add comment'}
+                        >
+                            <CommentIcon />
+                        </button>
                         <button
                             className={`icon-btn ignore-btn${isIgnored ? ' active' : ''}`}
                             onClick={onIgnore}
@@ -188,7 +185,7 @@ const PlayerItem = (props) => {
     )
 }
 
-const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable }) => {
+const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEven }) => {
     const {updatePlayerNote, userRanking} = useContext(StoreContext);
     const notesEditable = editable && (!userRanking?.isShared || !!userRanking?.pin);
     const [noteText, setNoteText] = useState(playerRanking?.note || '');
@@ -201,7 +198,7 @@ const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable }) => {
     }, []);
 
     return (
-        <tr className="note-row">
+        <tr className={`note-row${isEven ? ' even-row' : ''}`}>
             <td colSpan={colSpan} className="note-row-cell">
                 {notesEditable ? (
                     <textarea

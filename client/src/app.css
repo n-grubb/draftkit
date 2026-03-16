@@ -1154,7 +1154,7 @@ button[data-disabled] {
 .icon-btn:hover { opacity: 1; color: var(--brown); }
 .icon-btn.highlight-btn.active { color: var(--gold); opacity: 1; }
 .icon-btn.ignore-btn.active { color: var(--charcoal); opacity: 1; }
-.icon-btn.note-btn.active { color: var(--brown); opacity: 0.9; }
+.icon-btn.comment-btn.active { color: var(--brown); opacity: 0.9; }
 
 /* Settings button in controls bar */
 .gear-btn {

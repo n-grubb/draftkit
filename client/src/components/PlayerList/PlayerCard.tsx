@@ -59,10 +59,24 @@ const PlayerCard = ({ playerId, onClose }) => {
                         </div>
                         {player.averageDraftPosition && (
                             <div className="adp">
-                                <span className="adp-label">Average Draft Position:</span> 
+                                <span className="adp-label">Average Draft Position:</span>
                                 <span className="adp-value">{Math.round(player.averageDraftPosition * 10) / 10}</span>
                             </div>
                         )}
+                        <div className="player-card-ranks">
+                            {player.espnRank && (
+                                <div className="rank-badge">
+                                    <span className="rank-badge-label">ESPN RK</span>
+                                    <span className="rank-badge-value">{player.espnRank}</span>
+                                </div>
+                            )}
+                            {player.fantasyProsRank && (
+                                <div className="rank-badge">
+                                    <span className="rank-badge-label">FPRO RK</span>
+                                    <span className="rank-badge-value">{player.fantasyProsRank}</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
                 

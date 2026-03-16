@@ -21,6 +21,7 @@ import {
 } from '../services/storage.ts';
 import { fetch_teams_and_divisions, fetch_player_stats } from '../services/espn.ts';
 import { fetch_projections, build_player_projections, fetch_historical_stats } from '../services/fangraphs.ts';
+import { fetch_fantasypros_rankings, match_fantasypros_to_players } from '../services/fantasypros.ts';
 import { format_player_stats, format_projections, format_position_eligibility } from '../utils/formatters.ts';
 
 const admin_router = new Hono();
@@ -33,12 +34,14 @@ function build_player_store(
     player_details: PlayerDetails[],
     stats: Record<number, any>,
     projections: Record<number, any>,
-    historical_stats: Record<number, any>
+    historical_stats: Record<number, any>,
+    fantasypros_ranks: Record<number, { rank: number; adp: number | null }>
 ): Player[] {
     const players: Player[] = player_details.map(player => {
         const current_stats = format_player_stats(stats[player.id], player.eligible_slots);
         const historical = historical_stats[player.id] || {};
         const merged_stats = { ...current_stats, ...historical };
+        const fp_data = fantasypros_ranks[player.id];
 
         return {
             id: player.id,
@@ -56,6 +59,8 @@ function build_player_store(
             injuryStatus: player.injury_status || null,
             age: player.age || null,
             birthDate: player.birth_date || null,
+            espnRank: player.espn_rank || null,
+            fantasyProsRank: fp_data?.rank || null,
         };
     });
 
@@ -126,6 +131,23 @@ async function refresh_projections(
 }
 
 /**
+ * Refresh FantasyPros ECR rankings
+ */
+async function refresh_fantasypros(
+    player_details: PlayerDetails[]
+): Promise<Record<number, { rank: number; adp: number | null }>> {
+    try {
+        const fp_players = await fetch_fantasypros_rankings();
+        const matched = match_fantasypros_to_players(fp_players, player_details);
+        console.log(`FantasyPros: fetched ${fp_players.length} rankings, matched ${Object.keys(matched).length} players.`);
+        return matched;
+    } catch (error) {
+        console.error('Failed to fetch FantasyPros data:', error);
+        return {};
+    }
+}
+
+/**
  * GET /admin/refresh
  * Manually trigger a data refresh
  */
@@ -191,13 +213,23 @@ admin_router.get('/refresh', async (c) => {
 
     console.log(`Projections found: ${Object.keys(projections).length}`);
 
+    // Refresh FantasyPros rankings
+    let fantasypros_ranks: Record<number, { rank: number; adp: number | null }> = {};
+
+    if (sources_to_update.includes('fantasypros')) {
+        fantasypros_ranks = await refresh_fantasypros(player_details_array);
+    }
+
+    console.log(`FantasyPros ranks matched: ${Object.keys(fantasypros_ranks).length}`);
+
     // Build and store custom player objects
     const players = build_player_store(
         teams,
         player_details_array,
         stats,
         projections,
-        historical_stats
+        historical_stats,
+        fantasypros_ranks
     );
 
     await store_players(players);

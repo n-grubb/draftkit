@@ -143,6 +143,12 @@ const PlayerItem = (props) => {
                     )}
                 </div>
             </td>
+            <td className="rank-source-cell">
+                {player.espnRank ? player.espnRank : <span className="stat-neutral">—</span>}
+            </td>
+            <td className="rank-source-cell">
+                {player.fantasyProsRank ? player.fantasyProsRank : <span className="stat-neutral">—</span>}
+            </td>
             {columns.map(column => (
                 <td key={column.id} className="stat-cell">
                     {renderCellValue(player, column.id)}

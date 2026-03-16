@@ -5,6 +5,23 @@ import {formatStatValue, evaluateStatQuality} from '~/features/stats'
 
 const EXCLUDED_POSITIONS = ['1B/3B', '2B/SS', 'P', 'UTIL']
 
+const INJURY_LABELS = {
+    'DAY_TO_DAY': 'DTD',
+    'OUT': 'O',
+    'SEVEN_DAY_DL': 'IL7',
+    'TEN_DAY_DL': 'IL10',
+    'FIFTEEN_DAY_DL': 'IL15',
+    'SIXTY_DAY_DL': 'IL60',
+    'SUSPENSION': 'SUSP',
+    'PATERNITY': 'PAT',
+    'BEREAVEMENT': 'BRV',
+}
+
+const getInjuryLabel = (status) => {
+    if (!status || status === 'ACTIVE') return null
+    return INJURY_LABELS[status] || status
+}
+
 const IgnoreIcon = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/>
@@ -65,7 +82,9 @@ const PlayerItem = (props) => {
         return <span className={className}>{formattedValue}</span>;
     }
 
-    const teamLogo = teams[player.team_id].logo?.href
+    const team = teams[player.team_id]
+    const teamLogo = team.logo?.href
+    const injuryLabel = getInjuryLabel(player.injuryStatus)
 
     const onHighlight = () => highlightPlayer(playerId)
     const onIgnore = () => ignorePlayer(playerId)
@@ -83,15 +102,17 @@ const PlayerItem = (props) => {
                     <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="72" onError={(e) => { (e.target as HTMLImageElement).src = '/assets/images/player-fallback.png'; }} />
                 </div>
                 <div className="player-identity">
-                    <span className="player-name" onClick={onNameClick}>{player.name}</span>
-                    <div className="player-positions small">
-                        {positions.map(position => (
-                            <span
-                                key={position}
-                                className="position-chip small"
-                                data-pos={position}
-                            >{position}</span>
-                        ))}
+                    <div className="player-name-row">
+                        <span className="player-name" onClick={onNameClick}>{player.name}</span>
+                        {injuryLabel && (
+                            <span className="injury-designation">{injuryLabel}</span>
+                        )}
+                    </div>
+                    <div className="player-meta small">
+                        <span className="player-team-abbrev">{team.abbrev}</span>
+                        <span className="player-position-list">
+                            {positions.join(', ')}
+                        </span>
                     </div>
                 </div>
             </td>
@@ -105,11 +126,6 @@ const PlayerItem = (props) => {
                                     ({player.adpChange > 0 ? '+' : ''}{player.adpChange}%)
                                 </span>
                             )}
-                        </div>
-                    )}
-                    {player.injuryStatus && player.injuryStatus !== "ACTIVE" && (
-                        <div className="injury-status">
-                            {player.injuryStatus === "DAY_TO_DAY" ? "D2D" : player.injuryStatus}
                         </div>
                     )}
                 </div>

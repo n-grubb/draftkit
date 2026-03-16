@@ -1277,13 +1277,33 @@ button[data-disabled] {
   color: var(--notification-red);
 }
 
-.injury-status {
-  padding: 0.1rem 0.25rem;
-  border-radius: 3px;
-  font-size: 0.7rem;
+.player-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.injury-designation {
+  font-size: 0.65rem;
   font-weight: bold;
-  background-color: rgba(255, 84, 74, 0.1);
   color: var(--notification-red);
+}
+
+.player-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--greybrown);
+  font-size: 0.7rem;
+  line-height: 1.2;
+}
+
+.player-team-abbrev {
+  font-weight: 600;
+}
+
+.player-position-list {
+  color: var(--greybrown);
 }
 
 .player-name {

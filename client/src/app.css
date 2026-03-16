@@ -67,6 +67,7 @@
   --brown: #855a25;
   --grey: #c4c4c4;
   --royal-blue: #0059f3;
+  --highlight-blue: #3b82f6;
   --forest: #00a238;
   
   /* Define colors to be used in different themes */
@@ -647,7 +648,6 @@ button[data-disabled] {
   align-items: center;
   gap: 0.65rem;
   height: var(--controls-height);
-  background: var(--soft-tan);
   border-bottom: 1.5px solid var(--tan-dark);
   margin: 0.5rem 0 0;
   padding: 0 0.5rem;
@@ -954,13 +954,13 @@ button[data-disabled] {
 .player-row td:last-child  { border-radius: 0 6px 6px 0; }
 
 .player-row.highlighted td {
-  box-shadow: inset 0 1.5px 0 0 var(--gold), inset 0 -1.5px 0 0 var(--gold);
+  box-shadow: inset 0 1.5px 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
 }
 .player-row.highlighted td:first-child {
-  box-shadow: inset 1.5px 1.5px 0 0 var(--gold), inset 0 -1.5px 0 0 var(--gold);
+  box-shadow: inset 1.5px 1.5px 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
 }
 .player-row.highlighted td:last-child {
-  box-shadow: inset -1.5px 1.5px 0 0 var(--gold), inset 0 -1.5px 0 0 var(--gold);
+  box-shadow: inset -1.5px 1.5px 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
 }
 .player-row.ignored td { opacity: 0.5; }
 
@@ -991,7 +991,7 @@ button[data-disabled] {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-width: 190px;
+  min-width: 150px;
 }
 
 .player-identity {
@@ -1045,6 +1045,24 @@ button[data-disabled] {
   margin: 0;
 }
 
+/* Note accordion row */
+.note-row .note-row-cell {
+  background: rgba(134, 122, 101, 0.08);
+  padding: 0.3rem 0.5rem 0.3rem 3.5rem !important;
+  border-radius: 0 0 6px 6px;
+}
+
+.note-row .player-note-input {
+  width: 100%;
+}
+
+/* Active state for toggle-all-notes button */
+.gear-btn.active {
+  background: rgba(134, 122, 101, 0.15);
+  color: var(--brown);
+  border-color: var(--greybrown);
+}
+
 /* Stat cell */
 .stat-cell {
   text-align: center;
@@ -1056,11 +1074,13 @@ button[data-disabled] {
 .adp-cell {
   white-space: nowrap;
   width: 1%;
+  text-align: center;
 }
 
 .adp-info {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
 }
 
@@ -1099,20 +1119,33 @@ button[data-disabled] {
   opacity: 1;
 }
 
-/* Always show actions for active (highlighted/ignored) states */
-.actions-wrapper:has(.active) {
-  opacity: 1;
-}
+/* Actions only show on hover — row styling already signals highlighted/ignored */
 
 /* Border-radius on the cell before actions (the visual row end) */
 .player-row td:has(+ .actions-cell) { border-radius: 0 6px 6px 0; }
 
-/* Highlighted border on the cell before actions */
+/* Highlighted border on the cell before actions — close the right edge when actions hidden */
 .player-row.highlighted td:has(+ .actions-cell) {
-  box-shadow: inset -1.5px 1.5px 0 0 var(--gold), inset 0 -1.5px 0 0 var(--gold);
+  box-shadow: inset -1.5px 1.5px 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
 }
 .player-row.highlighted td.actions-cell {
   box-shadow: none;
+}
+
+/* When hovered, extend the highlight border over the actions wrapper */
+.player-row.highlighted:hover td:has(+ .actions-cell) {
+  box-shadow: inset 0 1.5px 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
+}
+.player-row.highlighted .actions-wrapper {
+  box-shadow: inset 0 1.5px 0 0 var(--highlight-blue), inset -1.5px 0 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
+  border-radius: 0 6px 6px 0;
+}
+.draggable-item.highlighted:hover td:has(+ .actions-cell) {
+  box-shadow: inset 0 1.5px 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
+}
+.draggable-item.highlighted .actions-wrapper {
+  box-shadow: inset 0 1.5px 0 0 var(--highlight-blue), inset -1.5px 0 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
+  border-radius: 0 6px 6px 0;
 }
 
 .actions-header {
@@ -1152,7 +1185,7 @@ button[data-disabled] {
 }
 
 .icon-btn:hover { opacity: 1; color: var(--brown); }
-.icon-btn.highlight-btn.active { color: var(--gold); opacity: 1; }
+.icon-btn.highlight-btn.active { color: var(--highlight-blue); opacity: 1; }
 .icon-btn.ignore-btn.active { color: var(--charcoal); opacity: 1; }
 .icon-btn.note-btn.active { color: var(--brown); opacity: 0.9; }
 

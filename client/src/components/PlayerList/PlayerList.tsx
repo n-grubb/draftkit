@@ -16,7 +16,7 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import FilterBar from '~/components/FilterBar'
 import DraggableItem from './DraggableItem'
-import PlayerItem from './PlayerItem'
+import PlayerItem, {PlayerNoteRow} from './PlayerItem'
 import PlayerCard from './PlayerCard'
 import Toast from '~/components/Toast'
 import {StoreContext} from '~/data/store'
@@ -35,6 +35,8 @@ const PlayerList = ({ editable }: any) => {
     const [sortColumn, setSortColumn] = useState<string | null>(null);
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const [searchQuery, setSearchQuery] = useState('');
+    const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
+    const [allNotesExpanded, setAllNotesExpanded] = useState(false);
 
     const isDraftMode = mode === 'draft';
     const draftedPlayerIds = isDraftMode ? Object.values(draftedPlayers) : [];
@@ -117,6 +119,29 @@ const PlayerList = ({ editable }: any) => {
         })
         : rankedBeforeSort;
 
+    const toggleNote = (playerId: string) => {
+        setExpandedNotes(prev => ({ ...prev, [playerId]: !prev[playerId] }));
+    }
+
+    const toggleAllNotes = () => {
+        const next = !allNotesExpanded;
+        setAllNotesExpanded(next);
+        if (next) {
+            const all: Record<string, boolean> = {};
+            displayedPlayerIds.forEach(id => { all[id] = true; });
+            setExpandedNotes(all);
+        } else {
+            setExpandedNotes({});
+        }
+    }
+
+    const isNoteExpanded = (playerId: string) => {
+        return !!expandedNotes[playerId];
+    }
+
+    // Total columns for note row colSpan: rank + player + adp + stats + actions
+    const totalColumns = 3 + columns.length + (editable ? 1 : 0);
+
     return (
         <>
             <FilterBar
@@ -125,6 +150,8 @@ const PlayerList = ({ editable }: any) => {
                 draftMode={isDraftMode}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
+                allNotesExpanded={allNotesExpanded}
+                onToggleAllNotes={toggleAllNotes}
             />
 
             <UnsavedChangesPrompt rankedPlayerIds={rankedPlayerIds} />
@@ -171,27 +198,53 @@ const PlayerList = ({ editable }: any) => {
                                 const playerRanking = ranking.players[playerId];
                                 const rowClass = `player-row${playerRanking?.highlight ? ' highlighted' : playerRanking?.ignore ? ' ignored' : ''}`;
 
+                                const noteVisible = isNoteExpanded(playerId);
+
                                 return editable ? (
-                                    <DraggableItem key={playerId} id={playerId} className={rowClass}>
-                                        <PlayerItem
-                                            playerId={playerId}
-                                            rank={rank}
-                                            columns={columns}
-                                            playerRanking={playerRanking}
-                                            editable
-                                            onNameClick={() => setShowCardForPlayerId(playerId)}
-                                        />
-                                    </DraggableItem>
+                                    <React.Fragment key={playerId}>
+                                        <DraggableItem id={playerId} className={rowClass}>
+                                            <PlayerItem
+                                                playerId={playerId}
+                                                rank={rank}
+                                                columns={columns}
+                                                playerRanking={playerRanking}
+                                                editable
+                                                onNameClick={() => setShowCardForPlayerId(playerId)}
+                                                showNote={noteVisible}
+                                                onToggleNote={() => toggleNote(playerId)}
+                                            />
+                                        </DraggableItem>
+                                        {noteVisible && (
+                                            <PlayerNoteRow
+                                                playerId={playerId}
+                                                playerRanking={playerRanking}
+                                                colSpan={totalColumns}
+                                                editable={editable}
+                                            />
+                                        )}
+                                    </React.Fragment>
                                 ) : (
-                                    <tr key={playerId} className={rowClass}>
-                                        <PlayerItem
-                                            playerId={playerId}
-                                            rank={rank}
-                                            columns={columns}
-                                            playerRanking={playerRanking}
-                                            onNameClick={() => setShowCardForPlayerId(playerId)}
-                                        />
-                                    </tr>
+                                    <React.Fragment key={playerId}>
+                                        <tr className={rowClass}>
+                                            <PlayerItem
+                                                playerId={playerId}
+                                                rank={rank}
+                                                columns={columns}
+                                                playerRanking={playerRanking}
+                                                onNameClick={() => setShowCardForPlayerId(playerId)}
+                                                showNote={noteVisible}
+                                                onToggleNote={() => toggleNote(playerId)}
+                                            />
+                                        </tr>
+                                        {noteVisible && (
+                                            <PlayerNoteRow
+                                                playerId={playerId}
+                                                playerRanking={playerRanking}
+                                                colSpan={totalColumns}
+                                                editable={editable}
+                                            />
+                                        )}
+                                    </React.Fragment>
                                 );
                             })}
                         </SortableContext>

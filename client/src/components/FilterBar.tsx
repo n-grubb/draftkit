@@ -31,8 +31,14 @@ const GearIcon = () => (
     </svg>
 )
 
+const CommentIcon = () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+)
+
 const FilterBar = (props) => {
-    const { posFilter, onPosChange, draftMode, searchQuery, onSearchChange } = props;
+    const { posFilter, onPosChange, draftMode, searchQuery, onSearchChange, allNotesExpanded, onToggleAllNotes } = props;
     const [showStatsModal, setShowStatsModal] = useState(false);
 
     return (
@@ -74,6 +80,13 @@ const FilterBar = (props) => {
 
             {!draftMode && (
                 <div className="controls-actions">
+                    <button
+                        className={`gear-btn${allNotesExpanded ? ' active' : ''}`}
+                        onClick={onToggleAllNotes}
+                        title={allNotesExpanded ? 'Collapse all notes' : 'Expand all notes'}
+                    >
+                        <CommentIcon />
+                    </button>
                     <button
                         className="gear-btn"
                         onClick={() => setShowStatsModal(true)}

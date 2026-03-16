@@ -18,10 +18,9 @@ const HighlightIcon = () => (
     </svg>
 )
 
-const NoteIcon = () => (
+const CommentIcon = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="2" x2="22" y2="6"/>
-        <path d="M7.5 20.5 19 9l-4-4L3.5 16.5 2 22z"/>
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
     </svg>
 )
 
@@ -153,11 +152,11 @@ const PlayerItem = (props) => {
                     <div className="actions-wrapper">
                         {notesEditable && (
                             <button
-                                className={`icon-btn note-btn${(hasNote || showNote) ? ' active' : ''}`}
+                                className={`icon-btn comment-btn${(hasNote || showNote) ? ' active' : ''}`}
                                 onClick={onToggleNote}
-                                title={showNote ? 'Hide note' : 'Add note'}
+                                title={showNote ? 'Hide comment' : 'Add comment'}
                             >
-                                <NoteIcon />
+                                <CommentIcon />
                             </button>
                         )}
                         <button

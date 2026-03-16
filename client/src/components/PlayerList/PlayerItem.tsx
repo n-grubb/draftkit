@@ -1,4 +1,4 @@
-import {useContext, useState, useRef} from 'react'
+import {useContext, useState, useRef, useEffect} from 'react'
 import {StoreContext} from '~/data/store'
 import {DraftContext} from '~/data/draftContext'
 import {formatStatValue, evaluateStatQuality} from '~/features/stats'
@@ -25,17 +25,13 @@ const CommentIcon = () => (
 )
 
 const PlayerItem = (props) => {
-    const {playerId, playerRanking, editable, onNameClick, columns, rank} = props
-    const {players, teams, mode, ignorePlayer, highlightPlayer, updatePlayerNote, userRanking} = useContext(StoreContext);
+    const {playerId, playerRanking, editable, onNameClick, columns, rank, showNote, onToggleNote} = props
+    const {players, teams, mode, ignorePlayer, highlightPlayer, userRanking} = useContext(StoreContext);
     const {isMyTurn, draftPlayer} = useContext(DraftContext);
 
     const isDraftMode = mode === 'draft';
     const notesEditable = editable && (!userRanking?.isShared || !!userRanking?.pin);
     const hasNote = !!playerRanking?.note;
-
-    const [noteText, setNoteText] = useState(playerRanking?.note || '');
-    const [showNote, setShowNote] = useState(hasNote);
-    const noteRef = useRef<HTMLTextAreaElement>(null);
 
     const player = players[playerId]
     const projections = player.projections
@@ -75,15 +71,6 @@ const PlayerItem = (props) => {
     const onIgnore = () => ignorePlayer(playerId)
     const onDraft = () => draftPlayer(playerId)
 
-    const onToggleNote = () => {
-        const next = !showNote;
-        setShowNote(next);
-        if (next) {
-            // Focus the textarea on the next render tick
-            setTimeout(() => noteRef.current?.focus(), 0);
-        }
-    }
-
     const isHighlighted = !!playerRanking?.highlight
     const isIgnored = !!playerRanking?.ignore
 
@@ -106,27 +93,12 @@ const PlayerItem = (props) => {
                             >{position}</span>
                         ))}
                     </div>
-                    {notesEditable && showNote && (
-                        <textarea
-                            ref={noteRef}
-                            className="player-note-input"
-                            placeholder="Add a note…"
-                            value={noteText}
-                            onChange={(e) => setNoteText(e.target.value)}
-                            onBlur={() => updatePlayerNote(playerId, noteText)}
-                            rows={1}
-                        />
-                    )}
-                    {!notesEditable && hasNote && (
-                        <p className="player-note-text">{playerRanking.note}</p>
-                    )}
                 </div>
             </td>
             <td className="adp-cell">
                 <div className="adp-info">
                     {player.averageDraftPosition && (
                         <div className="adp">
-                            <span className="adp-label">ADP</span>
                             <span className="adp-value">{Math.round(player.averageDraftPosition * 10) / 10}</span>
                             {player.adpChange && (
                                 <span className={`adp-change ${player.adpChange > 0 ? 'positive' : 'negative'}`}>
@@ -189,4 +161,38 @@ const PlayerItem = (props) => {
     )
 }
 
+const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable }) => {
+    const {updatePlayerNote, userRanking} = useContext(StoreContext);
+    const notesEditable = editable && (!userRanking?.isShared || !!userRanking?.pin);
+    const [noteText, setNoteText] = useState(playerRanking?.note || '');
+    const noteRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        if (notesEditable) {
+            setTimeout(() => noteRef.current?.focus(), 0);
+        }
+    }, []);
+
+    return (
+        <tr className="note-row">
+            <td colSpan={colSpan} className="note-row-cell">
+                {notesEditable ? (
+                    <textarea
+                        ref={noteRef}
+                        className="player-note-input"
+                        placeholder="Add a note…"
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                        onBlur={() => updatePlayerNote(playerId, noteText)}
+                        rows={1}
+                    />
+                ) : (
+                    <p className="player-note-text">{playerRanking?.note}</p>
+                )}
+            </td>
+        </tr>
+    )
+}
+
+export { PlayerNoteRow }
 export default PlayerItem

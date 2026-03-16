@@ -1100,11 +1100,55 @@ button[data-disabled] {
   color: var(--brown);
 }
 
+/* Column group borders */
+.adp-header,
+.adp-cell {
+  border-left: 2px solid var(--tan-dark);
+}
+
+.vs-adp-header,
+.vs-adp-cell {
+  border-right: 2px solid var(--tan-dark);
+}
+
 /* ADP cell */
 .adp-cell {
   white-space: nowrap;
   width: 1%;
   text-align: center;
+}
+
+/* vsADP cell */
+.vs-adp-header {
+  font-size: 0.65rem;
+  text-align: center;
+  width: 44px;
+  white-space: nowrap;
+}
+
+.vs-adp-cell {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  width: 44px;
+  white-space: nowrap;
+}
+
+.vs-adp-gold {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.vs-adp-green {
+  color: #2e7d32;
+}
+
+.vs-adp-red {
+  color: #c62828;
+}
+
+.vs-adp-neutral {
+  color: var(--greybrown);
 }
 
 .adp-info {

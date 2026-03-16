@@ -179,6 +179,7 @@ const PlayerList = ({ editable }: any) => {
                             <th className="adp-header">ADP</th>
                             <th className="rank-source-header">ESPN</th>
                             <th className="rank-source-header">FPRO</th>
+                            <th className="vs-adp-header">vsADP</th>
                             {columns.map(col => (
                                 <th
                                     key={col.id}

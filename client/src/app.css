@@ -1071,6 +1071,23 @@ button[data-disabled] {
   width: 44px;
 }
 
+/* Source rank cells (ESPN, FPRO) */
+.rank-source-header {
+  font-size: 0.7rem;
+  text-align: center;
+  width: 44px;
+  white-space: nowrap;
+}
+
+.rank-source-cell {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 500;
+  width: 44px;
+  white-space: nowrap;
+  color: var(--brown);
+}
+
 /* ADP cell */
 .adp-cell {
   white-space: nowrap;
@@ -1720,6 +1737,29 @@ button {
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
   padding: 0.25rem 0.5rem;
+}
+
+.player-card-ranks {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.rank-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.rank-badge-label {
+  color: var(--greybrown);
+  font-weight: 500;
+}
+
+.rank-badge-value {
+  color: var(--brown);
+  font-weight: 700;
 }
 
 .player-card-stats {

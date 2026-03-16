@@ -115,13 +115,16 @@ export const PITCHER_STATS = [
 ];
 
 // Data sources available for refresh
-export const VALID_DATA_SOURCES = ['teams', 'stats', 'projections', 'historical'] as const;
+export const VALID_DATA_SOURCES = ['teams', 'stats', 'projections', 'historical', 'fantasypros'] as const;
 
 // API URLs
 export const ESPN_TEAMS_URL = 'https://site.web.api.espn.com/apis/site/v2/teams?region=us&lang=en&leagues=mlb';
 export const ESPN_PLAYERS_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/3850?view=kona_player_info';
 export const FANGRAPHS_PROJECTIONS_URL = 'https://www.fangraphs.com/api/projections';
 export const FANGRAPHS_LEADERS_URL = 'https://www.fangraphs.com/api/leaders/major-league/data';
+
+// FantasyPros URL
+export const FANTASYPROS_RANKINGS_URL = 'https://www.fantasypros.com/mlb/rankings/overall.php';
 
 // Current season for data fetching
 export const CURRENT_SEASON = 2026;

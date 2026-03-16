@@ -138,5 +138,6 @@ function extract_player_details(espn_player: any): PlayerDetails {
         percent_change: player.ownership?.percentChange || null,
         birth_date: player.dateOfBirth || null,
         age: calculate_age(player.dateOfBirth),
+        espn_rank: player.draftRanksByRankType?.STANDARD?.rank || null,
     };
 }

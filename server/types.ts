@@ -34,6 +34,8 @@ export interface Player {
     injuryStatus: string | null;
     age: number | null;
     birthDate: string | null;
+    espnRank: number | null;
+    fantasyProsRank: number | null;
 }
 
 // Note: Ranking uses camelCase for stored field names to maintain
@@ -67,6 +69,7 @@ export interface PlayerDetails {
     percent_change: number | null;
     birth_date: string | null;
     age: number | null;
+    espn_rank: number | null;
 }
 
 export interface PlayerData {

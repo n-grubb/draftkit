@@ -144,8 +144,10 @@ const PlayerItem = (props) => {
                 {player.averageDraftPosition ? (() => {
                     const adpRound = Math.round(player.averageDraftPosition);
                     const diff = adpRound - rank;
-                    if (diff === 0) return <span className="vs-adp-neutral">0</span>;
-                    const className = diff > 0 ? 'vs-adp-positive' : 'vs-adp-negative';
+                    let className = 'vs-adp-neutral';
+                    if (diff > 50) className = 'vs-adp-gold';
+                    else if (diff > 10) className = 'vs-adp-green';
+                    else if (diff < -10) className = 'vs-adp-red';
                     return <span className={className}>{diff > 0 ? '+' : ''}{diff}</span>;
                 })() : <span className="stat-neutral">—</span>}
             </td>

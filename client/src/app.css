@@ -1134,11 +1134,16 @@ button[data-disabled] {
   white-space: nowrap;
 }
 
-.vs-adp-positive {
+.vs-adp-gold {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.vs-adp-green {
   color: #2e7d32;
 }
 
-.vs-adp-negative {
+.vs-adp-red {
   color: #c62828;
 }
 

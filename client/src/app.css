@@ -1295,14 +1295,40 @@ button[data-disabled] {
   color: var(--notification-red);
 }
 
-.injury-status {
-  padding: 0.1rem 0.25rem;
-  border-radius: 3px;
-  font-size: 0.7rem;
+.player-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.injury-designation {
+  font-size: 0.65rem;
   font-weight: bold;
-  background-color: rgba(255, 84, 74, 0.1);
   color: var(--notification-red);
 }
+
+.player-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--greybrown);
+  font-size: 0.7rem;
+  line-height: 1.2;
+}
+
+.player-team-abbrev {
+  font-weight: 600;
+}
+
+.player-pos[data-pos="SP"] { color: var(--c-sp); }
+.player-pos[data-pos="RP"] { color: var(--c-rp); }
+.player-pos[data-pos="C"] { color: var(--c-c); }
+.player-pos[data-pos="1B"] { color: var(--c-1b); }
+.player-pos[data-pos="2B"] { color: var(--c-2b); }
+.player-pos[data-pos="3B"] { color: var(--c-3b); }
+.player-pos[data-pos="SS"] { color: var(--c-ss); }
+.player-pos[data-pos="OF"] { color: var(--c-of); }
+.player-pos[data-pos="DH"] { color: var(--c-dh); }
 
 .player-name {
   cursor: pointer;

@@ -147,8 +147,8 @@ const PlayerList = ({ editable }: any) => {
         return !!expandedNotes[playerId];
     }
 
-    // Total columns for note row colSpan: rank + player + adp + stats + actions
-    const totalColumns = 3 + columns.length + (editable ? 1 : 0);
+    // Total columns for note row colSpan: rank + player + adp + espn + fpro + vsadp + stats + actions
+    const totalColumns = 6 + columns.length + (editable ? 1 : 0);
 
     return (
         <>
@@ -179,6 +179,7 @@ const PlayerList = ({ editable }: any) => {
                             <th className="adp-header">ADP</th>
                             <th className="rank-source-header">ESPN</th>
                             <th className="rank-source-header">FPRO</th>
+                            <th className="vs-adp-header">vsADP</th>
                             {columns.map(col => (
                                 <th
                                     key={col.id}

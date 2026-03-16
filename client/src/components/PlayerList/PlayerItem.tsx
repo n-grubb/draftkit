@@ -140,6 +140,17 @@ const PlayerItem = (props) => {
             <td className="rank-source-cell">
                 {player.fantasyProsRank ? player.fantasyProsRank : <span className="stat-neutral">—</span>}
             </td>
+            <td className="vs-adp-cell">
+                {player.averageDraftPosition ? (() => {
+                    const adpRound = Math.round(player.averageDraftPosition);
+                    const diff = adpRound - rank;
+                    let className = 'vs-adp-neutral';
+                    if (diff > 50) className = 'vs-adp-gold';
+                    else if (diff > 10) className = 'vs-adp-green';
+                    else if (diff < -10) className = 'vs-adp-red';
+                    return <span className={className}>{diff > 0 ? '+' : ''}{diff}</span>;
+                })() : <span className="stat-neutral">—</span>}
+            </td>
             {columns.map(column => (
                 <td key={column.id} className="stat-cell">
                     {renderCellValue(player, column.id)}

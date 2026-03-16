@@ -907,7 +907,7 @@ button[data-disabled] {
 .player-table {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 0 2px;
+  border-spacing: 0;
 }
 
 .player-table thead th {
@@ -954,14 +954,8 @@ button[data-disabled] {
 .player-row td:first-child { border-radius: 6px 0 0 6px; }
 .player-row td:last-child  { border-radius: 0 6px 6px 0; }
 
-.player-row.highlighted td {
-  box-shadow: inset 0 1.5px 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
-}
 .player-row.highlighted td:first-child {
-  box-shadow: inset 1.5px 1.5px 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
-}
-.player-row.highlighted td:last-child {
-  box-shadow: inset -1.5px 1.5px 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
+  box-shadow: inset 3px 0 0 0 var(--highlight-blue);
 }
 .player-row.ignored td { opacity: 0.5; }
 

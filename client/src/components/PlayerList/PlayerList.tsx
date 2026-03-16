@@ -147,8 +147,8 @@ const PlayerList = ({ editable }: any) => {
         return !!expandedNotes[playerId];
     }
 
-    // Total columns for note row colSpan: rank + player + adp + stats + actions
-    const totalColumns = 3 + columns.length + (editable ? 1 : 0);
+    // Total columns for note row colSpan: rank + player + adp + ESPN + FPRO + stats + actions
+    const totalColumns = 5 + columns.length + (editable ? 1 : 0);
 
     return (
         <>

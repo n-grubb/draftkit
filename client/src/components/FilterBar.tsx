@@ -86,6 +86,7 @@ const FilterBar = (props) => {
                         title={allNotesExpanded ? 'Collapse all notes' : 'Expand all notes'}
                     >
                         <CommentIcon />
+                        <span>{allNotesExpanded ? 'Notes On' : 'Notes Off'}</span>
                     </button>
                     <button
                         className="gear-btn"

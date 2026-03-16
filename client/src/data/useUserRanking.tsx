@@ -471,6 +471,85 @@ const useUserRanking = (players) => {
         }
     };
 
+    const updatePlayerProjection = async (playerId, statId, value) => {
+        const currentPlayerInfo = ranking.players[playerId] || { rank: 0, ignore: false, highlight: false };
+        const currentCustom = currentPlayerInfo.customProjections || {};
+
+        let updatedCustom;
+        if (value === null || value === undefined || value === '') {
+            // Remove the override
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { [statId]: _removed, ...rest } = currentCustom;
+            updatedCustom = Object.keys(rest).length > 0 ? rest : undefined;
+        } else {
+            updatedCustom = { ...currentCustom, [statId]: Number(value) };
+        }
+
+        const updatedPlayers = {
+            ...ranking.players,
+            [playerId]: {
+                ...currentPlayerInfo,
+                customProjections: updatedCustom
+            }
+        };
+
+        const now = Date.now();
+        const newRanking = {
+            ...ranking,
+            players: updatedPlayers,
+            updatedAt: now
+        };
+
+        setRanking(newRanking);
+        localStorage.setItem(`ranking_${newRanking.id}`, JSON.stringify(newRanking));
+        saveToRankingsList(newRanking);
+
+        if (isShared && !ranking.id.startsWith('local') && pin) {
+            try {
+                const updatedRemoteRanking = await updateRemoteRanking(
+                    ranking.id,
+                    { players: updatedPlayers },
+                    pin
+                );
+                updatedRemoteRanking.name = newRanking.name;
+                setRanking(updatedRemoteRanking);
+                localStorage.setItem(`ranking_${updatedRemoteRanking.id}`, JSON.stringify(updatedRemoteRanking));
+                saveToRankingsList(updatedRemoteRanking);
+            } catch (err) {
+                console.error('Failed to update remote ranking:', err);
+            }
+        }
+    };
+
+    const toggleCustomProjections = async () => {
+        const now = Date.now();
+        const newRanking = {
+            ...ranking,
+            useCustomProjections: ranking.useCustomProjections === false ? true : false,
+            updatedAt: now
+        };
+
+        setRanking(newRanking);
+        localStorage.setItem(`ranking_${newRanking.id}`, JSON.stringify(newRanking));
+        saveToRankingsList(newRanking);
+
+        if (isShared && !ranking.id.startsWith('local') && pin) {
+            try {
+                const updatedRemoteRanking = await updateRemoteRanking(
+                    ranking.id,
+                    { useCustomProjections: newRanking.useCustomProjections },
+                    pin
+                );
+                updatedRemoteRanking.name = newRanking.name;
+                setRanking(updatedRemoteRanking);
+                localStorage.setItem(`ranking_${updatedRemoteRanking.id}`, JSON.stringify(updatedRemoteRanking));
+                saveToRankingsList(updatedRemoteRanking);
+            } catch (err) {
+                console.error('Failed to update remote ranking:', err);
+            }
+        }
+    };
+
     const ignorePlayer = async (playerId) => {
         const currentPlayerInfo = ranking.players[playerId] || { rank: 0, ignore: false, highlight: false };
         const isCurrentlyIgnored = currentPlayerInfo.ignore || false;
@@ -547,6 +626,8 @@ const useUserRanking = (players) => {
         highlightPlayer,
         ignorePlayer,
         updatePlayerNote,
+        updatePlayerProjection,
+        toggleCustomProjections,
         shareRanking,
         loadRanking,
         createNewRanking,

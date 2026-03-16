@@ -37,8 +37,15 @@ const CommentIcon = () => (
     </svg>
 )
 
+const ToggleIcon = () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="1" y="5" width="22" height="14" rx="7" ry="7"/>
+        <circle cx="16" cy="12" r="3"/>
+    </svg>
+)
+
 const FilterBar = (props) => {
-    const { posFilter, onPosChange, draftMode, searchQuery, onSearchChange, allNotesExpanded, onToggleAllNotes } = props;
+    const { posFilter, onPosChange, draftMode, searchQuery, onSearchChange, allNotesExpanded, onToggleAllNotes, hasCustomProjections, useCustomProjections, onToggleCustomProjections } = props;
     const [showStatsModal, setShowStatsModal] = useState(false);
 
     return (
@@ -80,6 +87,16 @@ const FilterBar = (props) => {
 
             {!draftMode && (
                 <div className="controls-actions">
+                    {hasCustomProjections && (
+                        <button
+                            className={`gear-btn${useCustomProjections ? ' active' : ''}`}
+                            onClick={onToggleCustomProjections}
+                            title={useCustomProjections ? 'Using custom projections' : 'Using default projections'}
+                        >
+                            <ToggleIcon />
+                            <span>{useCustomProjections ? 'Custom On' : 'Custom Off'}</span>
+                        </button>
+                    )}
                     <button
                         className={`gear-btn${allNotesExpanded ? ' active' : ''}`}
                         onClick={onToggleAllNotes}

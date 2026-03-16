@@ -28,7 +28,9 @@ export const StoreProvider = ({ children }) => {
         updateRanking,
         ignorePlayer,
         highlightPlayer,
-        updatePlayerNote
+        updatePlayerNote,
+        updatePlayerProjection,
+        toggleCustomProjections
     } = userRanking
 
     const error = errorFetchingMLBTeams || errorFetchingPlayers
@@ -44,6 +46,8 @@ export const StoreProvider = ({ children }) => {
         ignorePlayer,
         highlightPlayer,
         updatePlayerNote,
+        updatePlayerProjection,
+        toggleCustomProjections,
         userRanking // Expose the full userRanking object for sharing functionality
     }
 

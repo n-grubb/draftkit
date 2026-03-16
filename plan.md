@@ -14,13 +14,13 @@ The `.player-controls` sticky toolbar currently has `background: var(--soft-tan)
 
 ---
 
-## 2. Narrow the search bar / distribute column widths more evenly
-**Files:** `client/src/app.css` (~line 685-702)
+## 2. Narrow the Player column / distribute column widths more evenly
+**Files:** `client/src/app.css` (~line 990-995)
 
-The search input is currently `width: 210px` (expands to `265px` on focus). The player column also has `min-width: 190px`. The annotation says the player column width is fine but the overall columns should distribute more evenly.
+The Player column currently has `min-width: 190px` on `.player-identity-cell`, making it wider than necessary and squeezing stat columns. The search bar width is fine as-is.
 
-- Reduce `.search-input` width from `210px` to ~`160px` and focus width from `265px` to ~`210px`
-- This naturally allows more room for stat columns
+- Reduce `.player-identity-cell` `min-width` from `190px` to a smaller value (e.g., ~`150px`)
+- This gives stat columns more breathing room and distributes widths more evenly
 
 ---
 

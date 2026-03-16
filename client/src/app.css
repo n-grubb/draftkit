@@ -648,6 +648,7 @@ button[data-disabled] {
   align-items: center;
   gap: 0.65rem;
   height: var(--controls-height);
+  background: var(--soft-tan);
   border-bottom: 1.5px solid var(--tan-dark);
   margin: 0.5rem 0 0;
   padding: 0 0.5rem;

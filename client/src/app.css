@@ -907,7 +907,7 @@ button[data-disabled] {
 .player-table {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 0 2px;
+  border-spacing: 0;
 }
 
 .player-table thead th {
@@ -944,6 +944,7 @@ button[data-disabled] {
   padding: 0.2rem 0.4rem;
   background: var(--soft-tan);
   vertical-align: middle;
+  border-top: 2px solid transparent;
 }
 
 /* Zebra striping — class-based to handle note rows */
@@ -1056,12 +1057,20 @@ button[data-disabled] {
 .note-row .note-row-cell {
   background: var(--soft-tan);
   padding: 0.2rem 0.5rem 0.4rem 3.5rem !important;
-  border-radius: 6px;
+  border-radius: 0 0 6px 6px;
 }
 
 .note-row.even-row .note-row-cell {
   background: #e0d3b0;
 }
+
+/* Remove bottom border-radius from player row when note row follows */
+.player-row:has(+ .note-row) td:first-child,
+.draggable-item:has(+ .note-row) td:first-child { border-radius: 6px 0 0 0; }
+.player-row:has(+ .note-row) td:last-child,
+.draggable-item:has(+ .note-row) td:last-child { border-radius: 0 6px 0 0; }
+.player-row:has(+ .note-row) td:has(+ .actions-cell),
+.draggable-item:has(+ .note-row) td:has(+ .actions-cell) { border-radius: 0; }
 
 .note-row .player-note-input {
   width: 100%;

@@ -111,7 +111,12 @@ const PlayerItem = (props) => {
                     <div className="player-meta small">
                         <span className="player-team-abbrev">{team.abbrev}</span>
                         <span className="player-position-list">
-                            {positions.join(', ')}
+                            {positions.map((position, i) => (
+                                <span key={position}>
+                                    {i > 0 && ', '}
+                                    <span className="player-pos" data-pos={position}>{position}</span>
+                                </span>
+                            ))}
                         </span>
                     </div>
                 </div>

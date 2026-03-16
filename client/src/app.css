@@ -1076,6 +1076,65 @@ button[data-disabled] {
   width: 100%;
 }
 
+/* Projection edit row */
+.projection-edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.projection-edit-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.5);
+  border-radius: 4px;
+  padding: 2px 6px;
+  border: 1px solid transparent;
+}
+
+.projection-edit-field.custom {
+  border-color: var(--navy, #2563eb);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.projection-edit-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--greybrown, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  min-width: 28px;
+}
+
+.projection-edit-input {
+  width: 48px;
+  padding: 2px 4px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  text-align: right;
+  background: white;
+  font-family: inherit;
+}
+
+.projection-edit-input:focus {
+  outline: none;
+  border-color: var(--navy, #2563eb);
+  box-shadow: 0 0 0 1px var(--navy, #2563eb);
+}
+
+.projection-edit-field.custom .projection-edit-input {
+  font-weight: 600;
+  color: var(--navy, #2563eb);
+}
+
+/* Custom projection indicator in stat cells */
+.stat-custom {
+  font-style: italic;
+}
+
 /* Active state for toggle-all-notes button */
 .gear-btn.active {
   background: rgba(134, 122, 101, 0.15);

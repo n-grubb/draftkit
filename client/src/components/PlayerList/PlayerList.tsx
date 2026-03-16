@@ -1,4 +1,4 @@
-import React, {useContext, useState, useEffect, useRef} from 'react'
+import React, {useContext, useState, useEffect, useRef, useMemo} from 'react'
 import {
     DndContext,
     KeyboardSensor,
@@ -25,7 +25,7 @@ import {StatsPrefsContext} from '~/data/statsPrefsContext'
 import {statsForFilter} from '~/features/filtering/columns'
 
 const PlayerList = ({ editable }: any) => {
-    const {players, ranking, mode} = useContext(StoreContext);
+    const {players, ranking, mode, toggleCustomProjections} = useContext(StoreContext);
     const {draftedPlayers} = useContext(DraftContext);
     const {selectedBattingStats, selectedPitchingStats} = useContext(StatsPrefsContext);
 
@@ -40,6 +40,15 @@ const PlayerList = ({ editable }: any) => {
 
     const isDraftMode = mode === 'draft';
     const draftedPlayerIds = isDraftMode ? Object.values(draftedPlayers) : [];
+
+    const hasCustomProjections = useMemo(() => {
+        if (!ranking?.players) return false;
+        return Object.values(ranking.players).some((p: any) =>
+            p.customProjections && Object.keys(p.customProjections).length > 0
+        );
+    }, [ranking?.players]);
+
+    const useCustomProjections = ranking?.useCustomProjections !== false;
 
     useEffect(() => {
         if (ranking.players && Object.keys(ranking.players).length > 0) {
@@ -117,7 +126,10 @@ const PlayerList = ({ editable }: any) => {
         ? [...rankedBeforeSort].sort((a, b) => {
             const getVal = (id) => {
                 const p = players[id];
-                return p?.[sortColumn] ?? p?.projections?.[sortColumn] ?? 0;
+                const custom = useCustomProjections
+                    ? ranking.players[id]?.customProjections
+                    : null;
+                return custom?.[sortColumn] ?? p?.[sortColumn] ?? p?.projections?.[sortColumn] ?? 0;
             };
             return sortDirection === 'desc' ? getVal(b) - getVal(a) : getVal(a) - getVal(b);
         })
@@ -160,6 +172,9 @@ const PlayerList = ({ editable }: any) => {
                 onSearchChange={setSearchQuery}
                 allNotesExpanded={allNotesExpanded}
                 onToggleAllNotes={toggleAllNotes}
+                hasCustomProjections={hasCustomProjections}
+                useCustomProjections={useCustomProjections}
+                onToggleCustomProjections={toggleCustomProjections}
             />
 
             <UnsavedChangesPrompt rankedPlayerIds={rankedPlayerIds} />
@@ -235,6 +250,7 @@ const PlayerList = ({ editable }: any) => {
                                                 colSpan={totalColumns}
                                                 editable={editable}
                                                 isEven={isEven}
+                                                columns={columns}
                                             />
                                         )}
                                     </React.Fragment>
@@ -258,6 +274,7 @@ const PlayerList = ({ editable }: any) => {
                                                 colSpan={totalColumns}
                                                 editable={editable}
                                                 isEven={isEven}
+                                                columns={columns}
                                             />
                                         )}
                                     </React.Fragment>

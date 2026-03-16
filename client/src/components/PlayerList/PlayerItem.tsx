@@ -35,19 +35,21 @@ const HighlightIcon = () => (
     </svg>
 )
 
-const CommentIcon = () => (
+const PencilIcon = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+        <path d="m15 5 4 4"/>
     </svg>
 )
 
 const PlayerItem = (props) => {
     const {playerId, playerRanking, editable, onNameClick, columns, rank, showNote, onToggleNote} = props
-    const {players, teams, mode, ignorePlayer, highlightPlayer} = useContext(StoreContext);
+    const {players, teams, mode, ranking, ignorePlayer, highlightPlayer} = useContext(StoreContext);
     const {isMyTurn, draftPlayer} = useContext(DraftContext);
 
     const isDraftMode = mode === 'draft';
     const hasNote = !!playerRanking?.note;
+    const hasCustomProjections = playerRanking?.customProjections && Object.keys(playerRanking.customProjections).length > 0;
 
     const player = players[playerId]
     const projections = player.projections
@@ -57,13 +59,14 @@ const PlayerItem = (props) => {
         positions = positions.filter(position => position != 'DH')
     }
 
+    const useCustom = ranking.useCustomProjections !== false;
+    const customProjections = useCustom ? playerRanking?.customProjections : null;
+
     const renderCellValue = (player, columnId) => {
-        let value = null;
-        if (player[columnId]) {
-            value = player[columnId];
-        } else if (projections && projections[columnId]) {
-            value = projections[columnId];
-        } else {
+        const isCustom = customProjections?.[columnId] != null;
+        let value = customProjections?.[columnId] ?? projections?.[columnId] ?? player[columnId] ?? null;
+
+        if (value == null) {
             return <span className="stat-neutral">—</span>;
         }
 
@@ -78,7 +81,7 @@ const PlayerItem = (props) => {
         const formattedValue = formatStatValue(columnId, value);
         const className = quality !== 'below-average' ? `stat-${quality}` : '';
 
-        return <span className={className}>{formattedValue}</span>;
+        return <span className={`${className}${isCustom ? ' stat-custom' : ''}`}>{formattedValue}</span>;
     }
 
     const team = teams[player.team_id]
@@ -162,11 +165,11 @@ const PlayerItem = (props) => {
                 <td className="actions-cell">
                     <div className="actions-wrapper">
                         <button
-                            className={`icon-btn comment-btn${(hasNote || showNote) ? ' active' : ''}`}
+                            className={`icon-btn comment-btn${(hasNote || hasCustomProjections || showNote) ? ' active' : ''}`}
                             onClick={onToggleNote}
-                            title={showNote ? 'Hide comment' : 'Add comment'}
+                            title={showNote ? 'Hide editor' : 'Edit projections & notes'}
                         >
-                            <CommentIcon />
+                            <PencilIcon />
                         </button>
                         <button
                             className={`icon-btn ignore-btn${isIgnored ? ' active' : ''}`}
@@ -198,21 +201,55 @@ const PlayerItem = (props) => {
     )
 }
 
-const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEven }) => {
-    const {updatePlayerNote} = useContext(StoreContext);
+const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEven, columns }) => {
+    const {players, updatePlayerNote, updatePlayerProjection, userRanking} = useContext(StoreContext);
     const notesEditable = editable;
+  
     const [noteText, setNoteText] = useState(playerRanking?.note || '');
     const noteRef = useRef<HTMLTextAreaElement>(null);
 
+    const player = players[playerId];
+    const projections = player?.projections || {};
+    const customProjections = playerRanking?.customProjections || {};
+
     useEffect(() => {
-        if (notesEditable) {
+        if (notesEditable && !columns?.length) {
             setTimeout(() => noteRef.current?.focus(), 0);
         }
     }, []);
 
+    const handleProjectionBlur = (statId, inputValue) => {
+        const original = projections[statId];
+        const parsed = inputValue === '' ? null : Number(inputValue);
+        // Remove override if empty or matches original
+        if (parsed === null || parsed === original) {
+            updatePlayerProjection(playerId, statId, null);
+        } else if (!isNaN(parsed)) {
+            updatePlayerProjection(playerId, statId, parsed);
+        }
+    };
+
     return (
         <tr className={`note-row${isEven ? ' even-row' : ''}`}>
             <td colSpan={colSpan} className="note-row-cell">
+                {notesEditable && columns?.length > 0 && (
+                    <div className="projection-edit-row">
+                        {columns.map(col => {
+                            const isCustom = customProjections[col.id] != null;
+                            const currentValue = customProjections[col.id] ?? projections[col.id] ?? '';
+                            return (
+                                <ProjectionInput
+                                    key={col.id}
+                                    statId={col.id}
+                                    label={col.name}
+                                    defaultValue={currentValue}
+                                    isCustom={isCustom}
+                                    onBlur={handleProjectionBlur}
+                                />
+                            );
+                        })}
+                    </div>
+                )}
                 {notesEditable ? (
                     <textarea
                         ref={noteRef}
@@ -229,6 +266,24 @@ const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEven }) =
             </td>
         </tr>
     )
+}
+
+const ProjectionInput = ({ statId, label, defaultValue, isCustom, onBlur }) => {
+    const [value, setValue] = useState(defaultValue !== '' ? String(defaultValue) : '');
+
+    return (
+        <div className={`projection-edit-field${isCustom ? ' custom' : ''}`}>
+            <label className="projection-edit-label">{label}</label>
+            <input
+                type="text"
+                inputMode="decimal"
+                className="projection-edit-input"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                onBlur={() => onBlur(statId, value)}
+            />
+        </div>
+    );
 }
 
 export { PlayerNoteRow }

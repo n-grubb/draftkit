@@ -944,6 +944,7 @@ button[data-disabled] {
   padding: 0.2rem 0.4rem;
   background: var(--soft-tan);
   vertical-align: middle;
+  border-top: 2px solid transparent;
 }
 
 /* Zebra striping — class-based to handle note rows */
@@ -955,7 +956,18 @@ button[data-disabled] {
 .player-row td:last-child  { border-radius: 0 6px 6px 0; }
 
 .player-row.highlighted td:first-child {
-  box-shadow: inset 3px 0 0 0 var(--highlight-blue);
+  position: relative;
+}
+
+.player-row.highlighted td:first-child::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: var(--highlight-blue);
+  border-radius: 3px 0 0 3px;
 }
 .player-row.ignored td { opacity: 0.5; }
 
@@ -1001,14 +1013,15 @@ button[data-disabled] {
 .player-note-input {
   width: 100%;
   resize: none;
-  border: 1px solid transparent;
+  border: 1px solid var(--tan-dark);
   border-radius: 4px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.7);
   font-family: inherit;
-  font-size: 0.7rem;
-  color: var(--greybrown);
-  padding: 0.1rem 0.3rem;
-  line-height: 1.3;
+  font-size: 0.75rem;
+  color: var(--brown);
+  padding: 0.3rem 0.5rem;
+  line-height: 1.4;
+  min-height: 32px;
   transition: border-color 0.15s ease, background 0.15s ease;
   overflow: hidden;
   margin-top: 0.1rem;
@@ -1019,8 +1032,8 @@ button[data-disabled] {
   }
 
   &:hover {
-    border-color: var(--tan-dark);
-    background: rgba(255, 255, 255, 0.5);
+    border-color: var(--greybrown);
+    background: rgba(255, 255, 255, 0.85);
   }
 
   &:focus {
@@ -1043,7 +1056,7 @@ button[data-disabled] {
 /* Note accordion row — seamless with parent */
 .note-row .note-row-cell {
   background: var(--soft-tan);
-  padding: 0 0.5rem 0.3rem 3.5rem !important;
+  padding: 0.2rem 0.5rem 0.4rem 3.5rem !important;
   border-radius: 0 0 6px 6px;
 }
 
@@ -1153,15 +1166,15 @@ button[data-disabled] {
   color: var(--brown);
 }
 
-/* Column group borders */
-.adp-header,
-.adp-cell {
-  border-left: 2px solid var(--tan-dark);
-}
-
-.vs-adp-header,
-.vs-adp-cell {
-  border-right: 2px solid var(--tan-dark);
+/* Column group spacers */
+.spacer-header,
+.spacer-cell {
+  width: 10px !important;
+  min-width: 10px;
+  max-width: 10px;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
 }
 
 /* ADP cell */
@@ -1251,29 +1264,7 @@ button[data-disabled] {
 /* Border-radius on the cell before actions (the visual row end) */
 .player-row td:has(+ .actions-cell) { border-radius: 0 6px 6px 0; }
 
-/* Highlighted border on the cell before actions — close the right edge when actions hidden */
-.player-row.highlighted td:has(+ .actions-cell) {
-  box-shadow: inset -1.5px 1.5px 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
-}
-.player-row.highlighted td.actions-cell {
-  box-shadow: none;
-}
-
-/* When hovered, extend the highlight border over the actions wrapper */
-.player-row.highlighted:hover td:has(+ .actions-cell) {
-  box-shadow: inset 0 1.5px 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
-}
-.player-row.highlighted .actions-wrapper {
-  box-shadow: inset 0 1.5px 0 0 var(--highlight-blue), inset -1.5px 0 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
-  border-radius: 0 6px 6px 0;
-}
-.draggable-item.highlighted:hover td:has(+ .actions-cell) {
-  box-shadow: inset 0 1.5px 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
-}
-.draggable-item.highlighted .actions-wrapper {
-  box-shadow: inset 0 1.5px 0 0 var(--highlight-blue), inset -1.5px 0 0 0 var(--highlight-blue), inset 0 -1.5px 0 0 var(--highlight-blue);
-  border-radius: 0 6px 6px 0;
-}
+/* No highlight border on actions overlay — the left tab is sufficient */
 
 .actions-header {
   width: 0;

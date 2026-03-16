@@ -1,4 +1,4 @@
-import React, {useContext, useState, useEffect} from 'react'
+import React, {useContext, useState, useEffect, useRef} from 'react'
 import {
     DndContext,
     KeyboardSensor,
@@ -147,8 +147,8 @@ const PlayerList = ({ editable }: any) => {
         return !!expandedNotes[playerId];
     }
 
-    // Total columns for note row colSpan: rank + player + adp + espn + fpro + vsadp + stats + actions
-    const totalColumns = 6 + columns.length + (editable ? 1 : 0);
+    const headerRef = useRef<HTMLTableRowElement>(null);
+    const totalColumns = headerRef.current?.children.length || 1;
 
     return (
         <>
@@ -173,7 +173,7 @@ const PlayerList = ({ editable }: any) => {
             >
                 <table className="player-table">
                     <thead>
-                        <tr>
+                        <tr ref={headerRef}>
                             <th className="rank-header">#</th>
                             <th className="player-header">Player</th>
                             <th className="adp-header">ADP</th>

@@ -648,7 +648,7 @@ button[data-disabled] {
   align-items: center;
   gap: 0.65rem;
   height: var(--controls-height);
-  background: var(--off-white);
+  background: var(--light-off-white);
   border-bottom: 1.5px solid var(--tan-dark);
   margin: 0.5rem 0 0;
   padding: 0 0.5rem;
@@ -965,10 +965,10 @@ button[data-disabled] {
 .player-row.highlighted td:first-child::before {
   content: '';
   position: absolute;
-  left: -5px;
-  top: -2px;
+  left: -20px;
+  top: 0;
   bottom: 0;
-  width: 5px;
+  width: 20px;
   background: var(--highlight-blue);
   border-radius: 3px 0 0 3px;
 }
@@ -1138,9 +1138,13 @@ button[data-disabled] {
 
 /* Active state for toggle-all-notes button */
 .gear-btn.active {
-  background: rgba(134, 122, 101, 0.15);
-  color: var(--brown);
-  border-color: var(--greybrown);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--highlight-blue);
+  border-color: var(--highlight-blue);
+}
+
+.gear-btn.active svg {
+  stroke: var(--highlight-blue);
 }
 
 /* Stat cell */
@@ -1178,6 +1182,11 @@ button[data-disabled] {
 }
 
 .spacer-header {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.spacer-cell {
   background: transparent !important;
 }
 

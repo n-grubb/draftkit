@@ -123,6 +123,7 @@ const PlayerItem = (props) => {
                     </div>
                 </div>
             </td>
+            <td className="spacer-cell"></td>
             <td className="adp-cell">
                 <div className="adp-info">
                     {player.averageDraftPosition && (
@@ -154,6 +155,7 @@ const PlayerItem = (props) => {
                     return <span className={className}>{diff > 0 ? '+' : ''}{diff}</span>;
                 })() : <span className="stat-neutral">—</span>}
             </td>
+            <td className="spacer-cell"></td>
             {columns.map(column => (
                 <td key={column.id} className={`stat-cell${showNote && editable && !isDraftMode ? ' stat-cell-editing' : ''}`}>
                     {showNote && editable && !isDraftMode ? (
@@ -210,8 +212,9 @@ const PlayerItem = (props) => {
 }
 
 const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEven }) => {
-    const {updatePlayerNote, userRanking} = useContext(StoreContext);
-    const notesEditable = editable && (!userRanking?.isShared || !!userRanking?.pin);
+    const {players, updatePlayerNote, updatePlayerProjection, userRanking} = useContext(StoreContext);
+    const notesEditable = editable;
+  
     const [noteText, setNoteText] = useState(playerRanking?.note || '');
     const noteRef = useRef<HTMLTextAreaElement>(null);
 

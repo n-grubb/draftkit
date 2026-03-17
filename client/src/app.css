@@ -999,6 +999,7 @@ button[data-disabled] {
   border-radius: 3px 0 0 3px;
 }
 .player-row.ignored td { opacity: 0.5; }
+.player-row.ignored:hover .actions-cell { opacity: 1; }
 
 /* Draft mode compact rows */
 .draft-mode .player-row td { padding: 0.15rem 0.3rem; }
@@ -1110,7 +1111,7 @@ button[data-disabled] {
 /* In-place editable stat cells */
 .stat-cell.stat-cell-editing {
   vertical-align: middle;
-  padding: 2px;
+  padding: 1px;
 }
 
 .stat-cell-input-wrapper {
@@ -1121,8 +1122,8 @@ button[data-disabled] {
 }
 
 .stat-cell-input {
-  width: 44px;
-  padding: 2px 3px;
+  width: 40px;
+  padding: 1px 2px;
   border: 1px solid #bbb;
   border-radius: 3px;
   font-size: 0.8rem;
@@ -1208,12 +1209,7 @@ button[data-disabled] {
 }
 
 .spacer-header {
-  background: transparent !important;
   box-shadow: none !important;
-}
-
-.spacer-cell {
-  background: transparent !important;
 }
 
 /* ADP cell */

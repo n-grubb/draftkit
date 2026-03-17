@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import StatsPrefsModal from './StatsPrefsModal';
 
 const POSITION_FILTERS = [
@@ -37,28 +37,56 @@ const CommentIcon = () => (
     </svg>
 )
 
-const ToggleIcon = () => (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="1" y="5" width="22" height="14" rx="7" ry="7"/>
-        <circle cx="16" cy="12" r="3"/>
+const NumbersRectIcon = () => (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="3" ry="3"/>
+        <text x="12" y="15.5" textAnchor="middle" fill="currentColor" stroke="none" fontSize="10" fontWeight="700" fontFamily="system-ui, sans-serif">123</text>
     </svg>
 )
 
 const FilterBar = (props) => {
     const { posFilter, onPosChange, draftMode, searchQuery, onSearchChange, allNotesExpanded, onToggleAllNotes, hasCustomProjections, useCustomProjections, onToggleCustomProjections } = props;
     const [showStatsModal, setShowStatsModal] = useState(false);
+    const [searchExpanded, setSearchExpanded] = useState(false);
+    const searchInputRef = useRef(null);
+
+    useEffect(() => {
+        if (searchExpanded && searchInputRef.current) {
+            searchInputRef.current.focus();
+        }
+    }, [searchExpanded]);
+
+    const handleSearchBlur = () => {
+        if (!searchQuery) {
+            setSearchExpanded(false);
+        }
+    };
 
     return (
         <div className="player-controls">
-            <div className="search-bar">
-                <span className="search-icon"><SearchIcon /></span>
-                <input
-                    className="search-input"
-                    type="text"
-                    placeholder="Search players…"
-                    value={searchQuery || ''}
-                    onChange={e => onSearchChange(e.target.value)}
-                />
+            <div className={`search-bar${searchExpanded ? ' expanded' : ''}`}>
+                {searchExpanded ? (
+                    <>
+                        <span className="search-icon"><SearchIcon /></span>
+                        <input
+                            ref={searchInputRef}
+                            className="search-input"
+                            type="text"
+                            placeholder="Search players..."
+                            value={searchQuery || ''}
+                            onChange={e => onSearchChange(e.target.value)}
+                            onBlur={handleSearchBlur}
+                        />
+                    </>
+                ) : (
+                    <button
+                        className="search-toggle-btn"
+                        onClick={() => setSearchExpanded(true)}
+                        title="Search players"
+                    >
+                        <SearchIcon />
+                    </button>
+                )}
             </div>
 
             <fieldset className="position-filters">
@@ -89,21 +117,19 @@ const FilterBar = (props) => {
                 <div className="controls-actions">
                     {hasCustomProjections && (
                         <button
-                            className={`gear-btn${useCustomProjections ? ' active' : ''}`}
+                            className={`gear-btn icon-only${useCustomProjections ? ' active' : ''}`}
                             onClick={onToggleCustomProjections}
                             title={useCustomProjections ? 'Using custom projections' : 'Using default projections'}
                         >
-                            <ToggleIcon />
-                            <span>{useCustomProjections ? 'Custom On' : 'Custom Off'}</span>
+                            <NumbersRectIcon />
                         </button>
                     )}
                     <button
-                        className={`gear-btn${allNotesExpanded ? ' active' : ''}`}
+                        className={`gear-btn icon-only${allNotesExpanded ? ' active' : ''}`}
                         onClick={onToggleAllNotes}
                         title={allNotesExpanded ? 'Collapse all notes' : 'Expand all notes'}
                     >
                         <CommentIcon />
-                        <span>{allNotesExpanded ? 'Notes On' : 'Notes Off'}</span>
                     </button>
                     <button
                         className="gear-btn"

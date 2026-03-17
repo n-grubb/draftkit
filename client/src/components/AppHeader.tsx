@@ -259,12 +259,13 @@ const AppHeader = () => {
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         {shareUrl ? (
                             <div className="share-success">
+                                <button className="modal-close-x" onClick={toggleShareModal} aria-label="Close">&times;</button>
                                 <h3>Ranking Shared!</h3>
                                 <div className="share-url">
-                                    <input 
-                                        type="text" 
-                                        readOnly 
-                                        value={shareUrl} 
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={shareUrl}
                                         onClick={(e) => (e.target as HTMLInputElement).select()}
                                     />
                                     <button onClick={copyToClipboard}>
@@ -277,25 +278,38 @@ const AppHeader = () => {
                                         <p className="pin-note">Keep this PIN to edit later</p>
                                     </div>
                                 )}
-                                <button onClick={toggleShareModal} className="close-button small">
-                                    Close
+                                <button onClick={toggleShareModal} className="share-modal-close">
+                                    Done
                                 </button>
                             </div>
                         ) : isShared ? (
                             <div className="share-existing">
+                                <button className="modal-close-x" onClick={toggleShareModal} aria-label="Close">&times;</button>
                                 <h3>Share Ranking</h3>
-                                <p>Your ranking ID: <strong>{ranking.id}</strong></p>
+                                {ranking.author && (
+                                    <p className="share-info-row">
+                                        <span className="label">By:</span> {ranking.author}
+                                    </p>
+                                )}
+                                {ranking.description && (
+                                    <p className="share-info-row">
+                                        <span className="label">Description:</span> {ranking.description}
+                                    </p>
+                                )}
                                 <div className="share-url">
-                                    <input 
-                                        type="text" 
-                                        readOnly 
-                                        value={getShareUrl() || ''} 
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        value={getShareUrl() || ''}
                                         onClick={(e) => (e.target as HTMLInputElement).select()}
                                     />
                                     <button onClick={() => {
-                                        navigator.clipboard.writeText(getShareUrl() || '');
-                                        setIsCopied(true);
-                                        setTimeout(() => setIsCopied(false), 2000);
+                                        const url = getShareUrl();
+                                        if (url) {
+                                            navigator.clipboard.writeText(url);
+                                            setIsCopied(true);
+                                            setTimeout(() => setIsCopied(false), 2000);
+                                        }
                                     }}>
                                         {isCopied ? 'Copied!' : 'Copy'}
                                     </button>
@@ -303,24 +317,25 @@ const AppHeader = () => {
                                 {!pin && (
                                     <div className="edit-pin">
                                         <label htmlFor="edit-pin">PIN to edit:</label>
-                                        <input 
+                                        <input
                                             id="edit-pin"
-                                            type="password" 
-                                            placeholder="Enter PIN" 
-                                            value={pin} 
+                                            type="password"
+                                            placeholder="Enter PIN"
+                                            value={pin}
                                             onChange={(e) => setPin(e.target.value)}
                                         />
                                     </div>
                                 )}
-                                <button onClick={toggleShareModal} className="close-button small">
-                                    Close
+                                <button onClick={toggleShareModal} className="share-modal-close">
+                                    Done
                                 </button>
                             </div>
                         ) : (
                             <form onSubmit={handleShare} className="share-form">
+                                <button type="button" className="modal-close-x" onClick={toggleShareModal} aria-label="Close">&times;</button>
                                 <h3>Share Your Ranking</h3>
                                 <div className="form-group">
-                                    <label htmlFor="author">Your Name (optional):</label>
+                                    <label htmlFor="author">Your Name</label>
                                     <input
                                         type="text"
                                         id="author"
@@ -330,7 +345,7 @@ const AppHeader = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="description">Description (optional):</label>
+                                    <label htmlFor="description">Description</label>
                                     <textarea
                                         id="description"
                                         value={description}
@@ -340,7 +355,7 @@ const AppHeader = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="pin">PIN (optional):</label>
+                                    <label htmlFor="pin">PIN</label>
                                     <input
                                         type="password"
                                         id="pin"
@@ -348,21 +363,21 @@ const AppHeader = () => {
                                         onChange={(e) => setNewPin(e.target.value)}
                                         placeholder="4-6 digits"
                                     />
-                                    <p className="field-hint">Create a PIN to edit later</p>
+                                    <p className="field-hint">Optional. Create a PIN to edit from another device.</p>
                                 </div>
                                 {error && <div className="error">{error}</div>}
                                 <div className="form-actions">
-                                    <button 
-                                        type="submit" 
+                                    <button
+                                        type="submit"
                                         className="submit-button"
                                         disabled={isSubmitting}
                                     >
                                         {isSubmitting ? 'Sharing...' : 'Share'}
                                     </button>
-                                    <button 
-                                        type="button" 
-                                        onClick={toggleShareModal} 
-                                        className="cancel-button small"
+                                    <button
+                                        type="button"
+                                        onClick={toggleShareModal}
+                                        className="cancel-button"
                                     >
                                         Cancel
                                     </button>

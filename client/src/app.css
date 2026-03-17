@@ -2518,6 +2518,65 @@ button {
   gap: 1rem;
 }
 
+/* Modal close X button - top right corner */
+.modal-close-x {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 1.5rem;
+  line-height: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--greybrown);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.modal-close-x:hover {
+  color: var(--charcoal);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Share modal bottom dismiss button */
+.share-modal-close {
+  background-color: var(--greybrown);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  align-self: center;
+}
+
+.share-modal-close:hover {
+  background-color: var(--charcoal);
+}
+
+/* Already-shared view */
+.share-existing {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.share-existing h3 {
+  color: var(--green-monster);
+  margin: 0;
+}
+
+.share-info-row {
+  font-size: 0.85rem;
+  color: var(--greybrown);
+}
+
+.share-info-row .label {
+  font-weight: 600;
+  color: var(--brown);
+}
+
 .stats-legend h3 {
   text-align: center;
   margin-bottom: 1rem;

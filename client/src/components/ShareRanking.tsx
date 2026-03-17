@@ -73,40 +73,45 @@ const ShareRanking = () => {
     };
 
     // For already shared rankings, just show the URL
-    if (isShared && ranking.id !== 'local') {
+    if (isShared && !ranking.id.startsWith('local')) {
         const url = getShareUrl();
         return (
             <div className="share-ranking">
                 <h3>Share Your Ranking</h3>
-                <p>Your ranking is already shared with ID: <strong>{ranking.id}</strong></p>
+                {ranking.author && (
+                    <p className="share-info-row">
+                        <span className="label">By:</span> {ranking.author}
+                    </p>
+                )}
+                {ranking.description && (
+                    <p className="share-info-row">
+                        <span className="label">Description:</span> {ranking.description}
+                    </p>
+                )}
                 <div className="share-url">
-                    <input 
-                        type="text" 
-                        readOnly 
-                        value={url} 
+                    <input
+                        type="text"
+                        readOnly
+                        value={url}
                         onClick={(e) => (e.target as HTMLInputElement).select()}
                     />
                     <button onClick={() => {
-                        navigator.clipboard.writeText(url);
-                        setIsCopied(true);
-                        setTimeout(() => setIsCopied(false), 2000);
+                        if (url) {
+                            navigator.clipboard.writeText(url);
+                            setIsCopied(true);
+                            setTimeout(() => setIsCopied(false), 2000);
+                        }
                     }}>
                         {isCopied ? 'Copied!' : 'Copy URL'}
                     </button>
                 </div>
-                {ranking.author && (
-                    <p>Created by: {ranking.author}</p>
-                )}
-                {ranking.description && (
-                    <p className="ranking-description">{ranking.description}</p>
-                )}
                 {!pin && (
                     <div className="edit-pin">
                         <p>Enter PIN to edit this ranking:</p>
-                        <input 
-                            type="password" 
-                            placeholder="PIN" 
-                            value={pin} 
+                        <input
+                            type="password"
+                            placeholder="PIN"
+                            value={pin}
                             onChange={(e) => setPin(e.target.value)}
                         />
                     </div>
@@ -146,15 +151,15 @@ const ShareRanking = () => {
                                     <p className="pin-note">Keep this PIN to edit your ranking later!</p>
                                 </div>
                             )}
-                            <button onClick={toggleForm} className="close-button">
-                                Close
+                            <button onClick={toggleForm} className="share-modal-close">
+                                Done
                             </button>
                         </div>
                     ) : (
                         // Show the share form
                         <form onSubmit={handleShare} className="share-form">
                             <div className="form-group">
-                                <label htmlFor="author">Your Name (optional):</label>
+                                <label htmlFor="author">Your Name</label>
                                 <input
                                     type="text"
                                     id="author"
@@ -164,7 +169,7 @@ const ShareRanking = () => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="description">Description (optional):</label>
+                                <label htmlFor="description">Description</label>
                                 <textarea
                                     id="description"
                                     value={description}
@@ -174,7 +179,7 @@ const ShareRanking = () => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="pin">PIN for Editing (optional):</label>
+                                <label htmlFor="pin">PIN</label>
                                 <input
                                     type="password"
                                     id="pin"
@@ -183,7 +188,7 @@ const ShareRanking = () => {
                                     placeholder="4-6 digits"
                                 />
                                 <p className="field-hint">
-                                    Create a PIN if you want to edit this ranking later from another device.
+                                    Optional. Create a PIN to edit from another device.
                                 </p>
                             </div>
                             {error && <div className="error">{error}</div>}

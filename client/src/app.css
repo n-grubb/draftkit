@@ -649,7 +649,7 @@ button[data-disabled] {
   gap: 0.65rem;
   height: var(--controls-height);
   background: var(--light-off-white);
-  border-bottom: 1.5px solid var(--tan-dark);
+  border-bottom: 1.5px solid #d1d5db;
   margin: 0.5rem 0 0;
   padding: 0 0.5rem;
   overflow: visible; /* let modals escape */
@@ -660,7 +660,7 @@ button[data-disabled] {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  border: 1.5px solid var(--tan-dark);
+  border: 1.5px solid #d1d5db;
   border-radius: 6px;
   padding: 0;
   overflow: hidden;
@@ -683,8 +683,28 @@ button[data-disabled] {
   align-items: center;
 }
 
+.search-toggle-btn {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1.5px solid #d1d5db;
+  border-radius: 9999px;
+  color: var(--greybrown);
+  width: 2.1rem;
+  height: 2.1rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.search-toggle-btn:hover {
+  border-color: var(--greybrown);
+  color: var(--brown);
+}
+
 .search-input {
-  border: 1.5px solid var(--tan-dark);
+  border: 1.5px solid #d1d5db;
   border-radius: 9999px;
   background: white;
   padding: 0.3rem 1rem 0.3rem 2rem;
@@ -705,6 +725,7 @@ button[data-disabled] {
 .search-input::placeholder {
   color: var(--faded);
   font-style: italic;
+  font-weight: 400;
 }
 
 /* Gear/settings pushed to the far right */
@@ -712,6 +733,7 @@ button[data-disabled] {
   margin-left: auto;
   display: flex;
   align-items: center;
+  gap: 0.4rem;
   flex-shrink: 0;
 }
 
@@ -736,7 +758,7 @@ button[data-disabled] {
 .pos-filter {
   position: relative;
   background: transparent;
-  border-right: 1px solid var(--tan-dark);
+  border-right: 1px solid #d1d5db;
   border-radius: 0;
   color: var(--greybrown);
   min-width: unset;
@@ -775,9 +797,13 @@ button[data-disabled] {
 }
 
 .pos-filter.active {
-  background: rgba(26, 58, 92, 0.12);
-  color: var(--brown);
+  background: #3b82f6;
+  color: white;
   opacity: 1;
+}
+
+.pos-filter.active label {
+  color: white;
 }
 
 /* Hide the radio input visually */
@@ -1347,7 +1373,7 @@ button[data-disabled] {
   align-items: center;
   gap: 0.35rem;
   background: transparent;
-  border: 1.5px solid var(--tan-dark);
+  border: 1.5px solid #d1d5db;
   border-radius: 6px;
   color: var(--greybrown);
   font-family: inherit;
@@ -1356,6 +1382,10 @@ button[data-disabled] {
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
   line-height: 1.4rem;
+}
+
+.gear-btn.icon-only {
+  padding: 0.2rem 0.4rem;
 }
 
 .gear-btn:hover {

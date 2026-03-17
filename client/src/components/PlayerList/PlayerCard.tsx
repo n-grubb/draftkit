@@ -14,6 +14,8 @@ import {
     Tooltip
 } from 'recharts'
 
+const FALLBACK_IMAGE = `${import.meta.env.BASE_URL}assets/images/player-fallback.png`
+
 const EXLUDED_POSITIONS = ['P', 'UTIL']
 
 const PlayerCard = ({ playerId, onClose }) => {
@@ -45,7 +47,7 @@ const PlayerCard = ({ playerId, onClose }) => {
                 <div className="player-card-header">
                     <div className="player-photos large">
                         { teamLogo && (<img className="team-logo" src={teamLogo} width="48" />) }
-                        <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="180" onError={(e) => { (e.target as HTMLImageElement).src = '/assets/images/player-fallback.png'; }} />
+                        <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="180" onError={(e) => { const img = e.target as HTMLImageElement; if (!img.src.endsWith(FALLBACK_IMAGE)) { img.src = FALLBACK_IMAGE; } }} />
                     </div>
                     <div className="player-info">
                         <h2>{player.name}</h2>

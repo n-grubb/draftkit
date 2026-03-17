@@ -250,7 +250,6 @@ const PlayerList = ({ editable }: any) => {
                                                 colSpan={totalColumns}
                                                 editable={editable}
                                                 isEven={isEven}
-                                                columns={columns}
                                             />
                                         )}
                                     </React.Fragment>
@@ -274,7 +273,6 @@ const PlayerList = ({ editable }: any) => {
                                                 colSpan={totalColumns}
                                                 editable={editable}
                                                 isEven={isEven}
-                                                columns={columns}
                                             />
                                         )}
                                     </React.Fragment>

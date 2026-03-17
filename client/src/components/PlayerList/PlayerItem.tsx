@@ -157,8 +157,18 @@ const PlayerItem = (props) => {
             </td>
             <td className="spacer-cell"></td>
             {columns.map(column => (
-                <td key={column.id} className="stat-cell">
-                    {renderCellValue(player, column.id)}
+                <td key={column.id} className={`stat-cell${showNote && editable && !isDraftMode ? ' stat-cell-editing' : ''}`}>
+                    {showNote && editable && !isDraftMode ? (
+                        <StatCellInput
+                            playerId={playerId}
+                            statId={column.id}
+                            label={column.name}
+                            projections={projections}
+                            customProjections={playerRanking?.customProjections}
+                        />
+                    ) : (
+                        renderCellValue(player, column.id)
+                    )}
                 </td>
             ))}
             {editable && !isDraftMode && (
@@ -201,55 +211,22 @@ const PlayerItem = (props) => {
     )
 }
 
-const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEven, columns }) => {
+const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEven }) => {
     const {players, updatePlayerNote, updatePlayerProjection, userRanking} = useContext(StoreContext);
     const notesEditable = editable;
   
     const [noteText, setNoteText] = useState(playerRanking?.note || '');
     const noteRef = useRef<HTMLTextAreaElement>(null);
 
-    const player = players[playerId];
-    const projections = player?.projections || {};
-    const customProjections = playerRanking?.customProjections || {};
-
     useEffect(() => {
-        if (notesEditable && !columns?.length) {
+        if (notesEditable) {
             setTimeout(() => noteRef.current?.focus(), 0);
         }
     }, []);
 
-    const handleProjectionBlur = (statId, inputValue) => {
-        const original = projections[statId];
-        const parsed = inputValue === '' ? null : Number(inputValue);
-        // Remove override if empty or matches original
-        if (parsed === null || parsed === original) {
-            updatePlayerProjection(playerId, statId, null);
-        } else if (!isNaN(parsed)) {
-            updatePlayerProjection(playerId, statId, parsed);
-        }
-    };
-
     return (
         <tr className={`note-row${isEven ? ' even-row' : ''}`}>
             <td colSpan={colSpan} className="note-row-cell">
-                {notesEditable && columns?.length > 0 && (
-                    <div className="projection-edit-row">
-                        {columns.map(col => {
-                            const isCustom = customProjections[col.id] != null;
-                            const currentValue = customProjections[col.id] ?? projections[col.id] ?? '';
-                            return (
-                                <ProjectionInput
-                                    key={col.id}
-                                    statId={col.id}
-                                    label={col.name}
-                                    defaultValue={currentValue}
-                                    isCustom={isCustom}
-                                    onBlur={handleProjectionBlur}
-                                />
-                            );
-                        })}
-                    </div>
-                )}
                 {notesEditable ? (
                     <textarea
                         ref={noteRef}
@@ -268,20 +245,36 @@ const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEven, col
     )
 }
 
-const ProjectionInput = ({ statId, label, defaultValue, isCustom, onBlur }) => {
-    const [value, setValue] = useState(defaultValue !== '' ? String(defaultValue) : '');
+const StatCellInput = ({ playerId, statId, label, projections, customProjections }) => {
+    const {updatePlayerProjection} = useContext(StoreContext);
+    const isCustom = customProjections?.[statId] != null;
+    const originalValue = projections?.[statId] ?? '';
+    const currentValue = customProjections?.[statId] ?? originalValue;
+    const [value, setValue] = useState(isCustom ? String(currentValue) : '');
+
+    const handleBlur = () => {
+        const parsed = value === '' ? null : Number(value);
+        if (parsed === null || parsed === originalValue) {
+            updatePlayerProjection(playerId, statId, null);
+        } else if (!isNaN(parsed)) {
+            updatePlayerProjection(playerId, statId, parsed);
+        }
+    };
+
+    const placeholder = originalValue !== '' ? formatStatValue(statId, originalValue) : '—';
 
     return (
-        <div className={`projection-edit-field${isCustom ? ' custom' : ''}`}>
-            <label className="projection-edit-label">{label}</label>
+        <div className="stat-cell-input-wrapper">
             <input
                 type="text"
                 inputMode="decimal"
-                className="projection-edit-input"
+                className={`stat-cell-input${isCustom ? ' custom' : ''}`}
                 value={value}
+                placeholder={placeholder}
                 onChange={(e) => setValue(e.target.value)}
-                onBlur={() => onBlur(statId, value)}
+                onBlur={handleBlur}
             />
+            <span className="stat-cell-input-label">{label}</span>
         </div>
     );
 }

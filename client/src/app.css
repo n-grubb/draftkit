@@ -1081,58 +1081,54 @@ button[data-disabled] {
   width: 100%;
 }
 
-/* Projection edit row */
-.projection-edit-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 8px;
+/* In-place editable stat cells */
+.stat-cell.stat-cell-editing {
+  vertical-align: middle;
+  padding: 2px;
 }
 
-.projection-edit-field {
+.stat-cell-input-wrapper {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  background: rgba(255,255,255,0.5);
-  border-radius: 4px;
-  padding: 2px 6px;
-  border: 1px solid transparent;
+  gap: 1px;
 }
 
-.projection-edit-field.custom {
-  border-color: var(--navy, #2563eb);
-  background: rgba(37, 99, 235, 0.08);
-}
-
-.projection-edit-label {
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--greybrown, #888);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  min-width: 28px;
-}
-
-.projection-edit-input {
-  width: 48px;
-  padding: 2px 4px;
-  border: 1px solid #ccc;
+.stat-cell-input {
+  width: 44px;
+  padding: 2px 3px;
+  border: 1px solid #bbb;
   border-radius: 3px;
-  font-size: 0.75rem;
-  text-align: right;
+  font-size: 0.8rem;
+  text-align: center;
   background: white;
   font-family: inherit;
 }
 
-.projection-edit-input:focus {
+.stat-cell-input::placeholder {
+  color: #999;
+  font-style: normal;
+}
+
+.stat-cell-input:focus {
   outline: none;
   border-color: var(--navy, #2563eb);
   box-shadow: 0 0 0 1px var(--navy, #2563eb);
 }
 
-.projection-edit-field.custom .projection-edit-input {
+.stat-cell-input.custom {
   font-weight: 600;
   color: var(--navy, #2563eb);
+  border-color: var(--navy, #2563eb);
+}
+
+.stat-cell-input-label {
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: var(--greybrown, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 /* Custom projection indicator in stat cells */

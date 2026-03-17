@@ -1249,7 +1249,7 @@ button[data-disabled] {
   padding: 0 0.4rem 0 1.5rem;
   white-space: nowrap;
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, transform 0.2s ease;
   background: linear-gradient(to right, transparent, var(--soft-tan) 30%);
   border-radius: 0 6px 6px 0;
 }
@@ -1324,32 +1324,11 @@ button[data-disabled] {
   color: white;
 }
 
-/* Keep actions visible while editing */
+/* Keep actions visible and slide to note row when editing */
 .actions-wrapper.editing {
   opacity: 1;
-}
-
-/* Actions anchored to bottom-right of note row when editing */
-.note-row .note-row-cell {
-  position: relative;
-}
-
-.note-row-actions {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.1rem;
-  padding: 0 0.4rem 0 1.5rem;
-  white-space: nowrap;
-  background: linear-gradient(to right, transparent, var(--soft-tan) 30%);
+  transform: translateY(100%);
   border-radius: 0 0 6px 0;
-}
-
-.note-row.even-row .note-row-actions {
-  background: linear-gradient(to right, transparent, #e0d3b0 30%);
 }
 
 /* Settings button in controls bar */

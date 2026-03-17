@@ -230,7 +230,7 @@ const PlayerItem = (props) => {
     )
 }
 
-const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEditing, isEven, actions }) => {
+const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEditing, isEven }) => {
     const {updatePlayerNote} = useContext(StoreContext);
 
     const [noteText, setNoteText] = useState(playerRanking?.note || '');
@@ -257,11 +257,6 @@ const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEditing, 
                     />
                 ) : (
                     <p className="player-note-text">{playerRanking?.note}</p>
-                )}
-                {actions && (
-                    <div className="note-row-actions">
-                        {actions}
-                    </div>
                 )}
             </td>
         </tr>
@@ -302,5 +297,5 @@ const StatCellInput = ({ playerId, statId, label, projections, customProjections
     );
 }
 
-export { PlayerNoteRow, RowActions }
+export { PlayerNoteRow }
 export default PlayerItem

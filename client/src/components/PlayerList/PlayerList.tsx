@@ -16,7 +16,7 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import FilterBar from '~/components/FilterBar'
 import DraggableItem from './DraggableItem'
-import PlayerItem, {PlayerNoteRow, RowActions} from './PlayerItem'
+import PlayerItem, {PlayerNoteRow} from './PlayerItem'
 import PlayerCard from './PlayerCard'
 import Toast from '~/components/Toast'
 import {StoreContext} from '~/data/store'
@@ -270,15 +270,6 @@ const PlayerList = ({ editable }: any) => {
                                                 editable={editable}
                                                 isEditing={noteEditing}
                                                 isEven={isEven}
-                                                actions={noteEditing ? (
-                                                    <RowActions
-                                                        playerId={playerId}
-                                                        playerRanking={playerRanking}
-                                                        showNote={noteVisible}
-                                                        isEditing={noteEditing}
-                                                        onToggleNote={() => toggleNoteEditing(playerId)}
-                                                    />
-                                                ) : null}
                                             />
                                         )}
                                     </React.Fragment>

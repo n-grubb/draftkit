@@ -37,10 +37,10 @@ const CommentIcon = () => (
     </svg>
 )
 
-const ToggleIcon = () => (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="1" y="5" width="22" height="14" rx="7" ry="7"/>
-        <circle cx="16" cy="12" r="3"/>
+const NumbersRectIcon = () => (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="3" ry="3"/>
+        <text x="12" y="15.5" textAnchor="middle" fill="currentColor" stroke="none" fontSize="10" fontWeight="700" fontFamily="system-ui, sans-serif">123</text>
     </svg>
 )
 
@@ -117,12 +117,11 @@ const FilterBar = (props) => {
                 <div className="controls-actions">
                     {hasCustomProjections && (
                         <button
-                            className={`gear-btn${useCustomProjections ? ' active' : ''}`}
+                            className={`gear-btn icon-only${useCustomProjections ? ' active' : ''}`}
                             onClick={onToggleCustomProjections}
                             title={useCustomProjections ? 'Using custom projections' : 'Using default projections'}
                         >
-                            <ToggleIcon />
-                            <span>{useCustomProjections ? 'Custom On' : 'Custom Off'}</span>
+                            <NumbersRectIcon />
                         </button>
                     )}
                     <button

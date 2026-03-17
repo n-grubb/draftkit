@@ -54,7 +54,7 @@ function build_player_store(
             projections: format_projections(projections[player.id]),
             headshot: `https://a.espncdn.com/combiner/i?img=/i/headshots/mlb/players/full/${player.id}.png?w=96&h=70&cb=1`,
             ownership: player.ownership || 0,
-            averageDraftPosition: player.average_draft_position || null,
+            averageDraftPosition: fp_data?.adp ?? player.average_draft_position ?? null,
             percentChange: player.percent_change || null,
             injuryStatus: player.injury_status || null,
             age: player.age || null,

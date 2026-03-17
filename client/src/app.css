@@ -648,7 +648,7 @@ button[data-disabled] {
   align-items: center;
   gap: 0.65rem;
   height: var(--controls-height);
-  background: var(--soft-tan);
+  background: var(--off-white);
   border-bottom: 1.5px solid var(--tan-dark);
   margin: 0.5rem 0 0;
   padding: 0 0.5rem;
@@ -943,6 +943,7 @@ button[data-disabled] {
 .player-row td {
   padding: 0.2rem 0.4rem;
   background: var(--soft-tan);
+  background-clip: padding-box;
   vertical-align: middle;
   border-top: 2px solid transparent;
 }
@@ -950,6 +951,7 @@ button[data-disabled] {
 /* Zebra striping — class-based to handle note rows */
 .player-table tbody tr.even-row td {
   background: #e0d3b0;
+  background-clip: padding-box;
 }
 
 .player-row td:first-child { border-radius: 6px 0 0 6px; }
@@ -957,13 +959,14 @@ button[data-disabled] {
 
 .player-row.highlighted td:first-child {
   position: relative;
+  border-radius: 0 !important;
 }
 
 .player-row.highlighted td:first-child::before {
   content: '';
   position: absolute;
   left: -5px;
-  top: 0;
+  top: -2px;
   bottom: 0;
   width: 5px;
   background: var(--highlight-blue);
@@ -1056,8 +1059,10 @@ button[data-disabled] {
 /* Note accordion row — seamless with parent */
 .note-row .note-row-cell {
   background: var(--soft-tan);
+  background-clip: padding-box;
   padding: 0.2rem 0.5rem 0.4rem 3.5rem !important;
   border-radius: 0 0 6px 6px;
+  border-top: none;
 }
 
 .note-row.even-row .note-row-cell {
@@ -1173,8 +1178,11 @@ button[data-disabled] {
   min-width: 10px;
   max-width: 10px;
   padding: 0 !important;
-  background: transparent !important;
   border: none !important;
+}
+
+.spacer-header {
+  background: transparent !important;
 }
 
 /* ADP cell */

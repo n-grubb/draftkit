@@ -1311,6 +1311,35 @@ button[data-disabled] {
 .icon-btn.ignore-btn.active { color: var(--charcoal); opacity: 1; }
 .icon-btn.comment-btn.active { color: var(--brown); opacity: 0.9; }
 
+/* Editing state: checkmark save button */
+.icon-btn.comment-btn.editing {
+  opacity: 1;
+  color: var(--brown);
+  background: rgba(134, 122, 101, 0.15);
+  border-radius: 5px;
+}
+
+.icon-btn.comment-btn.editing.active {
+  background: var(--highlight-blue, #2563eb);
+  color: white;
+}
+
+/* Keep actions visible while editing */
+.actions-wrapper.editing {
+  opacity: 1;
+}
+
+/* Extend actions over note row when editing */
+.actions-cell.editing {
+  position: relative;
+}
+
+.actions-cell.editing .actions-wrapper {
+  bottom: -32px;
+  z-index: 2;
+  border-radius: 0 6px 6px 0;
+}
+
 /* Settings button in controls bar */
 .gear-btn {
   appearance: none;

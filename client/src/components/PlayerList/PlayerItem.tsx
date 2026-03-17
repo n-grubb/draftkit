@@ -42,8 +42,14 @@ const PencilIcon = () => (
     </svg>
 )
 
+const CheckIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+    </svg>
+)
+
 const PlayerItem = (props) => {
-    const {playerId, playerRanking, editable, onNameClick, columns, rank, showNote, onToggleNote} = props
+    const {playerId, playerRanking, editable, onNameClick, columns, rank, showNote, isEditing, onToggleNote} = props
     const {players, teams, mode, ranking, ignorePlayer, highlightPlayer} = useContext(StoreContext);
     const {isMyTurn, draftPlayer} = useContext(DraftContext);
 
@@ -157,8 +163,8 @@ const PlayerItem = (props) => {
             </td>
             <td className="spacer-cell"></td>
             {columns.map(column => (
-                <td key={column.id} className={`stat-cell${showNote && editable && !isDraftMode ? ' stat-cell-editing' : ''}`}>
-                    {showNote && editable && !isDraftMode ? (
+                <td key={column.id} className={`stat-cell${isEditing && editable && !isDraftMode ? ' stat-cell-editing' : ''}`}>
+                    {isEditing && editable && !isDraftMode ? (
                         <StatCellInput
                             playerId={playerId}
                             statId={column.id}
@@ -172,14 +178,14 @@ const PlayerItem = (props) => {
                 </td>
             ))}
             {editable && !isDraftMode && (
-                <td className="actions-cell">
-                    <div className="actions-wrapper">
+                <td className={`actions-cell${isEditing ? ' editing' : ''}`}>
+                    <div className={`actions-wrapper${isEditing ? ' editing' : ''}`}>
                         <button
-                            className={`icon-btn comment-btn${(hasNote || hasCustomProjections || showNote) ? ' active' : ''}`}
+                            className={`icon-btn comment-btn${(hasNote || hasCustomProjections || showNote) ? ' active' : ''}${isEditing ? ' editing' : ''}`}
                             onClick={onToggleNote}
-                            title={showNote ? 'Hide editor' : 'Edit projections & notes'}
+                            title={isEditing ? 'Save & close' : 'Edit projections & notes'}
                         >
-                            <PencilIcon />
+                            {isEditing ? <CheckIcon /> : <PencilIcon />}
                         </button>
                         <button
                             className={`icon-btn ignore-btn${isIgnored ? ' active' : ''}`}
@@ -211,23 +217,22 @@ const PlayerItem = (props) => {
     )
 }
 
-const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEven }) => {
-    const {players, updatePlayerNote, updatePlayerProjection, userRanking} = useContext(StoreContext);
-    const notesEditable = editable;
-  
+const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEditing, isEven }) => {
+    const {updatePlayerNote} = useContext(StoreContext);
+
     const [noteText, setNoteText] = useState(playerRanking?.note || '');
     const noteRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
-        if (notesEditable) {
+        if (isEditing) {
             setTimeout(() => noteRef.current?.focus(), 0);
         }
-    }, []);
+    }, [isEditing]);
 
     return (
         <tr className={`note-row${isEven ? ' even-row' : ''}`}>
             <td colSpan={colSpan} className="note-row-cell">
-                {notesEditable ? (
+                {isEditing ? (
                     <textarea
                         ref={noteRef}
                         className="player-note-input"

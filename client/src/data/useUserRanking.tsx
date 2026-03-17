@@ -48,7 +48,7 @@ const useUserRanking = (players) => {
             id: rankingToSave.id,
             author: rankingToSave.author,
             description: rankingToSave.description,
-            isShared: rankingToSave.id !== 'local',
+            isShared: !rankingToSave.id.startsWith('local'),
             createdAt: rankingToSave.createdAt,
             updatedAt: rankingToSave.updatedAt,
             name: rankingToSave.name || (rankingToSave.author 
@@ -164,7 +164,7 @@ const useUserRanking = (players) => {
                         // Use the stored version
                         const parsedRanking = JSON.parse(storedRanking);
                         setRanking(parsedRanking);
-                        setIsShared(rankingId !== 'local');
+                        setIsShared(!rankingId.startsWith('local'));
                         return; // Exit early after loading the URL ranking
                     } else {
                         // Fetch from server
@@ -186,7 +186,7 @@ const useUserRanking = (players) => {
                     
                     if (storedRanking) {
                         setRanking(JSON.parse(storedRanking));
-                        setIsShared(mostRecentId !== 'local');
+                        setIsShared(!mostRecentId.startsWith('local'));
                     } else {
                         // Create new if we can't find the stored data
                         createNewRanking(players);

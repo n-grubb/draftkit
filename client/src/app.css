@@ -1249,7 +1249,7 @@ button[data-disabled] {
   padding: 0 0.4rem 0 1.5rem;
   white-space: nowrap;
   opacity: 0;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, transform 0.2s ease;
   background: linear-gradient(to right, transparent, var(--soft-tan) 30%);
   border-radius: 0 6px 6px 0;
 }
@@ -1310,6 +1310,26 @@ button[data-disabled] {
 .icon-btn.highlight-btn.active { color: var(--highlight-blue); opacity: 1; }
 .icon-btn.ignore-btn.active { color: var(--charcoal); opacity: 1; }
 .icon-btn.comment-btn.active { color: var(--brown); opacity: 0.9; }
+
+/* Editing state: checkmark save button */
+.icon-btn.comment-btn.editing {
+  opacity: 1;
+  color: var(--brown);
+  background: rgba(134, 122, 101, 0.15);
+  border-radius: 5px;
+}
+
+.icon-btn.comment-btn.editing.active {
+  background: var(--highlight-blue, #2563eb);
+  color: white;
+}
+
+/* Keep actions visible and slide to note row when editing */
+.actions-wrapper.editing {
+  opacity: 1;
+  transform: translateY(100%);
+  border-radius: 0 0 6px 0;
+}
 
 /* Settings button in controls bar */
 .gear-btn {

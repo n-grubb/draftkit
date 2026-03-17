@@ -36,6 +36,7 @@ const PlayerList = ({ editable }: any) => {
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
+    const [editingNotes, setEditingNotes] = useState<Record<string, boolean>>({});
     const [allNotesExpanded, setAllNotesExpanded] = useState(false);
 
     const isDraftMode = mode === 'draft';
@@ -135,8 +136,17 @@ const PlayerList = ({ editable }: any) => {
         })
         : rankedBeforeSort;
 
-    const toggleNote = (playerId: string) => {
-        setExpandedNotes(prev => ({ ...prev, [playerId]: !prev[playerId] }));
+    const toggleNoteEditing = (playerId: string) => {
+        const wasEditing = !!editingNotes[playerId];
+        if (wasEditing) {
+            // Stop editing and collapse
+            setEditingNotes(prev => ({ ...prev, [playerId]: false }));
+            setExpandedNotes(prev => ({ ...prev, [playerId]: false }));
+        } else {
+            // Start editing (also expand)
+            setEditingNotes(prev => ({ ...prev, [playerId]: true }));
+            setExpandedNotes(prev => ({ ...prev, [playerId]: true }));
+        }
     }
 
     const toggleAllNotes = () => {
@@ -150,13 +160,20 @@ const PlayerList = ({ editable }: any) => {
                 }
             });
             setExpandedNotes(all);
+            // Clear all editing states when toggling all notes for viewing
+            setEditingNotes({});
         } else {
             setExpandedNotes({});
+            setEditingNotes({});
         }
     }
 
     const isNoteExpanded = (playerId: string) => {
         return !!expandedNotes[playerId];
+    }
+
+    const isNoteEditing = (playerId: string) => {
+        return !!editingNotes[playerId];
     }
 
     const headerRef = useRef<HTMLTableRowElement>(null);
@@ -228,6 +245,7 @@ const PlayerList = ({ editable }: any) => {
                                 const rowClass = `player-row${isEven ? ' even-row' : ''}${playerRanking?.highlight ? ' highlighted' : playerRanking?.ignore ? ' ignored' : ''}`;
 
                                 const noteVisible = isNoteExpanded(playerId);
+                                const noteEditing = isNoteEditing(playerId);
 
                                 return editable ? (
                                     <React.Fragment key={playerId}>
@@ -240,7 +258,8 @@ const PlayerList = ({ editable }: any) => {
                                                 editable
                                                 onNameClick={() => setShowCardForPlayerId(playerId)}
                                                 showNote={noteVisible}
-                                                onToggleNote={() => toggleNote(playerId)}
+                                                isEditing={noteEditing}
+                                                onToggleNote={() => toggleNoteEditing(playerId)}
                                             />
                                         </DraggableItem>
                                         {noteVisible && (
@@ -249,6 +268,7 @@ const PlayerList = ({ editable }: any) => {
                                                 playerRanking={playerRanking}
                                                 colSpan={totalColumns}
                                                 editable={editable}
+                                                isEditing={noteEditing}
                                                 isEven={isEven}
                                             />
                                         )}
@@ -263,7 +283,8 @@ const PlayerList = ({ editable }: any) => {
                                                 playerRanking={playerRanking}
                                                 onNameClick={() => setShowCardForPlayerId(playerId)}
                                                 showNote={noteVisible}
-                                                onToggleNote={() => toggleNote(playerId)}
+                                                isEditing={noteEditing}
+                                                onToggleNote={() => toggleNoteEditing(playerId)}
                                             />
                                         </tr>
                                         {noteVisible && (
@@ -272,6 +293,7 @@ const PlayerList = ({ editable }: any) => {
                                                 playerRanking={playerRanking}
                                                 colSpan={totalColumns}
                                                 editable={editable}
+                                                isEditing={noteEditing}
                                                 isEven={isEven}
                                             />
                                         )}

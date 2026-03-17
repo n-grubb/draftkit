@@ -48,14 +48,46 @@ const CheckIcon = () => (
     </svg>
 )
 
+const RowActions = ({ playerId, playerRanking, showNote, isEditing, onToggleNote }) => {
+    const {ignorePlayer, highlightPlayer} = useContext(StoreContext);
+    const hasNote = !!playerRanking?.note;
+    const hasCustomProjections = playerRanking?.customProjections && Object.keys(playerRanking.customProjections).length > 0;
+    const isHighlighted = !!playerRanking?.highlight;
+    const isIgnored = !!playerRanking?.ignore;
+
+    return (
+        <>
+            <button
+                className={`icon-btn comment-btn${(hasNote || hasCustomProjections || showNote) ? ' active' : ''}${isEditing ? ' editing' : ''}`}
+                onClick={onToggleNote}
+                title={isEditing ? 'Save & close' : 'Edit projections & notes'}
+            >
+                {isEditing ? <CheckIcon /> : <PencilIcon />}
+            </button>
+            <button
+                className={`icon-btn ignore-btn${isIgnored ? ' active' : ''}`}
+                onClick={() => ignorePlayer(playerId)}
+                title={isIgnored ? 'Unignore' : 'Ignore'}
+            >
+                <IgnoreIcon />
+            </button>
+            <button
+                className={`icon-btn highlight-btn${isHighlighted ? ' active' : ''}`}
+                onClick={() => highlightPlayer(playerId)}
+                title={isHighlighted ? 'Unhighlight' : 'Highlight'}
+            >
+                <HighlightIcon />
+            </button>
+        </>
+    );
+}
+
 const PlayerItem = (props) => {
     const {playerId, playerRanking, editable, onNameClick, columns, rank, showNote, isEditing, onToggleNote} = props
-    const {players, teams, mode, ranking, ignorePlayer, highlightPlayer} = useContext(StoreContext);
+    const {players, teams, mode, ranking} = useContext(StoreContext);
     const {isMyTurn, draftPlayer} = useContext(DraftContext);
 
     const isDraftMode = mode === 'draft';
-    const hasNote = !!playerRanking?.note;
-    const hasCustomProjections = playerRanking?.customProjections && Object.keys(playerRanking.customProjections).length > 0;
 
     const player = players[playerId]
     const projections = player.projections
@@ -94,12 +126,7 @@ const PlayerItem = (props) => {
     const teamLogo = team.logo?.href
     const injuryLabel = getInjuryLabel(player.injuryStatus)
 
-    const onHighlight = () => highlightPlayer(playerId)
-    const onIgnore = () => ignorePlayer(playerId)
     const onDraft = () => draftPlayer(playerId)
-
-    const isHighlighted = !!playerRanking?.highlight
-    const isIgnored = !!playerRanking?.ignore
 
     return (
         <>
@@ -178,29 +205,15 @@ const PlayerItem = (props) => {
                 </td>
             ))}
             {editable && !isDraftMode && (
-                <td className={`actions-cell${isEditing ? ' editing' : ''}`}>
+                <td className="actions-cell">
                     <div className={`actions-wrapper${isEditing ? ' editing' : ''}`}>
-                        <button
-                            className={`icon-btn comment-btn${(hasNote || hasCustomProjections || showNote) ? ' active' : ''}${isEditing ? ' editing' : ''}`}
-                            onClick={onToggleNote}
-                            title={isEditing ? 'Save & close' : 'Edit projections & notes'}
-                        >
-                            {isEditing ? <CheckIcon /> : <PencilIcon />}
-                        </button>
-                        <button
-                            className={`icon-btn ignore-btn${isIgnored ? ' active' : ''}`}
-                            onClick={onIgnore}
-                            title={isIgnored ? 'Unignore' : 'Ignore'}
-                        >
-                            <IgnoreIcon />
-                        </button>
-                        <button
-                            className={`icon-btn highlight-btn${isHighlighted ? ' active' : ''}`}
-                            onClick={onHighlight}
-                            title={isHighlighted ? 'Unhighlight' : 'Highlight'}
-                        >
-                            <HighlightIcon />
-                        </button>
+                        <RowActions
+                            playerId={playerId}
+                            playerRanking={playerRanking}
+                            showNote={showNote}
+                            isEditing={isEditing}
+                            onToggleNote={onToggleNote}
+                        />
                     </div>
                 </td>
             )}
@@ -217,7 +230,7 @@ const PlayerItem = (props) => {
     )
 }
 
-const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEditing, isEven }) => {
+const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEditing, isEven, actions }) => {
     const {updatePlayerNote} = useContext(StoreContext);
 
     const [noteText, setNoteText] = useState(playerRanking?.note || '');
@@ -244,6 +257,11 @@ const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEditing, 
                     />
                 ) : (
                     <p className="player-note-text">{playerRanking?.note}</p>
+                )}
+                {actions && (
+                    <div className="note-row-actions">
+                        {actions}
+                    </div>
                 )}
             </td>
         </tr>
@@ -284,5 +302,5 @@ const StatCellInput = ({ playerId, statId, label, projections, customProjections
     );
 }
 
-export { PlayerNoteRow }
+export { PlayerNoteRow, RowActions }
 export default PlayerItem

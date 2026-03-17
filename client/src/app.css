@@ -1329,15 +1329,27 @@ button[data-disabled] {
   opacity: 1;
 }
 
-/* Extend actions over note row when editing */
-.actions-cell.editing {
+/* Actions anchored to bottom-right of note row when editing */
+.note-row .note-row-cell {
   position: relative;
 }
 
-.actions-cell.editing .actions-wrapper {
-  bottom: -32px;
-  z-index: 2;
-  border-radius: 0 6px 6px 0;
+.note-row-actions {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0 0.4rem 0 1.5rem;
+  white-space: nowrap;
+  background: linear-gradient(to right, transparent, var(--soft-tan) 30%);
+  border-radius: 0 0 6px 0;
+}
+
+.note-row.even-row .note-row-actions {
+  background: linear-gradient(to right, transparent, #e0d3b0 30%);
 }
 
 /* Settings button in controls bar */

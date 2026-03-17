@@ -3,6 +3,8 @@ import {StoreContext} from '~/data/store'
 import {DraftContext} from '~/data/draftContext'
 import {formatStatValue, evaluateStatQuality} from '~/features/stats'
 
+const FALLBACK_IMAGE = `${import.meta.env.BASE_URL}assets/images/player-fallback.png`
+
 const EXCLUDED_POSITIONS = ['1B/3B', '2B/SS', 'P', 'UTIL']
 
 const INJURY_LABELS = {
@@ -134,7 +136,7 @@ const PlayerItem = (props) => {
             <td className="player-identity-cell">
                 <div className="player-photos">
                     {teamLogo && <img className="team-logo" src={teamLogo} width="24" />}
-                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="72" onError={(e) => { (e.target as HTMLImageElement).src = '/assets/images/player-fallback.png'; }} />
+                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="72" onError={(e) => { const img = e.target as HTMLImageElement; if (!img.src.endsWith(FALLBACK_IMAGE)) { img.src = FALLBACK_IMAGE; } }} />
                 </div>
                 <div className="player-identity">
                     <div className="player-name-row">

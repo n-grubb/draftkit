@@ -24,6 +24,8 @@ import {DraftContext} from '~/data/draftContext'
 import {StatsPrefsContext} from '~/data/statsPrefsContext'
 import {statsForFilter} from '~/features/filtering/columns'
 
+const SIMPLE_POSITION_FILTERS = new Set(['C', '1B', '2B', 'SS', '3B', 'OF', 'DH', 'SP', 'RP']);
+
 const PlayerList = ({ editable }: any) => {
     const {players, ranking, mode, toggleCustomProjections} = useContext(StoreContext);
     const {draftedPlayers} = useContext(DraftContext);
@@ -212,7 +214,7 @@ const PlayerList = ({ editable }: any) => {
                             <th className="adp-header">ADP</th>
                             <th className="rank-source-header">ESPN</th>
                             <th className="rank-source-header">FPRO</th>
-                            <th className="vs-adp-header">vsADP</th>
+                            <th className="vs-adp-header">{posFilter && SIMPLE_POSITION_FILTERS.has(posFilter) ? 'vsFPRO' : 'vsADP'}</th>
                             <th className="spacer-header"></th>
                             {columns.map(col => (
                                 <th
@@ -255,6 +257,7 @@ const PlayerList = ({ editable }: any) => {
                                                 rank={rank}
                                                 columns={columns}
                                                 playerRanking={playerRanking}
+                                                posFilter={posFilter}
                                                 editable
                                                 onNameClick={() => setShowCardForPlayerId(playerId)}
                                                 showNote={noteVisible}
@@ -281,6 +284,7 @@ const PlayerList = ({ editable }: any) => {
                                                 rank={rank}
                                                 columns={columns}
                                                 playerRanking={playerRanking}
+                                                posFilter={posFilter}
                                                 onNameClick={() => setShowCardForPlayerId(playerId)}
                                                 showNote={noteVisible}
                                                 isEditing={noteEditing}

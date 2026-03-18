@@ -113,14 +113,51 @@ function parse_ranking_table(html: string): FantasyProsPlayer[] {
 }
 
 /**
+ * Normalize FantasyPros position strings to match app position abbreviations
+ */
+function normalize_position(position: string): string {
+    const pos = position.trim().toUpperCase();
+    if (pos === 'LF' || pos === 'CF' || pos === 'RF') return 'OF';
+    return pos;
+}
+
+/**
+ * Compute positional ranks from the overall rankings list.
+ * Players are already sorted by overall ECR rank, so we assign
+ * within-position ranks (1, 2, 3...) in that order.
+ * Returns a map of player name (lowercase, accent-normalized) -> { position -> positional rank }
+ */
+function compute_positional_ranks(
+    fp_players: FantasyProsPlayer[]
+): Map<string, Record<string, number>> {
+    const position_counters: Record<string, number> = {};
+    const result = new Map<string, Record<string, number>>();
+
+    for (const player of fp_players) {
+        const pos = normalize_position(player.position);
+        if (!pos) continue;
+
+        position_counters[pos] = (position_counters[pos] || 0) + 1;
+        const name_key = replace_accented_characters(player.name).toLowerCase();
+        const existing = result.get(name_key) || {};
+        existing[pos] = position_counters[pos];
+        result.set(name_key, existing);
+    }
+
+    return result;
+}
+
+/**
  * Match FantasyPros players to our player details by name
- * Returns a map of ESPN player ID -> { rank, adp }
+ * Returns a map of ESPN player ID -> { rank, adp, positionalRanks }
  */
 export function match_fantasypros_to_players(
     fp_players: FantasyProsPlayer[],
     player_details: PlayerDetails[]
-): Record<number, { rank: number; adp: number | null }> {
-    const result: Record<number, { rank: number; adp: number | null }> = {};
+): Record<number, { rank: number; adp: number | null; positionalRanks: Record<string, number> }> {
+    const result: Record<number, { rank: number; adp: number | null; positionalRanks: Record<string, number> }> = {};
+
+    const positional_ranks = compute_positional_ranks(fp_players);
 
     // Build a name lookup for our players
     const name_to_player = new Map<string, PlayerDetails>();
@@ -147,6 +184,7 @@ export function match_fantasypros_to_players(
             result[matched.id] = {
                 rank: fp.rank,
                 adp: fp.adp,
+                positionalRanks: positional_ranks.get(normalized_name) || {},
             };
         }
     }

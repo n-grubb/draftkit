@@ -35,7 +35,7 @@ function build_player_store(
     stats: Record<number, any>,
     projections: Record<number, any>,
     historical_stats: Record<number, any>,
-    fantasypros_ranks: Record<number, { rank: number; adp: number | null }>
+    fantasypros_ranks: Record<number, { rank: number; adp: number | null; positionalRanks: Record<string, number> }>
 ): Player[] {
     const players: Player[] = player_details.map(player => {
         const current_stats = format_player_stats(stats[player.id], player.eligible_slots);
@@ -61,6 +61,7 @@ function build_player_store(
             birthDate: player.birth_date || null,
             espnRank: player.espn_rank || null,
             fantasyProsRank: fp_data?.rank || null,
+            fantasyProsPositionalRank: fp_data?.positionalRanks ?? null,
         };
     });
 

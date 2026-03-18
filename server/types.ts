@@ -36,6 +36,7 @@ export interface Player {
     birthDate: string | null;
     espnRank: number | null;
     fantasyProsRank: number | null;
+    fantasyProsPositionalRank: Record<string, number> | null;
 }
 
 // Note: Ranking uses camelCase for stored field names to maintain

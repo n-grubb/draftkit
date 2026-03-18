@@ -36,7 +36,8 @@ export async function fetch_fantasypros_rankings(): Promise<FantasyProsPlayer[]>
 }
 
 /**
- * Fetch ADP data from FantasyPros ADP page
+ * Fetch ADP data from FantasyPros ADP page.
+ * Uses the page's Rank column as the ADP value.
  * Returns a map of player name (lowercase, accent-normalized) -> ADP value
  */
 export async function fetch_fantasypros_adp(): Promise<Map<string, number>> {
@@ -52,35 +53,13 @@ export async function fetch_fantasypros_adp(): Promise<Map<string, number>> {
     }
 
     const html = await response.text();
+    const players = parse_fantasypros_html(html);
     const adp_map = new Map<string, number>();
 
-    // Try embedded ecrData JSON first
-    const ecr_match = html.match(/var\s+ecrData\s*=\s*({[\s\S]*?});/);
-    if (ecr_match) {
-        try {
-            const ecr_data = JSON.parse(ecr_match[1]);
-            if (ecr_data.players && Array.isArray(ecr_data.players)) {
-                for (const p of ecr_data.players) {
-                    const name = p.player_name || p.name || '';
-                    const adp = parseFloat(p.adp) || parseFloat(p.rank_ave) || null;
-                    if (name && adp != null && adp > 0) {
-                        const name_key = replace_accented_characters(name).toLowerCase();
-                        adp_map.set(name_key, adp);
-                    }
-                }
-                return adp_map;
-            }
-        } catch {
-            console.warn('Failed to parse ADP ecrData JSON, falling back to table parsing');
-        }
-    }
-
-    // Fallback: parse the HTML table
-    const players = parse_ranking_table(html);
     for (const player of players) {
-        if (player.name && player.adp != null && player.adp > 0) {
+        if (player.name && player.rank > 0) {
             const name_key = replace_accented_characters(player.name).toLowerCase();
-            adp_map.set(name_key, player.adp);
+            adp_map.set(name_key, player.rank);
         }
     }
 
@@ -103,7 +82,7 @@ function parse_fantasypros_html(html: string): FantasyProsPlayer[] {
                     name: p.player_name || p.name || '',
                     team: p.player_team_id || p.team || '',
                     position: p.player_position_id || p.pos || '',
-                    adp: p.adp ? parseFloat(p.adp) : null,
+                    adp: parseFloat(p.adp) || parseFloat(p.rank_ave) || null,
                 }));
             }
         } catch {

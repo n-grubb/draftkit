@@ -36,7 +36,8 @@ export async function fetch_fantasypros_rankings(): Promise<FantasyProsPlayer[]>
 }
 
 /**
- * Fetch ADP data from FantasyPros ADP page
+ * Fetch ADP data from FantasyPros ADP page.
+ * Uses the page's Rank column as the ADP value.
  * Returns a map of player name (lowercase, accent-normalized) -> ADP value
  */
 export async function fetch_fantasypros_adp(): Promise<Map<string, number>> {
@@ -52,75 +53,13 @@ export async function fetch_fantasypros_adp(): Promise<Map<string, number>> {
     }
 
     const html = await response.text();
+    const players = parse_fantasypros_html(html);
     const adp_map = new Map<string, number>();
 
-    // Try embedded JSON first (ecrData or adpData)
-    for (const var_name of ['ecrData', 'adpData']) {
-        const json_match = html.match(new RegExp(`var\\s+${var_name}\\s*=\\s*({[\\s\\S]*?});`));
-        if (json_match) {
-            try {
-                const data = JSON.parse(json_match[1]);
-                if (data.players && Array.isArray(data.players)) {
-                    for (const p of data.players) {
-                        const name = p.player_name || p.name || '';
-                        const adp = parseFloat(p.adp) || parseFloat(p.rank_ave) || null;
-                        if (name && adp != null && adp > 0) {
-                            const name_key = replace_accented_characters(name).toLowerCase();
-                            adp_map.set(name_key, adp);
-                        }
-                    }
-                    if (adp_map.size > 0) return adp_map;
-                }
-            } catch {
-                console.warn(`Failed to parse ${var_name} JSON`);
-            }
-        }
-    }
-
-    // Fallback: parse the HTML table rows
-    // FantasyPros MLB pages use various row class names, so match broadly
-    const row_regex = /<tr[^>]*>[\s\S]*?<\/tr>/gi;
-    const rows = html.match(row_regex) || [];
-
-    for (const row of rows) {
-        const cells = row.match(/<td[^>]*>([\s\S]*?)<\/td>/gi) || [];
-        if (cells.length < 3) continue;
-
-        const strip_html = (s: string) => s.replace(/<[^>]+>/g, '').trim();
-
-        // Look for player name via fp-player-name attribute or anchor tag
-        const name_match = row.match(/fp-player-name="([^"]+)"/) ||
-                          row.match(/<a[^>]*class="[^"]*fp-player-link[^"]*"[^>]*>([^<]+)<\/a>/);
-        if (!name_match) continue;
-        const name = name_match[1].trim();
-        if (!name) continue;
-
-        // Extract all numeric values from cells to find ADP
-        // ADP is typically the last or second-to-last numeric column
-        const numeric_values: number[] = [];
-        for (let i = 0; i < cells.length; i++) {
-            const text = strip_html(cells[i]);
-            const val = parseFloat(text);
-            if (!isNaN(val) && text.match(/^\d+\.?\d*$/)) {
-                numeric_values.push(val);
-            }
-        }
-
-        // For ADP page, the main value we want is the overall ADP
-        // It's typically the first decimal number after the rank (which is an integer)
-        let adp: number | null = null;
-        for (const val of numeric_values) {
-            // Skip rank values (integers) and look for the ADP (typically has decimals, or is a small integer)
-            if (val > 0 && val < 1000) {
-                adp = val;
-                // If we find a value with decimals, prefer that as ADP
-                if (val !== Math.floor(val)) break;
-            }
-        }
-
-        if (name && adp != null && adp > 0) {
-            const name_key = replace_accented_characters(name).toLowerCase();
-            adp_map.set(name_key, adp);
+    for (const player of players) {
+        if (player.name && player.rank > 0) {
+            const name_key = replace_accented_characters(player.name).toLowerCase();
+            adp_map.set(name_key, player.rank);
         }
     }
 

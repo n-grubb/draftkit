@@ -23,6 +23,7 @@ const PlayerCard = ({ playerId, onClose }) => {
     const { expandedStatsView, selectedBattingStats, selectedPitchingStats } = useContext(StatsPrefsContext);
     
     const player      = players[playerId]
+    if (!player) return null
     const projections = player.projections
     const stats       = player.stats
 

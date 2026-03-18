@@ -68,25 +68,27 @@ export async function fetch_fantasypros_adp(): Promise<Map<string, number>> {
 
 /**
  * Parse FantasyPros HTML page to extract ranking data
- * Looks for embedded ECR data in script tags first, then falls back to table parsing
+ * Looks for embedded data in script tags first, then falls back to table parsing
  */
 function parse_fantasypros_html(html: string): FantasyProsPlayer[] {
-    // Try to find embedded ecrData JSON in script tags
-    const ecr_match = html.match(/var\s+ecrData\s*=\s*({[\s\S]*?});/);
-    if (ecr_match) {
-        try {
-            const ecr_data = JSON.parse(ecr_match[1]);
-            if (ecr_data.players && Array.isArray(ecr_data.players)) {
-                return ecr_data.players.map((p: any) => ({
-                    rank: p.rank_ecr || p.rank || 0,
-                    name: p.player_name || p.name || '',
-                    team: p.player_team_id || p.team || '',
-                    position: p.player_position_id || p.pos || '',
-                    adp: parseFloat(p.adp) || parseFloat(p.rank_ave) || null,
-                }));
+    // Try to find embedded JSON in script tags (ECR page uses ecrData, ADP page uses adpData)
+    for (const var_name of ['ecrData', 'adpData']) {
+        const json_match = html.match(new RegExp(`var\\s+${var_name}\\s*=\\s*({[\\s\\S]*?});`));
+        if (json_match) {
+            try {
+                const data = JSON.parse(json_match[1]);
+                if (data.players && Array.isArray(data.players)) {
+                    return data.players.map((p: any) => ({
+                        rank: p.rank_ecr || p.rank || 0,
+                        name: p.player_name || p.name || '',
+                        team: p.player_team_id || p.team || '',
+                        position: p.pos || String(p.player_position_id || ''),
+                        adp: parseFloat(p.adp) || parseFloat(p.rank_ave) || null,
+                    }));
+                }
+            } catch {
+                console.warn(`Failed to parse ${var_name} JSON, trying next`);
             }
-        } catch {
-            console.warn('Failed to parse ecrData JSON, falling back to table parsing');
         }
     }
 
@@ -101,9 +103,11 @@ function parse_ranking_table(html: string): FantasyProsPlayer[] {
     const players: FantasyProsPlayer[] = [];
 
     // Match table rows with ranking data
-    // FantasyPros tables typically have: Rank, Player Name, Team, Position(s), ADP
-    const row_regex = /<tr[^>]*class="[^"]*mpb-player[^"]*"[^>]*>[\s\S]*?<\/tr>/gi;
-    const rows = html.match(row_regex) || [];
+    // Try mpb-player class rows first, then fall back to any row containing fp-player-name
+    let rows = html.match(/<tr[^>]*class="[^"]*mpb-player[^"]*"[^>]*>[\s\S]*?<\/tr>/gi) || [];
+    if (rows.length === 0) {
+        rows = html.match(/<tr[^>]*>[\s\S]*?fp-player-name[\s\S]*?<\/tr>/gi) || [];
+    }
 
     for (const row of rows) {
         // Extract cells
@@ -116,8 +120,8 @@ function parse_ranking_table(html: string): FantasyProsPlayer[] {
         const rank = parseInt(rank_text);
         if (isNaN(rank)) continue;
 
-        // Player name is usually in the second cell, possibly wrapped in an anchor tag
-        const name_match = cells[1].match(/<a[^>]*fp-player-name="([^"]+)"/) ||
+        // Player name - search the whole row for fp-player-name attribute, then try cell anchors
+        const name_match = row.match(/fp-player-name="([^"]+)"/) ||
                           cells[1].match(/<a[^>]*>([^<]+)<\/a>/);
         const name = name_match ? name_match[1].trim() : strip_html(cells[1]);
 
@@ -144,15 +148,26 @@ function parse_ranking_table(html: string): FantasyProsPlayer[] {
 }
 
 /**
+ * Map of FantasyPros numeric position IDs to abbreviations (MLB).
+ */
+const POSITION_ID_MAP: Record<string, string> = {
+    '1': 'P', '2': 'C', '3': '1B', '4': '2B', '5': '3B',
+    '6': 'SS', '7': 'LF', '8': 'CF', '9': 'RF', '10': 'DH',
+};
+
+/**
  * Normalize FantasyPros position strings to match app position abbreviations.
  * Handles comma-separated multi-position strings (e.g., "SS,2B" -> ["SS", "2B"]).
+ * Also handles numeric position IDs from JSON data (e.g., "6" -> "SS").
  */
 function normalize_positions(position: string): string[] {
     return position.split(',')
         .map(p => {
             const pos = p.trim().toUpperCase();
-            if (pos === 'LF' || pos === 'CF' || pos === 'RF') return 'OF';
-            return pos;
+            // Convert numeric position IDs to abbreviations
+            const mapped = POSITION_ID_MAP[pos] || pos;
+            if (mapped === 'LF' || mapped === 'CF' || mapped === 'RF') return 'OF';
+            return mapped;
         })
         .filter(p => p.length > 0);
 }

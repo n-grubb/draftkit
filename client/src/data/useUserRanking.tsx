@@ -4,6 +4,18 @@ import { fetchRanking, createRanking, updateRanking as updateRemoteRanking } fro
 const MAX_STORED_RANKINGS = 10;
 const RANKINGS_STORAGE_KEY = 'storedRankings';
 
+// Remove player IDs from a ranking that no longer exist in the current player data
+function filterStalePlayers(rankingData, currentPlayers) {
+    if (!currentPlayers || !rankingData?.players) return rankingData;
+    const filtered = {};
+    for (const id in rankingData.players) {
+        if (currentPlayers[id]) {
+            filtered[id] = rankingData.players[id];
+        }
+    }
+    return { ...rankingData, players: filtered };
+}
+
 const useUserRanking = (players) => {
     // Get the ranking ID from URL if present
     const getUrlRankingId = () => {
@@ -161,8 +173,8 @@ const useUserRanking = (players) => {
                     const storedRanking = localStorage.getItem(`ranking_${rankingId}`);
                     
                     if (storedRanking) {
-                        // Use the stored version
-                        const parsedRanking = JSON.parse(storedRanking);
+                        // Use the stored version, filtering out stale player IDs
+                        const parsedRanking = filterStalePlayers(JSON.parse(storedRanking), players);
                         setRanking(parsedRanking);
                         setIsShared(!rankingId.startsWith('local'));
                         return; // Exit early after loading the URL ranking
@@ -185,7 +197,7 @@ const useUserRanking = (players) => {
                     const storedRanking = localStorage.getItem(`ranking_${mostRecentId}`);
                     
                     if (storedRanking) {
-                        setRanking(JSON.parse(storedRanking));
+                        setRanking(filterStalePlayers(JSON.parse(storedRanking), players));
                         setIsShared(!mostRecentId.startsWith('local'));
                     } else {
                         // Create new if we can't find the stored data
@@ -244,7 +256,7 @@ const useUserRanking = (players) => {
             
             let targetRanking;
             if (storedRanking) {
-                targetRanking = JSON.parse(storedRanking);
+                targetRanking = filterStalePlayers(JSON.parse(storedRanking), players);
             } else if (rankingId.startsWith('local')) {
                 // If it's a local ranking but we don't have it stored, create a new one
                 return createNewRanking(players);

@@ -10,18 +10,7 @@ const useMLBTeams = () => {
         throw new Error('Failed to fetch teams & divisions.')
     }
     
-    let teamsRaw = data ? data.teams : JSON.parse(storedTeams);
-
-    // Convert teams array to object keyed by team id for reliable lookups
-    let teams = null;
-    if (Array.isArray(teamsRaw)) {
-        teams = {};
-        for (const team of teamsRaw) {
-            teams[team.id] = team;
-        }
-    } else {
-        teams = teamsRaw;
-    }
+    let teams = data ? data.teams : JSON.parse(storedTeams);
 
     // Save in local storage
     if (data?.teams?.length > 0) {

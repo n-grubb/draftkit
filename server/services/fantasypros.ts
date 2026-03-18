@@ -82,7 +82,7 @@ function parse_fantasypros_html(html: string): FantasyProsPlayer[] {
                         rank: p.rank_ecr || p.rank || 0,
                         name: p.player_name || p.name || '',
                         team: p.player_team_id || p.team || '',
-                        position: p.pos || String(p.player_position_id || ''),
+                        position: p.player_positions || p.position_id || p.pos || String(p.player_position_id || ''),
                         adp: parseFloat(p.adp) || parseFloat(p.rank_ave) || null,
                     }));
                 }
@@ -103,8 +103,11 @@ function parse_ranking_table(html: string): FantasyProsPlayer[] {
     const players: FantasyProsPlayer[] = [];
 
     // Match table rows with ranking data
-    // Try mpb-player class rows first, then fall back to any row containing fp-player-name
+    // Try mpb-player class rows first, then player-row, then fall back to any row containing fp-player-name
     let rows = html.match(/<tr[^>]*class="[^"]*mpb-player[^"]*"[^>]*>[\s\S]*?<\/tr>/gi) || [];
+    if (rows.length === 0) {
+        rows = html.match(/<tr[^>]*class="[^"]*player-row[^"]*"[^>]*>[\s\S]*?<\/tr>/gi) || [];
+    }
     if (rows.length === 0) {
         rows = html.match(/<tr[^>]*>[\s\S]*?fp-player-name[\s\S]*?<\/tr>/gi) || [];
     }
@@ -163,7 +166,8 @@ const POSITION_ID_MAP: Record<string, string> = {
 function normalize_positions(position: string): string[] {
     return position.split(',')
         .map(p => {
-            const pos = p.trim().toUpperCase();
+            // Strip trailing digits (e.g., "SS2" -> "SS", "OF3" -> "OF")
+            const pos = p.trim().toUpperCase().replace(/\d+$/, '');
             // Convert numeric position IDs to abbreviations
             const mapped = POSITION_ID_MAP[pos] || pos;
             if (mapped === 'LF' || mapped === 'CF' || mapped === 'RF') return 'OF';

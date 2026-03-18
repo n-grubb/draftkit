@@ -11,6 +11,7 @@ const PITCHING_COLUMN_IDS = new Set(ALL_PITCHING_COLUMNS.map(col => col.id));
 const FALLBACK_IMAGE = `${import.meta.env.BASE_URL}assets/images/player-fallback.png`
 
 const EXCLUDED_POSITIONS = ['1B/3B', '2B/SS', 'P', 'UTIL']
+const SIMPLE_POSITION_FILTERS = new Set(['C', '1B', '2B', 'SS', '3B', 'OF', 'DH', 'SP', 'RP']);
 
 const INJURY_LABELS = {
     'DAY_TO_DAY': 'DTD',
@@ -90,7 +91,7 @@ const RowActions = ({ playerId, playerRanking, showNote, isEditing, onToggleNote
 }
 
 const PlayerItem = (props) => {
-    const {playerId, playerRanking, editable, onNameClick, columns, rank, showNote, isEditing, onToggleNote} = props
+    const {playerId, playerRanking, editable, onNameClick, columns, rank, posFilter, showNote, isEditing, onToggleNote} = props
     const {players, teams, mode, ranking} = useContext(StoreContext);
     const {isMyTurn, draftPlayer} = useContext(DraftContext);
 
@@ -195,7 +196,19 @@ const PlayerItem = (props) => {
                 {player.fantasyProsRank ? player.fantasyProsRank : <span className="stat-neutral">—</span>}
             </td>
             <td className="vs-adp-cell">
-                {player.averageDraftPosition ? (() => {
+                {(() => {
+                    const isPositionalMode = posFilter && SIMPLE_POSITION_FILTERS.has(posFilter);
+                    if (isPositionalMode) {
+                        const fproRank = player.fantasyProsPositionalRank?.[posFilter];
+                        if (!fproRank) return <span className="stat-neutral">—</span>;
+                        const diff = fproRank - rank;
+                        let className = 'vs-adp-neutral';
+                        if (diff > 50) className = 'vs-adp-gold';
+                        else if (diff > 10) className = 'vs-adp-green';
+                        else if (diff < -10) className = 'vs-adp-red';
+                        return <span className={className}>{diff > 0 ? '+' : ''}{diff}</span>;
+                    }
+                    if (!player.averageDraftPosition) return <span className="stat-neutral">—</span>;
                     const adpRound = Math.round(player.averageDraftPosition);
                     const diff = adpRound - rank;
                     let className = 'vs-adp-neutral';
@@ -203,7 +216,7 @@ const PlayerItem = (props) => {
                     else if (diff > 10) className = 'vs-adp-green';
                     else if (diff < -10) className = 'vs-adp-red';
                     return <span className={className}>{diff > 0 ? '+' : ''}{diff}</span>;
-                })() : <span className="stat-neutral">—</span>}
+                })()}
             </td>
             <td className="spacer-cell"></td>
             {columns.map(column => (

@@ -2,6 +2,11 @@ import {useContext, useState, useRef, useEffect} from 'react'
 import {StoreContext} from '~/data/store'
 import {DraftContext} from '~/data/draftContext'
 import {formatStatValue, evaluateStatQuality} from '~/features/stats'
+import {isBatter, isPitcher} from '~/features/positions'
+import {ALL_BATTING_COLUMNS, ALL_PITCHING_COLUMNS} from '~/features/filtering/columns'
+
+const BATTING_COLUMN_IDS = new Set(ALL_BATTING_COLUMNS.map(col => col.id));
+const PITCHING_COLUMN_IDS = new Set(ALL_PITCHING_COLUMNS.map(col => col.id));
 
 const FALLBACK_IMAGE = `${import.meta.env.BASE_URL}assets/images/player-fallback.png`
 
@@ -103,6 +108,16 @@ const PlayerItem = (props) => {
     const customProjections = useCustom ? playerRanking?.customProjections : null;
 
     const renderCellValue = (player, columnId) => {
+        // Show "--" for inapplicable stat categories (e.g., pitching stats for batters)
+        const playerHasBattingPos = player.pos?.some(p => isBatter(p));
+        const playerHasPitchingPos = player.pos?.some(p => isPitcher(p));
+        if (PITCHING_COLUMN_IDS.has(columnId) && !playerHasPitchingPos) {
+            return <span className="stat-neutral">—</span>;
+        }
+        if (BATTING_COLUMN_IDS.has(columnId) && !playerHasBattingPos) {
+            return <span className="stat-neutral">—</span>;
+        }
+
         const isCustom = customProjections?.[columnId] != null;
         let value = customProjections?.[columnId] ?? projections?.[columnId] ?? player[columnId] ?? null;
 

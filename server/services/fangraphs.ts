@@ -77,6 +77,11 @@ export function build_player_projections(
             }
         }
 
+        // Prevent batting SO from leaking into K (pitcher strikeouts) via format_projections
+        if (player.eligible_slots?.includes(SLOT_IDS.UTIL) && !player.eligible_slots?.includes(SLOT_IDS.PITCHER)) {
+            delete projection.SO;
+        }
+
         player_projections[player.id] = projection;
     }
 
@@ -168,6 +173,11 @@ export async function fetch_historical_stats(
                         HR: merged?.HR || 0,
                         HRA: pitching.HR,
                     };
+                }
+
+                // Prevent batting SO from leaking into K for batter-only players
+                if (!pitching && !player.eligible_slots?.includes(SLOT_IDS.PITCHER)) {
+                    delete merged.SO;
                 }
 
                 if (!historical_stats[player.id]) {

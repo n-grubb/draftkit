@@ -114,7 +114,7 @@ export function format_projections(
         SB: projection['SB'] || 0,
         OBP: projection['OBP'] || 0,
         AVG: projection['AVG'] || 0,
-        KO: projection['SO'] || 0,
+        KO: projection['KO'] || projection['SO'] || 0,
         CS: projection['CS'] || 0,
         OPS: projection['OPS'] || 0,
         SLG: projection['SLG'] || 0,

@@ -660,7 +660,7 @@ button[data-disabled] {
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  border: 1.5px solid #d1d5db;
+  border: 1px solid #b0b0b0;
   border-radius: 6px;
   padding: 0;
   overflow: hidden;
@@ -689,7 +689,7 @@ button[data-disabled] {
   align-items: center;
   justify-content: center;
   background: transparent;
-  border: 1.5px solid #d1d5db;
+  border: 1px solid #b0b0b0;
   border-radius: 9999px;
   color: var(--greybrown);
   width: 2.1rem;
@@ -704,7 +704,7 @@ button[data-disabled] {
 }
 
 .search-input {
-  border: 1.5px solid #d1d5db;
+  border: 1px solid #b0b0b0;
   border-radius: 9999px;
   background: white;
   padding: 0.3rem 1rem 0.3rem 2rem;
@@ -725,7 +725,7 @@ button[data-disabled] {
 .search-input::placeholder {
   color: var(--faded);
   font-style: italic;
-  font-weight: 400;
+  font-weight: 300;
 }
 
 /* Gear/settings pushed to the far right */
@@ -758,7 +758,7 @@ button[data-disabled] {
 .pos-filter {
   position: relative;
   background: transparent;
-  border-right: 1px solid #d1d5db;
+  border-right: 1px solid #b0b0b0;
   border-radius: 0;
   color: var(--greybrown);
   min-width: unset;
@@ -800,6 +800,7 @@ button[data-disabled] {
   background: #3b82f6;
   color: white;
   opacity: 1;
+  border-color: #3b82f6;
 }
 
 .pos-filter.active label {
@@ -1206,6 +1207,7 @@ button[data-disabled] {
   max-width: 10px;
   padding: 0 !important;
   border: none !important;
+  border-top: 2px solid transparent !important;
 }
 
 .spacer-header {

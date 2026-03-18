@@ -123,8 +123,9 @@ export const ESPN_PLAYERS_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/g
 export const FANGRAPHS_PROJECTIONS_URL = 'https://www.fangraphs.com/api/projections';
 export const FANGRAPHS_LEADERS_URL = 'https://www.fangraphs.com/api/leaders/major-league/data';
 
-// FantasyPros URL
+// FantasyPros URLs
 export const FANTASYPROS_RANKINGS_URL = 'https://www.fantasypros.com/mlb/rankings/overall.php';
+export const FANTASYPROS_ADP_URL = 'https://www.fantasypros.com/mlb/adp/overall.php';
 
 // Current season for data fetching
 export const CURRENT_SEASON = 2026;

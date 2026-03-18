@@ -21,7 +21,7 @@ import {
 } from '../services/storage.ts';
 import { fetch_teams_and_divisions, fetch_player_stats } from '../services/espn.ts';
 import { fetch_projections, build_player_projections, fetch_historical_stats } from '../services/fangraphs.ts';
-import { fetch_fantasypros_rankings, match_fantasypros_to_players } from '../services/fantasypros.ts';
+import { fetch_fantasypros_rankings, fetch_fantasypros_adp, match_fantasypros_to_players } from '../services/fantasypros.ts';
 import { format_player_stats, format_projections, format_position_eligibility } from '../utils/formatters.ts';
 
 const admin_router = new Hono();
@@ -132,15 +132,21 @@ async function refresh_projections(
 }
 
 /**
- * Refresh FantasyPros ECR rankings
+ * Refresh FantasyPros ECR rankings and ADP data
  */
 async function refresh_fantasypros(
     player_details: PlayerDetails[]
-): Promise<Record<number, { rank: number; adp: number | null }>> {
+): Promise<Record<number, { rank: number; adp: number | null; positionalRanks: Record<string, number> }>> {
     try {
-        const fp_players = await fetch_fantasypros_rankings();
-        const matched = match_fantasypros_to_players(fp_players, player_details);
-        console.log(`FantasyPros: fetched ${fp_players.length} rankings, matched ${Object.keys(matched).length} players.`);
+        const [fp_players, adp_data] = await Promise.all([
+            fetch_fantasypros_rankings(),
+            fetch_fantasypros_adp().catch(err => {
+                console.warn('Failed to fetch FantasyPros ADP, falling back to ECR page ADP:', err);
+                return undefined;
+            }),
+        ]);
+        const matched = match_fantasypros_to_players(fp_players, player_details, adp_data);
+        console.log(`FantasyPros: fetched ${fp_players.length} rankings, matched ${Object.keys(matched).length} players, ADP entries: ${adp_data?.size ?? 0}.`);
         return matched;
     } catch (error) {
         console.error('Failed to fetch FantasyPros data:', error);
@@ -215,7 +221,7 @@ admin_router.get('/refresh', async (c) => {
     console.log(`Projections found: ${Object.keys(projections).length}`);
 
     // Refresh FantasyPros rankings
-    let fantasypros_ranks: Record<number, { rank: number; adp: number | null }> = {};
+    let fantasypros_ranks: Record<number, { rank: number; adp: number | null; positionalRanks: Record<string, number> }> = {};
 
     if (sources_to_update.includes('fantasypros')) {
         fantasypros_ranks = await refresh_fantasypros(player_details_array);

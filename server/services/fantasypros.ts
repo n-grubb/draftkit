@@ -4,7 +4,7 @@
  */
 
 import type { PlayerDetails } from '../types.ts';
-import { FANTASYPROS_RANKINGS_URL } from '../constants.ts';
+import { FANTASYPROS_RANKINGS_URL, FANTASYPROS_ADP_URL } from '../constants.ts';
 import { replace_accented_characters } from '../utils/formatters.ts';
 
 export interface FantasyProsPlayer {
@@ -33,6 +33,58 @@ export async function fetch_fantasypros_rankings(): Promise<FantasyProsPlayer[]>
 
     const html = await response.text();
     return parse_fantasypros_html(html);
+}
+
+/**
+ * Fetch ADP data from FantasyPros ADP page
+ * Returns a map of player name (lowercase, accent-normalized) -> ADP value
+ */
+export async function fetch_fantasypros_adp(): Promise<Map<string, number>> {
+    const response = await fetch(FANTASYPROS_ADP_URL, {
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch FantasyPros ADP: ${response.status}`);
+    }
+
+    const html = await response.text();
+    const adp_map = new Map<string, number>();
+
+    // Try embedded ecrData JSON first
+    const ecr_match = html.match(/var\s+ecrData\s*=\s*({[\s\S]*?});/);
+    if (ecr_match) {
+        try {
+            const ecr_data = JSON.parse(ecr_match[1]);
+            if (ecr_data.players && Array.isArray(ecr_data.players)) {
+                for (const p of ecr_data.players) {
+                    const name = p.player_name || p.name || '';
+                    const adp = parseFloat(p.adp) || parseFloat(p.rank_ave) || null;
+                    if (name && adp != null && adp > 0) {
+                        const name_key = replace_accented_characters(name).toLowerCase();
+                        adp_map.set(name_key, adp);
+                    }
+                }
+                return adp_map;
+            }
+        } catch {
+            console.warn('Failed to parse ADP ecrData JSON, falling back to table parsing');
+        }
+    }
+
+    // Fallback: parse the HTML table
+    const players = parse_ranking_table(html);
+    for (const player of players) {
+        if (player.name && player.adp != null && player.adp > 0) {
+            const name_key = replace_accented_characters(player.name).toLowerCase();
+            adp_map.set(name_key, player.adp);
+        }
+    }
+
+    return adp_map;
 }
 
 /**
@@ -113,12 +165,17 @@ function parse_ranking_table(html: string): FantasyProsPlayer[] {
 }
 
 /**
- * Normalize FantasyPros position strings to match app position abbreviations
+ * Normalize FantasyPros position strings to match app position abbreviations.
+ * Handles comma-separated multi-position strings (e.g., "SS,2B" -> ["SS", "2B"]).
  */
-function normalize_position(position: string): string {
-    const pos = position.trim().toUpperCase();
-    if (pos === 'LF' || pos === 'CF' || pos === 'RF') return 'OF';
-    return pos;
+function normalize_positions(position: string): string[] {
+    return position.split(',')
+        .map(p => {
+            const pos = p.trim().toUpperCase();
+            if (pos === 'LF' || pos === 'CF' || pos === 'RF') return 'OF';
+            return pos;
+        })
+        .filter(p => p.length > 0);
 }
 
 /**
@@ -134,13 +191,17 @@ function compute_positional_ranks(
     const result = new Map<string, Record<string, number>>();
 
     for (const player of fp_players) {
-        const pos = normalize_position(player.position);
-        if (!pos) continue;
+        const positions = normalize_positions(player.position);
+        if (positions.length === 0) continue;
 
-        position_counters[pos] = (position_counters[pos] || 0) + 1;
         const name_key = replace_accented_characters(player.name).toLowerCase();
         const existing = result.get(name_key) || {};
-        existing[pos] = position_counters[pos];
+
+        for (const pos of positions) {
+            position_counters[pos] = (position_counters[pos] || 0) + 1;
+            existing[pos] = position_counters[pos];
+        }
+
         result.set(name_key, existing);
     }
 
@@ -150,10 +211,12 @@ function compute_positional_ranks(
 /**
  * Match FantasyPros players to our player details by name
  * Returns a map of ESPN player ID -> { rank, adp, positionalRanks }
+ * @param adp_data Optional ADP data from the dedicated FantasyPros ADP page
  */
 export function match_fantasypros_to_players(
     fp_players: FantasyProsPlayer[],
-    player_details: PlayerDetails[]
+    player_details: PlayerDetails[],
+    adp_data?: Map<string, number>
 ): Record<number, { rank: number; adp: number | null; positionalRanks: Record<string, number> }> {
     const result: Record<number, { rank: number; adp: number | null; positionalRanks: Record<string, number> }> = {};
 
@@ -181,9 +244,11 @@ export function match_fantasypros_to_players(
         }
 
         if (matched) {
+            // Prefer ADP from the dedicated ADP page, fall back to ECR page ADP
+            const adp = adp_data?.get(normalized_name) ?? fp.adp;
             result[matched.id] = {
                 rank: fp.rank,
-                adp: fp.adp,
+                adp,
                 positionalRanks: positional_ranks.get(normalized_name) || {},
             };
         }

@@ -98,7 +98,7 @@ const PlayerItem = (props) => {
     const isDraftMode = mode === 'draft';
 
     const player = players[playerId]
-    if (!player) return null
+    if (!player?.pos) return null
     const projections = player.projections
 
     let positions = player.pos.filter(position => !EXCLUDED_POSITIONS.includes(position))

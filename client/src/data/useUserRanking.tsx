@@ -9,7 +9,7 @@ function filterStalePlayers(rankingData, currentPlayers) {
     if (!currentPlayers || !rankingData?.players) return rankingData;
     const filtered = {};
     for (const id in rankingData.players) {
-        if (currentPlayers[id]) {
+        if (currentPlayers[id]?.pos) {
             filtered[id] = rankingData.players[id];
         }
     }

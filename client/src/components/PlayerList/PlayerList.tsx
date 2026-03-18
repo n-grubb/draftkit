@@ -89,7 +89,7 @@ const PlayerList = ({ editable }: any) => {
 
     function filterPlayers(playerId) {
         const player = players?.[playerId]
-        if (!player) { return false }
+        if (!player?.pos) { return false }
         if (isDraftMode && draftedPlayerIds.includes(playerId)) { return false; }
         if (!posFilter) return true
         if (posFilter === 'DH') {

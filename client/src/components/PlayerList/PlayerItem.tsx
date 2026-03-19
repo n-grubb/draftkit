@@ -261,8 +261,7 @@ const PlayerItem = memo(function PlayerItem(props: any) {
     )
 })
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const PlayerNoteRow = memo(function PlayerNoteRow({ playerId, playerRanking, colSpan, editable, isEditing, isEven }: any) {
+const PlayerNoteRow = memo(function PlayerNoteRow({ playerId, playerRanking, colSpan, isEditing, isEven }: any) {
     const {updatePlayerNote} = useContext(StoreContext);
 
     const [noteText, setNoteText] = useState(playerRanking?.note || '');

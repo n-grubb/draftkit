@@ -1,4 +1,4 @@
-import {useContext, useState, useRef, useEffect} from 'react'
+import React, {useContext, useState, useRef, useEffect, memo} from 'react'
 import {StoreContext} from '~/data/store'
 import {DraftContext} from '~/data/draftContext'
 import {formatStatValue, evaluateStatQuality} from '~/features/stats'
@@ -56,7 +56,7 @@ const CheckIcon = () => (
     </svg>
 )
 
-const RowActions = ({ playerId, playerRanking, showNote, isEditing, onToggleNote }) => {
+const RowActions = memo(function RowActions({ playerId, playerRanking, showNote, isEditing, onToggleNote }: any) {
     const {ignorePlayer, highlightPlayer} = useContext(StoreContext);
     const hasNote = !!playerRanking?.note;
     const hasCustomProjections = playerRanking?.customProjections && Object.keys(playerRanking.customProjections).length > 0;
@@ -88,9 +88,9 @@ const RowActions = ({ playerId, playerRanking, showNote, isEditing, onToggleNote
             </button>
         </>
     );
-}
+})
 
-const PlayerItem = (props) => {
+const PlayerItem = memo(function PlayerItem(props: any) {
     const {playerId, playerRanking, editable, onNameClick, columns, rank, posFilter, showNote, isEditing, onToggleNote} = props
     const {players, teams, mode, ranking} = useContext(StoreContext);
     const {isMyTurn, draftPlayer} = useContext(DraftContext);
@@ -152,8 +152,8 @@ const PlayerItem = (props) => {
             <td className="rank-cell">{rank}.</td>
             <td className="player-identity-cell">
                 <div className="player-photos">
-                    {teamLogo && <img className="team-logo" src={teamLogo} width="24" />}
-                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="72" onError={(e) => { const img = e.target as HTMLImageElement; if (!img.src.endsWith(FALLBACK_IMAGE)) { img.src = FALLBACK_IMAGE; } }} />
+                    {teamLogo && <img className="team-logo" src={teamLogo} width="24" loading="lazy" />}
+                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="72" loading="lazy" onError={(e) => { const img = e.target as HTMLImageElement; if (!img.src.endsWith(FALLBACK_IMAGE)) { img.src = FALLBACK_IMAGE; } }} />
                 </div>
                 <div className="player-identity">
                     <div className="player-name-row">
@@ -259,9 +259,10 @@ const PlayerItem = (props) => {
             )}
         </>
     )
-}
+})
 
-const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEditing, isEven }) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const PlayerNoteRow = memo(function PlayerNoteRow({ playerId, playerRanking, colSpan, editable, isEditing, isEven }: any) {
     const {updatePlayerNote} = useContext(StoreContext);
 
     const [noteText, setNoteText] = useState(playerRanking?.note || '');
@@ -292,7 +293,7 @@ const PlayerNoteRow = ({ playerId, playerRanking, colSpan, editable, isEditing, 
             </td>
         </tr>
     )
-}
+})
 
 const StatCellInput = ({ playerId, statId, label, projections, customProjections }) => {
     const {updatePlayerProjection} = useContext(StoreContext);

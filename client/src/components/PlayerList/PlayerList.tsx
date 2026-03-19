@@ -42,7 +42,10 @@ const PlayerList = ({ editable }: any) => {
     const [allNotesExpanded, setAllNotesExpanded] = useState(false);
 
     const isDraftMode = mode === 'draft';
-    const draftedPlayerIds = isDraftMode ? Object.values(draftedPlayers) : [];
+    const draftedPlayerIds = useMemo(
+        () => isDraftMode ? Object.values(draftedPlayers) : [],
+        [isDraftMode, draftedPlayers]
+    );
 
     const hasCustomProjections = useMemo(() => {
         if (!ranking?.players) return false;
@@ -98,9 +101,12 @@ const PlayerList = ({ editable }: any) => {
         return player.pos.includes(posFilter)
     }
 
-    const columns = isDraftMode
-        ? statsForFilter(posFilter)
-        : statsForFilter(posFilter, selectedBattingStats, selectedPitchingStats);
+    const columns = useMemo(
+        () => isDraftMode
+            ? statsForFilter(posFilter)
+            : statsForFilter(posFilter, selectedBattingStats, selectedPitchingStats),
+        [isDraftMode, posFilter, selectedBattingStats, selectedPitchingStats]
+    );
 
     const handleSortClick = (colId: string) => {
         if (sortColumn === colId) {
@@ -116,17 +122,28 @@ const PlayerList = ({ editable }: any) => {
     };
 
     // Apply position filter + search first (no sort yet) — this is used for rank numbers
-    let rankedBeforeSort = rankedPlayerIds.filter(filterPlayers);
-    if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        rankedBeforeSort = rankedBeforeSort.filter(id =>
-            players[id]?.name.toLowerCase().includes(q)
-        );
-    }
+    const rankedBeforeSort = useMemo(() => {
+        let filtered = rankedPlayerIds.filter(filterPlayers);
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            filtered = filtered.filter(id =>
+                players[id]?.name.toLowerCase().includes(q)
+            );
+        }
+        return filtered;
+    }, [rankedPlayerIds, posFilter, searchQuery, players, isDraftMode, draftedPlayerIds]);
+
+    // Pre-compute rank lookup to avoid O(n²) indexOf calls during render
+    const rankByPlayerId = useMemo(() => {
+        const map = new Map<string, number>();
+        rankedBeforeSort.forEach((id, i) => { map.set(id, i + 1); });
+        return map;
+    }, [rankedBeforeSort]);
 
     // Apply sort on top for visual ordering only
-    const displayedPlayerIds = sortColumn
-        ? [...rankedBeforeSort].sort((a, b) => {
+    const displayedPlayerIds = useMemo(() => {
+        if (!sortColumn) return rankedBeforeSort;
+        return [...rankedBeforeSort].sort((a, b) => {
             const getVal = (id) => {
                 const p = players[id];
                 const custom = useCustomProjections
@@ -135,8 +152,8 @@ const PlayerList = ({ editable }: any) => {
                 return custom?.[sortColumn] ?? p?.[sortColumn] ?? p?.projections?.[sortColumn] ?? 0;
             };
             return sortDirection === 'desc' ? getVal(b) - getVal(a) : getVal(a) - getVal(b);
-        })
-        : rankedBeforeSort;
+        });
+    }, [rankedBeforeSort, sortColumn, sortDirection, players, ranking.players, useCustomProjections]);
 
     const toggleNoteEditing = (playerId: string) => {
         const wasEditing = !!editingNotes[playerId];
@@ -241,7 +258,7 @@ const PlayerList = ({ editable }: any) => {
                             {displayedPlayerIds.map((playerId, visualIndex) => {
                                 // Rank = 1-based position in the pre-sort filtered list
                                 // (reflects live drag order and position-filtered context)
-                                const rank = rankedBeforeSort.indexOf(playerId) + 1;
+                                const rank = rankByPlayerId.get(playerId) || 0;
                                 const playerRanking = ranking.players[playerId];
                                 const isEven = visualIndex % 2 === 1;
                                 const rowClass = `player-row${isEven ? ' even-row' : ''}${playerRanking?.highlight ? ' highlighted' : playerRanking?.ignore ? ' ignored' : ''}`;

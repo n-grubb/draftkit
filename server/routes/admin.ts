@@ -18,6 +18,7 @@ import {
     store_historical_stats,
     store_projection,
     store_players,
+    cleanup_stale_players,
 } from '../services/storage.ts';
 import { fetch_teams_and_divisions, fetch_player_stats } from '../services/espn.ts';
 import { fetch_projections, build_player_projections, fetch_historical_stats } from '../services/fangraphs.ts';
@@ -240,6 +241,11 @@ admin_router.get('/refresh', async (c) => {
     );
 
     await store_players(players);
+
+    // Remove KV entries for players no longer in the ESPN response
+    const current_player_ids = new Set(players.map(p => p.id));
+    const deleted = await cleanup_stale_players(current_player_ids);
+    console.log(`Cleaned up ${deleted} stale player/stats entries.`);
 
     return c.json(players);
 });

@@ -132,6 +132,24 @@ export async function store_players(players: Player[]): Promise<void> {
     }
 }
 
+export async function cleanup_stale_players(current_player_ids: Set<number>): Promise<number> {
+    let deleted_count = 0;
+    const prefixes = ['players', 'stats'] as const;
+
+    for (const prefix of prefixes) {
+        const entries = kv.list({ prefix: [prefix] });
+        for await (const entry of entries) {
+            const player_id = entry.key[1] as number;
+            if (!current_player_ids.has(player_id)) {
+                await kv.delete([prefix, player_id]);
+                deleted_count++;
+            }
+        }
+    }
+
+    return deleted_count;
+}
+
 export async function store_ranking(ranking: Ranking): Promise<void> {
     await kv.set(['rankings', ranking.id], ranking);
 }

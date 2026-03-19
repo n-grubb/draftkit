@@ -15,7 +15,8 @@ export async function get_all_teams(): Promise<Team[]> {
     const teams: Team[] = [];
     const entries = kv.list({ prefix: ['teams'] });
     for await (const entry of entries) {
-        teams.push(entry.value as Team);
+        const team = entry.value as Team;
+        teams[team.id] = team;
     }
     return teams;
 }

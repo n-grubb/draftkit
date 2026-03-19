@@ -230,7 +230,7 @@ const PlayerList = ({ editable }: any) => {
                                     )}
                                 </th>
                             ))}
-                            {editable && <th className="actions-header"></th>}
+                            {(editable || isDraftMode) && <th className="actions-header"></th>}
                         </tr>
                     </thead>
                     <tbody>

@@ -56,6 +56,12 @@ const CheckIcon = () => (
     </svg>
 )
 
+const CommentIcon = () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+)
+
 const RowActions = ({ playerId, playerRanking, showNote, isEditing, onToggleNote }) => {
     const {ignorePlayer, highlightPlayer} = useContext(StoreContext);
     const hasNote = !!playerRanking?.note;
@@ -160,6 +166,11 @@ const PlayerItem = (props) => {
                         <span className="player-name" onClick={onNameClick}>{player.name}</span>
                         {injuryLabel && (
                             <span className="injury-designation">{injuryLabel}</span>
+                        )}
+                        {isDraftMode && playerRanking?.note && (
+                            <span className="draft-note-icon" title={playerRanking.note}>
+                                <CommentIcon />
+                            </span>
                         )}
                     </div>
                     <div className="player-meta small">

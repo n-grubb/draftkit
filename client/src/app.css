@@ -1014,6 +1014,16 @@ button[data-disabled] {
   width: 48px;
 }
 
+.draft-note-icon {
+  color: var(--brown);
+  opacity: 0.6;
+  margin-left: 0.3rem;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  cursor: default;
+}
+
 /* Rank cell */
 .rank-cell {
   font-size: 0.75rem;
@@ -1300,6 +1310,7 @@ button[data-disabled] {
 
 /* Border-radius on the cell before actions (the visual row end) */
 .player-row td:has(+ .actions-cell) { border-radius: 0 6px 6px 0; }
+.draft-mode .player-row td:has(+ .actions-cell) { border-radius: 0; }
 
 /* No highlight border on actions overlay — the left tab is sufficient */
 
@@ -1318,8 +1329,8 @@ button[data-disabled] {
   padding: 0.15rem 0.3rem !important;
   position: static;
   overflow: hidden;
-  background: var(--soft-tan) !important;
   opacity: 1;
+  border-radius: 0 6px 6px 0;
 }
 
 /* Icon buttons */
@@ -1552,15 +1563,15 @@ button {
   &.draft-button {
     background: var(--forest);
     opacity: 1;
-    padding: .5rem 1rem;
-    font-size: .875rem;
+    padding: .25rem .75rem;
+    font-size: .75rem;
   }
-  
+
   &.drafted-button {
     background: var(--navy);
     opacity: 1;
-    padding: .5rem 1rem;
-    font-size: .875rem;
+    padding: .25rem .75rem;
+    font-size: .75rem;
   }
 }
 

@@ -231,7 +231,7 @@ const PlayerList = ({ editable }: any) => {
                             <th className="adp-header">ADP</th>
                             <th className="rank-source-header">ESPN</th>
                             <th className="rank-source-header">FPRO</th>
-                            <th className="vs-adp-header">{posFilter && SIMPLE_POSITION_FILTERS.has(posFilter) ? 'vsFPRO' : 'vsADP'}</th>
+                            <th className="vs-adp-header">{posFilter && SIMPLE_POSITION_FILTERS.has(posFilter) ? 'vsPRK' : 'vsADP'}</th>
                             <th className="spacer-header"></th>
                             {columns.map(col => (
                                 <th
@@ -247,7 +247,7 @@ const PlayerList = ({ editable }: any) => {
                                     )}
                                 </th>
                             ))}
-                            {editable && <th className="actions-header"></th>}
+                            {(editable || isDraftMode) && <th className="actions-header"></th>}
                         </tr>
                     </thead>
                     <tbody>

@@ -1,4 +1,4 @@
-import { createContext, useState } from 'react';
+import { createContext, useState, useMemo, useCallback } from 'react';
 import useMLBTeams from './useMLBTeams'
 import usePlayers from './usePlayers'
 import useUserRanking from './useUserRanking'
@@ -10,12 +10,12 @@ import useUserRanking from './useUserRanking'
 export const StoreContext = createContext<any>({})
 
 export const StoreProvider = ({ children }) => {
-    let initialMode = localStorage.getItem('mode') || 'view'
+    const initialMode = localStorage.getItem('mode') || 'view'
     const [mode, setMode] = useState(initialMode)
-    function updateMode(modeSelection) {
+    const updateMode = useCallback((modeSelection) => {
         setMode(modeSelection)
         localStorage.setItem('mode', modeSelection)
-    }
+    }, [])
     
     const { teams, error: errorFetchingMLBTeams, isLoading: isLoadingMLBTeams } = useMLBTeams()
     const { players, error: errorFetchingPlayers, isLoading: isLoadingPlayers } = usePlayers()
@@ -36,7 +36,7 @@ export const StoreProvider = ({ children }) => {
     const error = errorFetchingMLBTeams || errorFetchingPlayers
     const isLoading = isLoadingMLBTeams || isLoadingPlayers || isLoadingRanking
 
-    const context = {
+    const context = useMemo(() => ({
         teams,
         players,
         mode,
@@ -49,7 +49,7 @@ export const StoreProvider = ({ children }) => {
         updatePlayerProjection,
         toggleCustomProjections,
         userRanking // Expose the full userRanking object for sharing functionality
-    }
+    }), [teams, players, mode, ranking, updateMode, updateRanking, ignorePlayer, highlightPlayer, updatePlayerNote, updatePlayerProjection, toggleCustomProjections, userRanking])
 
     if (error) {
         return (

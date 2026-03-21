@@ -36,7 +36,11 @@ export async function get_all_players(): Promise<Player[]> {
     for await (const entry of entries) {
         players.push(entry.value as Player);
     }
-    players.sort((a, b) => b.ownership - a.ownership);
+    players.sort((a, b) => {
+        const adpA = a.averageDraftPosition ?? Infinity;
+        const adpB = b.averageDraftPosition ?? Infinity;
+        return adpA - adpB;
+    });
     return players;
 }
 

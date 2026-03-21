@@ -63,8 +63,8 @@ export async function fetch_player_stats(): Promise<PlayerData> {
                 players: {
                     filterSlotIds: { value: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 19] },
                     filterRanksForScoringPeriodIds: { value: [162] },
-                    sortPercOwned: { sortPriority: 1, sortAsc: false },
-                    sortDraftRanks: { sortPriority: 100, sortAsc: true, value: 'STANDARD' },
+                    sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'STANDARD' },
+                    sortPercOwned: { sortPriority: 100, sortAsc: false },
                     limit: 700,
                 },
             }),
@@ -84,7 +84,8 @@ export async function fetch_player_stats(): Promise<PlayerData> {
                 players: {
                     filterSlotIds: { value: [13, 14, 15, 17] },
                     filterRanksForScoringPeriodIds: { value: [162] },
-                    sortPercOwned: { sortPriority: 1, sortAsc: false },
+                    sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'STANDARD' },
+                    sortPercOwned: { sortPriority: 100, sortAsc: false },
                     limit: 600,
                 },
             }),

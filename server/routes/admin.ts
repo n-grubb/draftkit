@@ -66,7 +66,11 @@ function build_player_store(
         };
     });
 
-    players.sort((a, b) => b.ownership - a.ownership);
+    players.sort((a, b) => {
+        const adpA = a.averageDraftPosition ?? Infinity;
+        const adpB = b.averageDraftPosition ?? Infinity;
+        return adpA - adpB;
+    });
     return players;
 }
 

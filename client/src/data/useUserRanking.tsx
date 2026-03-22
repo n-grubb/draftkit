@@ -17,6 +17,39 @@ function filterStalePlayers(rankingData, currentPlayers) {
     return { ...rankingData, players: filtered };
 }
 
+// Add players from currentPlayers that are missing from the ranking (e.g. newly added players)
+function addNewPlayers(rankingData, currentPlayers) {
+    if (!currentPlayers || !rankingData?.players) return rankingData;
+
+    const existingPlayers = rankingData.players;
+    const newPlayerIds = Object.keys(currentPlayers).filter(id => !existingPlayers[id]);
+    if (newPlayerIds.length === 0) return rankingData;
+
+    const maxRank = Object.values(existingPlayers).reduce<number>(
+        (max, p: any) => Math.max(max, p.rank ?? 0),
+        -1
+    );
+
+    // Sort new players by ADP so they appear in a sensible order at the end
+    newPlayerIds.sort((a, b) => {
+        const adpA = currentPlayers[a].averageDraftPosition ?? Infinity;
+        const adpB = currentPlayers[b].averageDraftPosition ?? Infinity;
+        return adpA - adpB;
+    });
+
+    const updatedPlayers = { ...existingPlayers };
+    newPlayerIds.forEach((id, i) => {
+        updatedPlayers[id] = { rank: maxRank + 1 + i, ignore: false, highlight: false };
+    });
+
+    return { ...rankingData, players: updatedPlayers };
+}
+
+// Sync a ranking with the current player data: remove stale players and add new ones
+function syncRankingWithPlayers(rankingData, currentPlayers) {
+    return addNewPlayers(filterStalePlayers(rankingData, currentPlayers), currentPlayers);
+}
+
 function readRankingsList() {
     const json = localStorage.getItem(RANKINGS_STORAGE_KEY);
     return json ? JSON.parse(json) : [];
@@ -226,7 +259,7 @@ const useUserRanking = (players) => {
 
                     if (storedRanking) {
                         // Use the stored version, filtering out stale player IDs
-                        const parsedRanking = filterStalePlayers(JSON.parse(storedRanking), players);
+                        const parsedRanking = syncRankingWithPlayers(JSON.parse(storedRanking), players);
                         setRanking(parsedRanking);
                         setIsShared(!rankingId.startsWith('local'));
                         return; // Exit early after loading the URL ranking
@@ -249,7 +282,7 @@ const useUserRanking = (players) => {
                     const storedRanking = localStorage.getItem(`ranking_${mostRecentId}`);
 
                     if (storedRanking) {
-                        setRanking(filterStalePlayers(JSON.parse(storedRanking), players));
+                        setRanking(syncRankingWithPlayers(JSON.parse(storedRanking), players));
                         setIsShared(!mostRecentId.startsWith('local'));
                     } else {
                         // Create new if we can't find the stored data
@@ -308,7 +341,7 @@ const useUserRanking = (players) => {
 
             let targetRanking;
             if (storedRanking) {
-                targetRanking = filterStalePlayers(JSON.parse(storedRanking), players);
+                targetRanking = syncRankingWithPlayers(JSON.parse(storedRanking), players);
             } else if (rankingId.startsWith('local')) {
                 // If it's a local ranking but we don't have it stored, create a new one
                 return createNewRanking(players);

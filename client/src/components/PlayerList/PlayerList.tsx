@@ -277,10 +277,10 @@ const PlayerList = ({ editable }: any) => {
                             strategy={verticalListSortingStrategy}
                         >
                             {displayedPlayerIds.map((playerId, visualIndex) => {
-                                // Rank = 1-based position in the pre-sort filtered list
-                                // (reflects live drag order and position-filtered context)
-                                const rank = rankByPlayerId.get(playerId) || 0;
-                                const vsAdpRank = vsAdpRankByPlayerId.get(playerId) || rank;
+                                // In draft mode, rank reflects position in the full list (including
+                                // drafted players) so numbers stay stable as players are picked.
+                                // Outside draft mode, rank is position in the filtered list.
+                                const rank = vsAdpRankByPlayerId.get(playerId) || 0;
                                 const playerRanking = ranking.players[playerId];
                                 const isEven = visualIndex % 2 === 1;
                                 const rowClass = `player-row${isEven ? ' even-row' : ''}${playerRanking?.highlight ? ' highlighted' : playerRanking?.ignore ? ' ignored' : ''}`;
@@ -294,7 +294,6 @@ const PlayerList = ({ editable }: any) => {
                                             <PlayerItem
                                                 playerId={playerId}
                                                 rank={rank}
-                                                vsAdpRank={vsAdpRank}
                                                 columns={columns}
                                                 playerRanking={playerRanking}
                                                 posFilter={posFilter}
@@ -322,7 +321,6 @@ const PlayerList = ({ editable }: any) => {
                                             <PlayerItem
                                                 playerId={playerId}
                                                 rank={rank}
-                                                vsAdpRank={vsAdpRank}
                                                 columns={columns}
                                                 playerRanking={playerRanking}
                                                 posFilter={posFilter}

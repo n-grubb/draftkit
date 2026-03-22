@@ -140,6 +140,27 @@ const PlayerList = ({ editable }: any) => {
         return map;
     }, [rankedBeforeSort]);
 
+    // In draft mode, vsADP rank should reflect a player's position in the full list
+    // (including drafted players) so the comparison stays accurate as picks are made.
+    const vsAdpRankByPlayerId = useMemo(() => {
+        if (!isDraftMode) return rankByPlayerId;
+        // Same filters as rankedBeforeSort but without the drafted-player exclusion
+        let filtered = rankedPlayerIds.filter(id => {
+            const player = players?.[id];
+            if (!player) return false;
+            if (!posFilter) return true;
+            if (posFilter === 'DH') return player.pos.every(p => p === 'DH' || p === 'UTIL');
+            return player.pos.includes(posFilter);
+        });
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            filtered = filtered.filter(id => players[id]?.name.toLowerCase().includes(q));
+        }
+        const map = new Map<string, number>();
+        filtered.forEach((id, i) => { map.set(id, i + 1); });
+        return map;
+    }, [isDraftMode, rankByPlayerId, rankedPlayerIds, players, posFilter, searchQuery]);
+
     // Apply sort on top for visual ordering only
     const displayedPlayerIds = useMemo(() => {
         if (!sortColumn) return rankedBeforeSort;
@@ -256,9 +277,10 @@ const PlayerList = ({ editable }: any) => {
                             strategy={verticalListSortingStrategy}
                         >
                             {displayedPlayerIds.map((playerId, visualIndex) => {
-                                // Rank = 1-based position in the pre-sort filtered list
-                                // (reflects live drag order and position-filtered context)
-                                const rank = rankByPlayerId.get(playerId) || 0;
+                                // In draft mode, rank reflects position in the full list (including
+                                // drafted players) so numbers stay stable as players are picked.
+                                // Outside draft mode, rank is position in the filtered list.
+                                const rank = vsAdpRankByPlayerId.get(playerId) || 0;
                                 const playerRanking = ranking.players[playerId];
                                 const isEven = visualIndex % 2 === 1;
                                 const rowClass = `player-row${isEven ? ' even-row' : ''}${playerRanking?.highlight ? ' highlighted' : playerRanking?.ignore ? ' ignored' : ''}`;

@@ -97,7 +97,8 @@ const RowActions = memo(function RowActions({ playerId, playerRanking, showNote,
 })
 
 const PlayerItem = memo(function PlayerItem(props: any) {
-    const {playerId, playerRanking, editable, onNameClick, columns, rank, posFilter, showNote, isEditing, onToggleNote} = props
+    const {playerId, playerRanking, editable, onNameClick, columns, rank, vsAdpRank: vsAdpRankProp, posFilter, showNote, isEditing, onToggleNote} = props
+    const vsAdpRank = vsAdpRankProp ?? rank;
     const {players, teams, mode, ranking} = useContext(StoreContext);
     const {isMyTurn, draftPlayer} = useContext(DraftContext);
 
@@ -213,7 +214,7 @@ const PlayerItem = memo(function PlayerItem(props: any) {
                     if (isPositionalMode) {
                         const fproRank = player.fantasyProsPositionalRank?.[posFilter];
                         if (!fproRank) return <span className="stat-neutral">—</span>;
-                        const diff = fproRank - rank;
+                        const diff = fproRank - vsAdpRank;
                         let className = 'vs-adp-neutral';
                         if (diff > 50) className = 'vs-adp-gold';
                         else if (diff > 10) className = 'vs-adp-green';
@@ -222,7 +223,7 @@ const PlayerItem = memo(function PlayerItem(props: any) {
                     }
                     if (!player.averageDraftPosition) return <span className="stat-neutral">—</span>;
                     const adpRound = Math.round(player.averageDraftPosition);
-                    const diff = adpRound - rank;
+                    const diff = adpRound - vsAdpRank;
                     let className = 'vs-adp-neutral';
                     if (diff > 50) className = 'vs-adp-gold';
                     else if (diff > 10) className = 'vs-adp-green';

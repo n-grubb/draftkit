@@ -133,7 +133,7 @@ const Draft = () => {
                             value={totalRounds} 
                             onChange={(e) => setTotalRounds(Number(e.target.value))}
                         >
-                            {[20, 22, 24, 26, 28, 30].map(num => (
+                            {[13, 14, 15, 16, 17, 18].map(num => (
                                 <option key={num} value={num}>{num}</option>
                             ))}
                         </select>

@@ -1,45 +1,53 @@
-const BATTING_POSITIONS = ['C', '1B', '2B', '3B', 'SS', 'OF', '1B/3B', '2B/SS', 'UTIL', 'DH']
-export const isBatter = (position) => {
-    return BATTING_POSITIONS.includes(position)
+// Fantasy football positions and helpers
+
+export const OFFENSE_POSITIONS = ['QB', 'RB', 'WR', 'TE', 'FLEX']
+export const isOffense = (position) => {
+    return OFFENSE_POSITIONS.includes(position)
 }
 
-const PITCHING_POSITIONS = ['P', 'SP', 'RP']
-export const isPitcher = (position) => {
-    return PITCHING_POSITIONS.includes(position)
+export const SPECIAL_POSITIONS = ['K', 'DST']
+export const isSpecial = (position) => {
+    return SPECIAL_POSITIONS.includes(position)
 }
 
-// Define starter thresholds for each position
+// Which stat groups apply to each position. Used to decide whether a stat
+// column is relevant for a given player (else it renders as "—").
+export const GROUPS_BY_POSITION = {
+    QB:   ['all', 'pass', 'rush'],
+    RB:   ['all', 'rush', 'rec'],
+    WR:   ['all', 'rec', 'rush'],
+    TE:   ['all', 'rec'],
+    FLEX: ['all', 'rush', 'rec'],
+    K:    ['all', 'kick'],
+    DST:  ['all', 'def'],
+}
+
+// Does a stat group apply to any of the given positions?
+export function groupAppliesToPositions(positions, group) {
+    if (group === 'all') return true
+    return (positions || []).some(pos => GROUPS_BY_POSITION[pos]?.includes(group))
+}
+
+// Starter thresholds per position for a 10-team league (top-N are "startable").
+// QB/TE/K/DST ~ 1 per team; RB/WR ~ 2-3 per team plus flex.
 export const STARTER_THRESHOLDS = {
-    // Infield positions - top 10 players in a 10-team league
-    'C': 10,
-    '1B': 10,
-    '2B': 10,
-    '3B': 10,
-    'SS': 10,
-    // Outfield - top 40 players in a 10-team league (4 OF spots per team)
-    'OF': 40,
-    // Combo positions - top 30 players
-    '1B/3B': 30,
-    '2B/SS': 30, 
-    'UTIL': 30,
-    // Pitchers - top 60 starters (6 SP per team in 10-team league)
-    'SP': 60,
-    // Relievers - top 30 closers/setup men (3 RP per team in 10-team league)
-    'RP': 30,
-    // Generic pitcher position
-    'P': 90, // Combined SP+RP
-    'DH': 10
-};
+    QB: 12,
+    RB: 30,
+    WR: 36,
+    TE: 12,
+    K: 12,
+    DST: 12,
+    FLEX: 40,
+}
 
 // Function to adjust thresholds based on league size
 export function getAdjustedThreshold(position, teamCount = 10) {
-    const baseThreshold = STARTER_THRESHOLDS[position] || 10;
-    
-    // Scale threshold based on league size
+    const baseThreshold = STARTER_THRESHOLDS[position] || 12
+
     if (teamCount !== 10) {
-        const scaleFactor = teamCount / 10;
-        return Math.round(baseThreshold * scaleFactor);
+        const scaleFactor = teamCount / 10
+        return Math.round(baseThreshold * scaleFactor)
     }
-    
-    return baseThreshold;
+
+    return baseThreshold
 }

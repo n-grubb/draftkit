@@ -1,5 +1,5 @@
 import { createContext, useState, useMemo, useCallback } from 'react';
-import useMLBTeams from './useMLBTeams'
+import useNFLTeams from './useNFLTeams'
 import usePlayers from './usePlayers'
 import useUserRanking from './useUserRanking'
 
@@ -17,7 +17,7 @@ export const StoreProvider = ({ children }) => {
         localStorage.setItem('mode', modeSelection)
     }, [])
     
-    const { teams, error: errorFetchingMLBTeams, isLoading: isLoadingMLBTeams } = useMLBTeams()
+    const { teams, error: errorFetchingNFLTeams, isLoading: isLoadingNFLTeams } = useNFLTeams()
     const { players, error: errorFetchingPlayers, isLoading: isLoadingPlayers } = usePlayers()
 
     // Use the enhanced user ranking hook that supports sharing
@@ -33,8 +33,8 @@ export const StoreProvider = ({ children }) => {
         toggleCustomProjections
     } = userRanking
 
-    const error = errorFetchingMLBTeams || errorFetchingPlayers
-    const isLoading = isLoadingMLBTeams || isLoadingPlayers || isLoadingRanking
+    const error = errorFetchingNFLTeams || errorFetchingPlayers
+    const isLoading = isLoadingNFLTeams || isLoadingPlayers || isLoadingRanking
 
     const context = useMemo(() => ({
         teams,
@@ -61,7 +61,7 @@ export const StoreProvider = ({ children }) => {
     if (isLoading) {
         return (
             <div className="centered">
-                <p>Loading MLB players and teams...</p>
+                <p>Loading NFL players and teams...</p>
             </div>
         )
     }

@@ -4,23 +4,18 @@ import { DraftContext } from '~/data/draftContext';
 import { STARTER_THRESHOLDS, getAdjustedThreshold } from '~/features/positions';
 
 const DISPLAY_POSITIONS = [
-    { id: 'C', label: 'C', category: 'Batters' },
-    { id: '1B', label: '1B', category: 'Batters' },
-    { id: '2B', label: '2B', category: 'Batters' },
-    { id: '3B', label: '3B', category: 'Batters' },
-    { id: 'SS', label: 'SS', category: 'Batters' },
-    { id: 'OF', label: 'OF', category: 'Batters' },
-    { id: '1B/3B', label: 'CI', category: 'Batters' },
-    { id: '2B/SS', label: 'MI', category: 'Batters' },
-    // { id: 'UTIL', label: 'UTIL', category: 'Batters' },
-    { id: 'SP', label: 'SP', category: 'Pitchers' },
-    { id: 'RP', label: 'RP', category: 'Pitchers' },
+    { id: 'QB', label: 'QB', category: 'Offense' },
+    { id: 'RB', label: 'RB', category: 'Offense' },
+    { id: 'WR', label: 'WR', category: 'Offense' },
+    { id: 'TE', label: 'TE', category: 'Offense' },
+    { id: 'K', label: 'K', category: 'Special' },
+    { id: 'DST', label: 'DST', category: 'Special' },
 ];
 
 // Helper to group positions by category
 const POSITION_CATEGORIES = {
-    'Batters': ['C', '1B', '2B', '3B', 'SS', 'OF', '1B/3B', '2B/SS'],
-    'Pitchers': ['SP', 'RP'],
+    'Offense': ['QB', 'RB', 'WR', 'TE'],
+    'Special': ['K', 'DST'],
 };
 
 // Circular progress component

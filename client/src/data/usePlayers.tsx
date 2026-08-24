@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import useSWR from 'swr'
 import {fetcher} from './fetcher'
+import {API_URL} from './config'
 
 function buildPlayerMap(players) {
     const playersMap = {}
@@ -27,7 +28,7 @@ const usePlayers = () => {
     const initialState = useRef(getInitialState())
     const { cachedPlayers, isStale, shouldFetch } = initialState.current
 
-    const { data, error, isLoading, mutate } = useSWR(shouldFetch ? `https://baseball-data.deno.dev/players` : null, fetcher)
+    const { data, error, isLoading, mutate } = useSWR(shouldFetch ? `${API_URL}/players` : null, fetcher)
 
     if (error) {
         throw new Error('Failed to fetch player data.')

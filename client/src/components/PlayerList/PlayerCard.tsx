@@ -16,29 +16,23 @@ import {
 
 const FALLBACK_IMAGE = `${import.meta.env.BASE_URL}assets/images/player-fallback.png`
 
-const EXLUDED_POSITIONS = ['P', 'UTIL']
-
 const PlayerCard = ({ playerId, onClose }) => {
     const { players, teams } = useContext(StoreContext);
-    const { expandedStatsView, selectedBattingStats, selectedPitchingStats } = useContext(StatsPrefsContext);
-    
+    const { expandedStatsView, selectedStats } = useContext(StatsPrefsContext);
+
     const player      = players[playerId]
     if (!player) return null
     const projections = player.projections
     const stats       = player.stats
 
-    // Don't show specialty roster spots as POS
-    let positions = [...player.pos].filter(position => !EXLUDED_POSITIONS.includes(position))
-    if (positions.length > 1) {
-        positions = positions.filter(position => position != 'DH')
-    }
+    const positions = player.pos
+    const team = teams[player.team_id]
+    const teamLogo = team?.logo
 
-    const teamLogo = teams[player.team_id].logo?.href
-    
     // Use expanded view or custom stats based on user preferences
-    const columns = expandedStatsView 
-        ? statsToDisplay(player.pos, null, null, true) // Show all stats
-        : statsToDisplay(player.pos, selectedBattingStats, selectedPitchingStats);
+    const columns = expandedStatsView
+        ? statsToDisplay(player.pos, null, true) // Show all applicable stats
+        : statsToDisplay(player.pos, selectedStats);
     
     return (
         <div className="player-card-overlay" onClick={onClose}>
@@ -57,8 +51,8 @@ const PlayerCard = ({ playerId, onClose }) => {
                                 <span key={position} className="position-chip" data-pos={position}>{position}</span>
                             ))}
                         </div>
-                        <div className="player-team" style={{ color: teams[player.team_id].color || 'var(--brown)' }}>
-                            {teams[player.team_id].name}
+                        <div className="player-team" style={{ color: team?.color || 'var(--brown)' }}>
+                            {team?.name}
                         </div>
                         {player.averageDraftPosition && (
                             <div className="adp">

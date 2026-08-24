@@ -24,12 +24,13 @@ import {DraftContext} from '~/data/draftContext'
 import {StatsPrefsContext} from '~/data/statsPrefsContext'
 import {statsForFilter} from '~/features/filtering/columns'
 
-const SIMPLE_POSITION_FILTERS = new Set(['C', '1B', '2B', 'SS', '3B', 'OF', 'DH', 'SP', 'RP']);
+const SIMPLE_POSITION_FILTERS = new Set(['QB', 'RB', 'WR', 'TE', 'K', 'DST']);
+const FLEX_POSITIONS = ['RB', 'WR', 'TE'];
 
 const PlayerList = ({ editable }: any) => {
     const {players, ranking, mode, toggleCustomProjections} = useContext(StoreContext);
     const {draftedPlayers} = useContext(DraftContext);
-    const {selectedBattingStats, selectedPitchingStats} = useContext(StatsPrefsContext);
+    const {selectedStats} = useContext(StatsPrefsContext);
 
     const [posFilter, setPosFilter] = useState(undefined)
     const [rankedPlayerIds, setRankedPlayerIds] = useState([]);
@@ -95,8 +96,8 @@ const PlayerList = ({ editable }: any) => {
         if (!player) { return false }
         if (isDraftMode && draftedPlayerIds.includes(playerId)) { return false; }
         if (!posFilter) return true
-        if (posFilter === 'DH') {
-            return player.pos.every(p => p === 'DH' || p === 'UTIL')
+        if (posFilter === 'FLEX') {
+            return player.pos.some(p => FLEX_POSITIONS.includes(p))
         }
         return player.pos.includes(posFilter)
     }
@@ -104,8 +105,8 @@ const PlayerList = ({ editable }: any) => {
     const columns = useMemo(
         () => isDraftMode
             ? statsForFilter(posFilter)
-            : statsForFilter(posFilter, selectedBattingStats, selectedPitchingStats),
-        [isDraftMode, posFilter, selectedBattingStats, selectedPitchingStats]
+            : statsForFilter(posFilter, selectedStats),
+        [isDraftMode, posFilter, selectedStats]
     );
 
     const handleSortClick = (colId: string) => {
@@ -149,7 +150,7 @@ const PlayerList = ({ editable }: any) => {
             const player = players?.[id];
             if (!player) return false;
             if (!posFilter) return true;
-            if (posFilter === 'DH') return player.pos.every(p => p === 'DH' || p === 'UTIL');
+            if (posFilter === 'FLEX') return player.pos.some(p => FLEX_POSITIONS.includes(p));
             return player.pos.includes(posFilter);
         });
         if (searchQuery) {

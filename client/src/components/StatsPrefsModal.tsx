@@ -1,10 +1,8 @@
 import { useContext, useState } from 'react';
 import { StatsPrefsContext } from '~/data/statsPrefsContext';
-import { 
-    ALL_BATTING_COLUMNS, 
-    ALL_PITCHING_COLUMNS,
-    DEFAULT_BATTING_COLUMNS,
-    DEFAULT_PITCHING_COLUMNS
+import {
+    ALL_OFFENSE_COLUMNS,
+    DEFAULT_OFFENSE_STAT_IDS,
 } from '~/features/filtering/columns';
 
 const StatCheckbox = ({ stat, isSelected, onChange }) => (
@@ -21,80 +19,53 @@ const StatCheckbox = ({ stat, isSelected, onChange }) => (
 );
 
 const StatsPrefsModal = ({ onClose }) => {
-    const { 
-        selectedBattingStats, 
-        selectedPitchingStats,
+    const {
+        selectedStats,
         expandedStatsView,
-        updateBattingStats, 
-        updatePitchingStats,
+        updateSelectedStats,
         toggleExpandedStatsView,
-        resetToDefaults
     } = useContext(StatsPrefsContext);
-    
+
     // Local state for current selections (to avoid updating context on every change)
-    const [localBattingStats, setLocalBattingStats] = useState([...selectedBattingStats]);
-    const [localPitchingStats, setLocalPitchingStats] = useState([...selectedPitchingStats]);
+    const [localStats, setLocalStats] = useState([...selectedStats]);
     const [localExpandedView, setLocalExpandedView] = useState(expandedStatsView);
-    
-    // Toggle a batting stat
-    const toggleBattingStat = (statId) => {
-        setLocalBattingStats(prev => {
+
+    const toggleStat = (statId) => {
+        setLocalStats(prev => {
             if (prev.includes(statId)) {
                 return prev.filter(id => id !== statId);
-            } else {
-                return [...prev, statId];
             }
+            return [...prev, statId];
         });
     };
-    
-    // Toggle a pitching stat
-    const togglePitchingStat = (statId) => {
-        setLocalPitchingStats(prev => {
-            if (prev.includes(statId)) {
-                return prev.filter(id => id !== statId);
-            } else {
-                return [...prev, statId];
-            }
-        });
-    };
-    
-    // Toggle expanded view
+
     const handleExpandedViewToggle = () => {
         setLocalExpandedView(prev => !prev);
     };
-    
-    // Save changes and close modal
+
     const saveChanges = () => {
-        // Ensure at least one stat is selected for each type
-        if (localBattingStats.length === 0) {
-            alert("Please select at least one batting stat");
+        if (localStats.length === 0) {
+            alert("Please select at least one stat");
             return;
         }
-        if (localPitchingStats.length === 0) {
-            alert("Please select at least one pitching stat");
-            return;
-        }
-        
-        updateBattingStats(localBattingStats);
-        updatePitchingStats(localPitchingStats);
+
+        updateSelectedStats(localStats);
         if (localExpandedView !== expandedStatsView) {
             toggleExpandedStatsView();
         }
         onClose();
     };
-    
-    // Reset to defaults
+
     const handleReset = () => {
-        setLocalBattingStats(DEFAULT_BATTING_COLUMNS.map(col => col.id));
-        setLocalPitchingStats(DEFAULT_PITCHING_COLUMNS.map(col => col.id));
+        setLocalStats([...DEFAULT_OFFENSE_STAT_IDS]);
         setLocalExpandedView(false);
     };
-    
+
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="stats-prefs-modal" onClick={e => e.stopPropagation()}>
                 <h2>Customize Stats Display</h2>
-                
+
                 <div className="expanded-toggle">
                     <label>
                         <input
@@ -108,39 +79,29 @@ const StatsPrefsModal = ({ onClose }) => {
                         When enabled, player cards will show all available stats
                     </p>
                 </div>
-                
+
                 {!localExpandedView && (
                     <div className="stat-selections">
                         <div className="stat-column">
-                            <h3>Batting Stats</h3>
+                            <h3>Offense Stats (All view)</h3>
+                            <p className="help-text">
+                                Shown in the default table. Position filters (QB, RB, K, DST…)
+                                always show their own curated columns.
+                            </p>
                             <div className="stat-group">
-                                {ALL_BATTING_COLUMNS.map(stat => (
+                                {ALL_OFFENSE_COLUMNS.map(stat => (
                                     <StatCheckbox
                                         key={stat.id}
                                         stat={stat}
-                                        isSelected={localBattingStats.includes(stat.id)}
-                                        onChange={toggleBattingStat}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                        
-                        <div className="stat-column">
-                            <h3>Pitching Stats</h3>
-                            <div className="stat-group">
-                                {ALL_PITCHING_COLUMNS.map(stat => (
-                                    <StatCheckbox
-                                        key={stat.id}
-                                        stat={stat}
-                                        isSelected={localPitchingStats.includes(stat.id)}
-                                        onChange={togglePitchingStat}
+                                        isSelected={localStats.includes(stat.id)}
+                                        onChange={toggleStat}
                                     />
                                 ))}
                             </div>
                         </div>
                     </div>
                 )}
-                
+
                 <div className="modal-buttons">
                     <button className="reset-button" onClick={handleReset}>
                         Reset to Defaults

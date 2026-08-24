@@ -1,5 +1,5 @@
 /**
- * FantasyPros data fetching functions
+ * FantasyPros data fetching functions (NFL, PPR scoring)
  * Fetches ECR (Expert Consensus Rankings) and ADP data
  */
 
@@ -151,27 +151,18 @@ function parse_ranking_table(html: string): FantasyProsPlayer[] {
 }
 
 /**
- * Map of FantasyPros numeric position IDs to abbreviations (MLB).
- */
-const POSITION_ID_MAP: Record<string, string> = {
-    '1': 'P', '2': 'C', '3': '1B', '4': '2B', '5': '3B',
-    '6': 'SS', '7': 'LF', '8': 'CF', '9': 'RF', '10': 'DH',
-};
-
-/**
- * Normalize FantasyPros position strings to match app position abbreviations.
- * Handles comma-separated multi-position strings (e.g., "SS,2B" -> ["SS", "2B"]).
- * Also handles numeric position IDs from JSON data (e.g., "6" -> "SS").
+ * Normalize FantasyPros football position strings to app abbreviations.
+ * Handles positional-rank suffixes (e.g., "RB5" -> "RB", "WR12" -> "WR"),
+ * comma-separated multi-position strings, and the DEF -> DST alias.
  */
 function normalize_positions(position: string): string[] {
     return position.split(',')
         .map(p => {
-            // Strip trailing digits (e.g., "SS2" -> "SS", "OF3" -> "OF")
+            // Strip trailing digits (e.g., "RB5" -> "RB", "WR12" -> "WR")
             const pos = p.trim().toUpperCase().replace(/\d+$/, '');
-            // Convert numeric position IDs to abbreviations
-            const mapped = POSITION_ID_MAP[pos] || pos;
-            if (mapped === 'LF' || mapped === 'CF' || mapped === 'RF') return 'OF';
-            return mapped;
+            if (pos === 'DEF' || pos === 'D/ST' || pos === 'DEFENSE') return 'DST';
+            if (pos === 'PK') return 'K';
+            return pos;
         })
         .filter(p => p.length > 0);
 }

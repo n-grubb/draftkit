@@ -9,6 +9,7 @@ export interface Team {
     name: string;
     location: string | null;
     logo: string | null;
+    color: string | null;
 }
 
 export interface Division {
@@ -71,6 +72,9 @@ export interface PlayerDetails {
     birth_date: string | null;
     age: number | null;
     espn_rank: number | null;
+    // Raw ESPN stats array (season actuals + projections) kept for building
+    // yearly stats and projections downstream.
+    raw_stats?: any[];
 }
 
 export interface PlayerData {

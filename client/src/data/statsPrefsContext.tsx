@@ -1,80 +1,58 @@
 import { createContext, useState, useEffect } from 'react';
-import { DEFAULT_BATTING_COLUMNS, DEFAULT_PITCHING_COLUMNS } from '~/features/filtering/columns';
+import { DEFAULT_OFFENSE_STAT_IDS } from '~/features/filtering/columns';
 
 // Create context
 export const StatsPrefsContext = createContext<any>({
-    selectedBattingStats: DEFAULT_BATTING_COLUMNS.map(col => col.id),
-    selectedPitchingStats: DEFAULT_PITCHING_COLUMNS.map(col => col.id),
+    selectedStats: DEFAULT_OFFENSE_STAT_IDS,
     expandedStatsView: false,
     toggleExpandedStatsView: () => {},
-    updateBattingStats: () => {},
-    updatePitchingStats: () => {},
+    updateSelectedStats: () => {},
     resetToDefaults: () => {},
 });
 
 // Provider component
 export const StatsPrefsProvider = ({ children }) => {
     // Get saved preferences from localStorage or use defaults
-    const getSavedStats = (key, defaultStats) => {
-        const saved = localStorage.getItem(key);
-        return saved ? JSON.parse(saved) : defaultStats.map(col => col.id);
+    const getSavedStats = () => {
+        const saved = localStorage.getItem('selectedStats');
+        return saved ? JSON.parse(saved) : [...DEFAULT_OFFENSE_STAT_IDS];
     };
-    
-    // State for selected stats
-    const [selectedBattingStats, setSelectedBattingStats] = useState(() => 
-        getSavedStats('battingStats', DEFAULT_BATTING_COLUMNS)
-    );
-    
-    const [selectedPitchingStats, setSelectedPitchingStats] = useState(() => 
-        getSavedStats('pitchingStats', DEFAULT_PITCHING_COLUMNS)
-    );
-    
+
+    const [selectedStats, setSelectedStats] = useState(getSavedStats);
+
     // State for expanded view toggle
     const [expandedStatsView, setExpandedStatsView] = useState(() => {
         const saved = localStorage.getItem('expandedStatsView');
         return saved ? JSON.parse(saved) : false;
     });
-    
+
     // Save preferences to localStorage when they change
     useEffect(() => {
-        localStorage.setItem('battingStats', JSON.stringify(selectedBattingStats));
-        localStorage.setItem('pitchingStats', JSON.stringify(selectedPitchingStats));
+        localStorage.setItem('selectedStats', JSON.stringify(selectedStats));
         localStorage.setItem('expandedStatsView', JSON.stringify(expandedStatsView));
-    }, [selectedBattingStats, selectedPitchingStats, expandedStatsView]);
-    
-    // Toggle expanded view
+    }, [selectedStats, expandedStatsView]);
+
     const toggleExpandedStatsView = () => {
         setExpandedStatsView(prev => !prev);
     };
-    
-    // Update batting stats
-    const updateBattingStats = (statIds) => {
-        setSelectedBattingStats(statIds);
+
+    const updateSelectedStats = (statIds) => {
+        setSelectedStats(statIds);
     };
-    
-    // Update pitching stats
-    const updatePitchingStats = (statIds) => {
-        setSelectedPitchingStats(statIds);
-    };
-    
-    // Reset to defaults
+
     const resetToDefaults = () => {
-        setSelectedBattingStats(DEFAULT_BATTING_COLUMNS.map(col => col.id));
-        setSelectedPitchingStats(DEFAULT_PITCHING_COLUMNS.map(col => col.id));
+        setSelectedStats([...DEFAULT_OFFENSE_STAT_IDS]);
         setExpandedStatsView(false);
     };
-    
-    // Context value
+
     const contextValue = {
-        selectedBattingStats,
-        selectedPitchingStats,
+        selectedStats,
         expandedStatsView,
         toggleExpandedStatsView,
-        updateBattingStats,
-        updatePitchingStats,
+        updateSelectedStats,
         resetToDefaults,
     };
-    
+
     return (
         <StatsPrefsContext.Provider value={contextValue}>
             {children}

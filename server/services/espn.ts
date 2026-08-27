@@ -1,19 +1,13 @@
 /**
- * ESPN API data fetching functions (NFL / fantasy football)
+ * ESPN API data fetching functions
  */
 
 import type { Team, Division, PlayerData, PlayerDetails } from '../types.ts';
-import {
-    ESPN_TEAMS_URL,
-    ESPN_PLAYERS_URL,
-    SLOT_IDS,
-} from '../constants.ts';
+import { ESPN_TEAMS_URL, ESPN_PLAYERS_URL } from '../constants.ts';
 import { calculate_age } from '../utils/formatters.ts';
 
 /**
- * Fetch NFL pro teams from ESPN.
- * Football has no fantasy-relevant divisions, but the divisions map is kept
- * for API/storage compatibility with the rest of the app.
+ * Fetch teams and divisions from ESPN
  */
 export async function fetch_teams_and_divisions(): Promise<{
     teams: Map<string | number, Team>;
@@ -29,87 +23,104 @@ export async function fetch_teams_and_divisions(): Promise<{
     const teams = new Map<string | number, Team>();
     const divisions = new Map<number, Division>();
 
-    // Add a "Free Agent" team (proTeamId 0)
-    teams.set(0, {
+    // Add a "Free Agent" team
+    teams.set('FA', {
         id: 0,
         abbrev: 'FA',
         division_id: null,
         name: 'Free Agent',
         location: null,
         logo: null,
-        color: null,
     });
 
-    const league_teams = data?.sports?.[0]?.leagues?.[0]?.teams ?? [];
+    data.mlb.forEach((division: any, index: number) => {
+        divisions.set(index, { id: index, name: division.name });
 
-    for (const entry of league_teams) {
-        const team = entry.team;
-        if (!team) continue;
-
-        teams.set(Number(team.id), {
-            id: Number(team.id),
-            abbrev: team.abbreviation,
-            division_id: null,
-            name: team.name ?? team.displayName ?? team.abbreviation,
-            location: team.location ?? null,
-            logo: team.logos?.[0]?.href ?? null,
-            color: team.color ? `#${team.color}` : null,
+        division.teams.forEach((team: any) => {
+            teams.set(team.id, {
+                id: team.id,
+                abbrev: team.abbreviation,
+                division_id: index,
+                name: team.name,
+                location: team.location,
+                logo: team.logo,
+            });
         });
-    }
+    });
 
     return { teams, divisions };
 }
 
 /**
- * Fetch player stats and details from ESPN (kona_player_info view).
- * A single request returns the full fantasy-relevant player universe with
- * both projected and prior-season stat splits embedded per player.
+ * Fetch player stats and details from ESPN
+ * Combines batter and pitcher data into a single response
  */
 export async function fetch_player_stats(): Promise<PlayerData> {
-    const response = await fetch(ESPN_PLAYERS_URL, {
+    // Fetch batters
+    const batter_response = await fetch(ESPN_PLAYERS_URL, {
         headers: {
             'x-fantasy-filter': JSON.stringify({
                 players: {
-                    filterSlotIds: {
-                        value: [
-                            SLOT_IDS.QB,
-                            SLOT_IDS.RB,
-                            SLOT_IDS.WR,
-                            SLOT_IDS.TE,
-                            SLOT_IDS.DST,
-                            SLOT_IDS.K,
-                        ],
-                    },
-                    sortDraftRanks: { sortPriority: 100, sortAsc: true, value: 'PPR' },
-                    sortPercOwned: { sortPriority: 1, sortAsc: false },
-                    limit: 1500,
+                    filterSlotIds: { value: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 19] },
+                    filterRanksForScoringPeriodIds: { value: [162] },
+                    sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'STANDARD' },
+                    sortPercOwned: { sortPriority: 100, sortAsc: false },
+                    limit: 700,
                 },
             }),
-            'x-fantasy-platform': 'kona',
-            'x-fantasy-source': 'kona',
         },
     });
 
-    if (!response.ok) {
-        throw new Error('Failed to fetch player stats.');
+    if (!batter_response.ok) {
+        throw new Error('Failed to fetch batter stats.');
     }
 
-    const data = await response.json();
+    const batter_data = await batter_response.json();
 
+    // Fetch pitchers
+    const pitcher_response = await fetch(ESPN_PLAYERS_URL, {
+        headers: {
+            'x-fantasy-filter': JSON.stringify({
+                players: {
+                    filterSlotIds: { value: [13, 14, 15, 17] },
+                    filterRanksForScoringPeriodIds: { value: [162] },
+                    sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'STANDARD' },
+                    sortPercOwned: { sortPriority: 100, sortAsc: false },
+                    limit: 600,
+                },
+            }),
+        },
+    });
+
+    if (!pitcher_response.ok) {
+        throw new Error('Failed to fetch pitcher stats.');
+    }
+
+    const pitcher_data = await pitcher_response.json();
+
+    // Process all players
     const stats: Record<number, any> = {};
     const player_details: Record<number, PlayerDetails> = {};
 
-    for (const entry of data.players || []) {
-        const id = entry.id;
-        stats[id] = entry.player?.stats ?? [];
-        player_details[id] = extract_player_details(entry);
+    // Process batters
+    for (const batter of batter_data.players) {
+        stats[batter.id] = batter.player.stats;
+        player_details[batter.id] = extract_player_details(batter);
+    }
+
+    // Process pitchers
+    for (const pitcher of pitcher_data.players) {
+        stats[pitcher.id] = pitcher.player.stats;
+        if (!player_details[pitcher.id]) {
+            player_details[pitcher.id] = extract_player_details(pitcher);
+        }
     }
 
     return { stats, player_details };
 }
 
 /**
- * Extract player details from an ESPN player object
+ * Extract player details from ESPN player object
  */
 function extract_player_details(espn_player: any): PlayerDetails {
     const player = espn_player.player;
@@ -128,10 +139,6 @@ function extract_player_details(espn_player: any): PlayerDetails {
         percent_change: player.ownership?.percentChange || null,
         birth_date: player.dateOfBirth || null,
         age: calculate_age(player.dateOfBirth),
-        espn_rank:
-            player.draftRanksByRankType?.PPR?.rank ??
-            player.draftRanksByRankType?.STANDARD?.rank ??
-            null,
-        raw_stats: player.stats ?? [],
+        espn_rank: player.draftRanksByRankType?.STANDARD?.rank || null,
     };
 }

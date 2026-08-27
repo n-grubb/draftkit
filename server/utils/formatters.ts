@@ -1,140 +1,139 @@
 /**
- * Formatting utilities for player data (NFL / fantasy football)
+ * Formatting utilities for player data
  */
 
 import {
     POSITION_MAP,
     IGNORED_POSITIONS,
-    DEFAULT_POSITION_MAP,
     ESPN_STAT_MAP,
-    PPR_SCORING,
+    BATTER_STATS,
+    PITCHER_STATS,
     SLOT_IDS,
 } from '../constants.ts';
 
 /**
- * Convert eligible slot IDs to position abbreviation strings (QB/RB/WR/TE/K/DST).
- * Falls back to the player's default position if no eligible slots map cleanly.
+ * Check if eligible slots indicate a batter (has UTIL slot)
  */
-export function format_position_eligibility(
-    eligible_slots: number[],
-    default_position_id?: number
-): string[] {
-    const positions = (eligible_slots || [])
+export function is_batter(eligible_slots: number[]): boolean {
+    return eligible_slots?.includes(SLOT_IDS.UTIL) ?? false;
+}
+
+/**
+ * Check if eligible slots indicate a pitcher (has P slot)
+ */
+export function is_pitcher(eligible_slots: number[]): boolean {
+    return eligible_slots?.includes(SLOT_IDS.PITCHER) ?? false;
+}
+
+/**
+ * Convert eligible slot IDs to position abbreviation strings
+ */
+export function format_position_eligibility(eligible_slots: number[]): string[] {
+    if (!eligible_slots) return [];
+
+    return eligible_slots
         .filter(slot => !IGNORED_POSITIONS.includes(slot))
         .map(slot => POSITION_MAP[slot])
         .filter(Boolean);
-
-    // De-duplicate while preserving order
-    const unique = [...new Set(positions)];
-
-    if (unique.length === 0 && default_position_id != null) {
-        const fallback = DEFAULT_POSITION_MAP[default_position_id];
-        if (fallback) return [fallback];
-    }
-
-    return unique;
 }
 
 /**
- * Determine a player's primary (scoring) position.
- */
-export function primary_position(
-    eligible_slots: number[],
-    default_position_id?: number
-): string {
-    if (default_position_id != null && DEFAULT_POSITION_MAP[default_position_id]) {
-        return DEFAULT_POSITION_MAP[default_position_id];
-    }
-    const positions = format_position_eligibility(eligible_slots, default_position_id);
-    return positions[0] || 'FLEX';
-}
-
-/**
- * Compute a normalized stat line (our stat keys) from a raw ESPN stats map,
- * including PPR fantasy points.
- *
- * For kickers and defenses, ESPN's appliedTotal is used for fantasy points
- * because their scoring (FG distance tiers, points-allowed tiers) is not
- * captured by the simple PPR weights. For offense we compute PPR points
- * directly so the result is independent of whichever league scoring the ESPN
- * request happened to use.
- */
-function compute_stat_line(
-    raw_stats: Record<number, number>,
-    position: string,
-    applied_total?: number
-): Record<string, number> {
-    const line: Record<string, number> = {};
-
-    for (const [key, id] of Object.entries(ESPN_STAT_MAP)) {
-        const value = raw_stats[id];
-        if (value != null) {
-            line[key] = value;
-        }
-    }
-
-    let fpts = 0;
-    for (const [key, weight] of Object.entries(PPR_SCORING)) {
-        if (line[key] != null) {
-            fpts += line[key] * weight;
-        }
-    }
-
-    if ((position === 'DST' || position === 'K') && typeof applied_total === 'number') {
-        fpts = applied_total;
-    }
-
-    line.FPTS = Math.round(fpts * 10) / 10;
-    return line;
-}
-
-/**
- * Extract full-season actual stats per year from an ESPN player's stats array.
- * ESPN encodes each split via statSourceId (0 = actual, 1 = projected) and
- * statSplitTypeId (0 = full season).
+ * Format player stats from ESPN data, extracting stats for multiple years
  */
 export function format_player_stats(
-    stat_entries: any[],
-    position: string
+    stats: any[],
+    eligible_slots: number[]
 ): Record<number, Record<string, number>> {
-    const player_stats: Record<number, Record<string, number>> = {};
-
-    if (!Array.isArray(stat_entries)) {
-        return player_stats;
+    if (!stats || !Array.isArray(stats)) {
+        return {};
     }
 
-    for (const entry of stat_entries) {
-        if (entry?.statSplitTypeId !== 0) continue; // full-season only
-        if (entry?.statSourceId !== 0) continue;     // actuals only
-        if (!entry.seasonId || !entry.stats) continue;
-        player_stats[entry.seasonId] = compute_stat_line(entry.stats, position, entry.appliedTotal);
+    const player_stats: Record<number, Record<string, number>> = {};
+    const year_pattern = /^00(\d{4})$/;
+
+    // Find all available years in the stats data
+    const available_years = stats
+        .filter(ps => ps?.id && year_pattern.test(ps.id))
+        .map(ps => {
+            const match = ps.id.match(year_pattern);
+            return match ? parseInt(match[1]) : null;
+        })
+        .filter((year): year is number => year !== null);
+
+    // Process each year's stats
+    for (const year of available_years) {
+        const year_stats = stats.find(ps => ps.id === `00${year}`)?.stats;
+        if (year_stats) {
+            player_stats[year] = get_applicable_stats(year_stats, eligible_slots);
+        }
     }
 
     return player_stats;
 }
 
 /**
- * Extract the projected stat line for a given season from an ESPN player's
- * stats array (statSourceId === 1).
+ * Extract applicable stats based on player type (batter/pitcher)
  */
-export function extract_projection(
-    stat_entries: any[],
-    position: string,
-    season: number
+export function get_applicable_stats(
+    stat_year: Record<number, number>,
+    eligible_slots: number[]
 ): Record<string, number> {
-    if (!Array.isArray(stat_entries)) {
+    const applicable_stats: Record<string, number> = {};
+
+    if (is_batter(eligible_slots)) {
+        for (const stat of BATTER_STATS) {
+            applicable_stats[stat] = stat_year[ESPN_STAT_MAP[stat]] || 0;
+        }
+    }
+
+    if (is_pitcher(eligible_slots)) {
+        for (const stat of PITCHER_STATS) {
+            applicable_stats[stat] = stat_year[ESPN_STAT_MAP[stat]] || 0;
+        }
+    }
+
+    return applicable_stats;
+}
+
+/**
+ * Format projections from FanGraphs to our standard stat names
+ */
+export function format_projections(
+    projection: Record<string, number> | null
+): Record<string, number> {
+    if (!projection) {
         return {};
     }
 
-    const projection = stat_entries.find(
-        (e: any) => e?.statSourceId === 1 && e?.statSplitTypeId === 0 && e?.seasonId === season
-    );
-
-    if (!projection?.stats) {
-        return {};
-    }
-
-    return compute_stat_line(projection.stats, position, projection.appliedTotal);
+    return {
+        AB: projection['AB'] || 0,
+        PA: projection['PA'] || 0,
+        R: projection['R'] || 0,
+        HR: projection['HR'] || 0,
+        RBI: projection['RBI'] || 0,
+        SB: projection['SB'] || 0,
+        OBP: projection['OBP'] || 0,
+        AVG: projection['AVG'] || 0,
+        KO: projection['KO'] || projection['SO'] || 0,
+        CS: projection['CS'] || 0,
+        OPS: projection['OPS'] || 0,
+        SLG: projection['SLG'] || 0,
+        XBH: (projection['2B'] || 0) + (projection['3B'] || 0),
+        IP: projection['IP'] || 0,
+        K: projection['SO'] || 0,
+        W: projection['W'] || 0,
+        ERA: projection['ERA'] || 0,
+        WHIP: projection['WHIP'] || 0,
+        SV: projection['SV'] || 0,
+        HD: projection['HLD'] || 0,
+        SVHD: (projection['SV'] || 0) + (projection['HLD'] || 0),
+        QS: projection['QS'] || 0,
+        BB: projection['BB'] || 0,
+        'K/9': projection['K/9'] || 0,
+        'K/BB': projection['K/BB'] || 0,
+        BS: projection['BS'] || 0,
+        HRA: projection['HRA'] || 0,
+    };
 }
 
 /**
@@ -145,8 +144,7 @@ export function replace_accented_characters(name: string): string {
 }
 
 /**
- * Calculate age from birthdate string (kept for API compatibility; NFL data
- * rarely includes a birth date).
+ * Calculate age from birthdate string
  */
 export function calculate_age(date_of_birth: string | null): number | null {
     if (!date_of_birth) return null;
@@ -167,6 +165,3 @@ export function calculate_age(date_of_birth: string | null): number | null {
         return null;
     }
 }
-
-// Re-exported so other modules keep a single import site for slot constants.
-export { SLOT_IDS };

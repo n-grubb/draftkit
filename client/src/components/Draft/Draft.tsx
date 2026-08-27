@@ -1,12 +1,14 @@
 import { useContext } from 'react'
 import { StoreContext } from '~/data/store'
+import { SportContext } from '~/data/sportContext'
 import { DraftContext } from '~/data/draftContext'
 import PlayerList from '../PlayerList/PlayerList'
 import TeamRadarChart from './TeamRadarChart'
 import StartersRemaining from './StartersRemaining'
 
 const Draft = () => {
-    const { players, teams } = useContext(StoreContext)
+    const { players } = useContext(StoreContext)
+    const { config } = useContext(SportContext)
     const { 
         myDraftSlot, 
         totalTeams, 
@@ -67,19 +69,18 @@ const Draft = () => {
                 let cellContent = null
                 if (pickedPlayerId) {
                     const player = players[pickedPlayerId]
-                    const team = teams[player.team_id]
                     // Get primary position for border color
-                    const primaryPosition = player.pos[0]
-                    
+                    const primaryPosition = config.positions.primaryPosition(player)
+
                     cellContent = (
-                        <div 
+                        <div
                             className="drafted-player"
                             data-primary-pos={primaryPosition}
                         >
-                            <img 
-                                className="mini-headshot" 
-                                src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} 
-                                alt={player.name} 
+                            <img
+                                className="mini-headshot"
+                                src={config.data.largeHeadshot(player.headshot)}
+                                alt={player.name}
                             />
                             <div className="picked-player-name">{player.name}</div>
                             <span className="player-pos-indicator">{primaryPosition}</span>
@@ -120,7 +121,7 @@ const Draft = () => {
                             value={totalTeams} 
                             onChange={(e) => setTotalTeams(Number(e.target.value))}
                         >
-                            {[8, 10, 12, 14, 16].map(num => (
+                            {config.draft.teamsOptions.map(num => (
                                 <option key={num} value={num}>{num}</option>
                             ))}
                         </select>
@@ -133,7 +134,7 @@ const Draft = () => {
                             value={totalRounds} 
                             onChange={(e) => setTotalRounds(Number(e.target.value))}
                         >
-                            {[13, 14, 15, 16, 17, 18].map(num => (
+                            {config.draft.roundsOptions.map(num => (
                                 <option key={num} value={num}>{num}</option>
                             ))}
                         </select>

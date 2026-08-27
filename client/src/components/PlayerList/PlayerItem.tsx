@@ -1,28 +1,11 @@
 import React, {useContext, useState, useRef, useEffect, memo} from 'react'
 import {StoreContext} from '~/data/store'
+import {SportContext} from '~/data/sportContext'
 import {DraftContext} from '~/data/draftContext'
 import {formatStatValue, evaluateStatQuality} from '~/features/stats'
 import {columnAppliesToPlayer} from '~/features/filtering/columns'
 
 const FALLBACK_IMAGE = `${import.meta.env.BASE_URL}assets/images/player-fallback.png`
-
-const SIMPLE_POSITION_FILTERS = new Set(['QB', 'RB', 'WR', 'TE', 'K', 'DST']);
-
-const INJURY_LABELS = {
-    'QUESTIONABLE': 'Q',
-    'DOUBTFUL': 'D',
-    'OUT': 'O',
-    'INJURY_RESERVE': 'IR',
-    'IR': 'IR',
-    'SUSPENSION': 'SUSP',
-    'PROBABLE': 'P',
-    'DAY_TO_DAY': 'DTD',
-}
-
-const getInjuryLabel = (status) => {
-    if (!status || status === 'ACTIVE') return null
-    return INJURY_LABELS[status] || status
-}
 
 const IgnoreIcon = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -93,16 +76,18 @@ const RowActions = memo(function RowActions({ playerId, playerRanking, showNote,
 const PlayerItem = memo(function PlayerItem(props: any) {
     const {playerId, playerRanking, editable, onNameClick, columns, rank, posFilter, showNote, isEditing, onToggleNote} = props
     const {players, teams, mode, ranking} = useContext(StoreContext);
+    const {config} = useContext(SportContext);
     const {isMyTurn, draftPlayer} = useContext(DraftContext);
 
     const isDraftMode = mode === 'draft';
+    const SIMPLE_POSITION_FILTERS = new Set(config.positions.simpleFilters);
 
     const player = players[playerId]
     if (!player) return null
     const projections = player.projections
 
-    const positions = player.pos;
-    const primaryPosition = positions[0] || null;
+    const positions = config.positions.displayPositions(player);
+    const primaryPosition = config.positions.primaryPosition(player);
 
     const useCustom = ranking.useCustomProjections !== false;
     const customProjections = useCustom ? playerRanking?.customProjections : null;
@@ -128,8 +113,8 @@ const PlayerItem = memo(function PlayerItem(props: any) {
     }
 
     const team = teams[player.team_id]
-    const teamLogo = team?.logo
-    const injuryLabel = getInjuryLabel(player.injuryStatus)
+    const teamLogo = config.data.teamLogo(team)
+    const injuryLabel = config.positions.injuryLabel(player.injuryStatus)
 
     const onDraft = () => draftPlayer(playerId)
 
@@ -139,7 +124,7 @@ const PlayerItem = memo(function PlayerItem(props: any) {
             <td className="player-identity-cell">
                 <div className="player-photos">
                     {teamLogo && <img className="team-logo" src={teamLogo} width="24" loading="lazy" />}
-                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="72" loading="lazy" onError={(e) => { const img = e.target as HTMLImageElement; if (!img.src.endsWith(FALLBACK_IMAGE)) { img.src = FALLBACK_IMAGE; } }} />
+                    <img className="player-headshot" src={config.data.largeHeadshot(player.headshot)} width="72" loading="lazy" onError={(e) => { const img = e.target as HTMLImageElement; if (!img.src.endsWith(FALLBACK_IMAGE)) { img.src = FALLBACK_IMAGE; } }} />
                 </div>
                 <div className="player-identity">
                     <div className="player-name-row">

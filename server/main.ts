@@ -1,18 +1,27 @@
 /**
- * NFL Fantasy Football Draft Tool Server
+ * MLB Fantasy Baseball Draft Tool Server
  *
- * DATA SOURCES:
+ * DATA SOURCES FOR HISTORICAL STATS:
  *
- * 1. ESPN Fantasy API (ffl / kona_player_info view)
- *    - Full fantasy-relevant player universe, positions, ownership, ADP
- *    - Projected stats (statSourceId 1) and prior-season actuals (statSourceId 0)
+ * 1. MLB Stats API (https://statsapi.mlb.com/api/)
+ *    - Official MLB data with comprehensive player information
+ *    - Requires authentication for full access
  *
- * 2. FantasyPros (NFL, PPR)
- *    - Expert Consensus Rankings (ECR) and ADP, scraped from public pages
+ * 2. Baseball-Reference
+ *    - Not a public API but data can be scraped
+ *    - Contains 3+ years of historical data
  *
- * Fantasy points are computed from raw ESPN stats using PPR scoring
- * (see server/constants.ts -> PPR_SCORING) so the result does not depend on
- * which ESPN league's scoring the request happens to use.
+ * 3. FanGraphs
+ *    - Contains both current season and historical data
+ *    - Also has projections from multiple systems
+ *
+ * 4. Baseball Savant
+ *    - Advanced statistics and Statcast data
+ *
+ * 5. ESPN Fantasy API (currently used)
+ *    - Limited to recent years only
+ *
+ * Historical stats are currently fetched from FanGraphs leaders API (2024, 2025 seasons)
  */
 
 import { Hono } from 'jsr:@hono/hono';

@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useMemo, useCallback } from 'react'
 import { StoreContext } from './store'
+import { SportContext } from './sportContext'
 
 export const DraftContext = createContext<any>({
     myDraftSlot: null,
@@ -20,12 +21,13 @@ export const DraftContext = createContext<any>({
 })
 
 export const DraftProvider = ({ children }) => {
-    const { players, teams } = useContext(StoreContext)
-    
+    const { players } = useContext(StoreContext)
+    const { config } = useContext(SportContext)
+
     // State for draft configuration
     const [myDraftSlot, setMyDraftSlot] = useState(null)
-    const [totalTeams, setTotalTeams] = useState(10)
-    const [totalRounds, setTotalRounds] = useState(16)
+    const [totalTeams, setTotalTeams] = useState(config.draft.defaultTeams)
+    const [totalRounds, setTotalRounds] = useState(config.draft.defaultRounds)
     const [currentPick, setCurrentPick] = useState(1)
     const [draftedPlayers, setDraftedPlayers] = useState<Record<string, any>>({})
     const [showDraftSettings, setShowDraftSettings] = useState(true)
@@ -87,23 +89,9 @@ export const DraftProvider = ({ children }) => {
         
         if (teamPlayerIds.length === 0) return null;
 
-        // Football projections are all counting stats, so team totals are a
-        // straight sum of each player's projected stats (including FPTS).
-        const totals: Record<string, number> = {};
-
-        teamPlayerIds.forEach(playerId => {
-            const player = players[playerId];
-            if (!player || !player.projections) return;
-
-            Object.entries(player.projections).forEach(([stat, value]: [string, any]) => {
-                if (typeof value === 'number') {
-                    totals[stat] = (totals[stat] || 0) + value;
-                }
-            });
-        });
-
-        return totals;
-    }, [draftedPlayers, players, totalTeams, totalRounds]);
+        // Each sport defines how team totals are aggregated from projections.
+        return config.draft.aggregateTeamStats(players, teamPlayerIds);
+    }, [draftedPlayers, players, totalTeams, totalRounds, config]);
 
     // Function to get league averages excluding my team
     const getLeagueAverages = useCallback(() => {

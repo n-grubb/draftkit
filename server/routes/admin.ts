@@ -1,42 +1,31 @@
 /**
- * Admin routes for data management (NFL / fantasy football)
+ * Admin routes for data management
  */
 
 import { Hono } from 'jsr:@hono/hono';
 import type { Team, Division, Player, PlayerDetails } from '../types.ts';
-import { VALID_DATA_SOURCES, CURRENT_SEASON } from '../constants.ts';
+import { VALID_DATA_SOURCES } from '../constants.ts';
 import {
     get_all_teams,
     get_all_divisions,
     get_player_stats,
     get_player_details,
+    get_historical_stats,
+    get_projections,
     store_teams,
     store_divisions,
     store_player_stats,
+    store_historical_stats,
+    store_projection,
     store_players,
     cleanup_stale_players,
 } from '../services/storage.ts';
 import { fetch_teams_and_divisions, fetch_player_stats } from '../services/espn.ts';
+import { fetch_projections, build_player_projections, fetch_historical_stats } from '../services/fangraphs.ts';
 import { fetch_fantasypros_rankings, fetch_fantasypros_adp, match_fantasypros_to_players } from '../services/fantasypros.ts';
-import {
-    format_player_stats,
-    format_position_eligibility,
-    primary_position,
-    extract_projection,
-} from '../utils/formatters.ts';
+import { format_player_stats, format_projections, format_position_eligibility } from '../utils/formatters.ts';
 
 const admin_router = new Hono();
-
-/**
- * Build a headshot URL for a player. Offense/kickers use ESPN NFL headshots;
- * team defenses fall back to the pro team's logo.
- */
-function build_headshot(player: PlayerDetails, position: string, team?: Team): string {
-    if (position === 'DST') {
-        return team?.logo || '';
-    }
-    return `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${player.id}.png&w=426&h=320&cb=1`;
-}
 
 /**
  * Build the custom player store from all data sources
@@ -44,17 +33,16 @@ function build_headshot(player: PlayerDetails, position: string, team?: Team): s
 function build_player_store(
     teams: Team[],
     player_details: PlayerDetails[],
+    stats: Record<number, any>,
+    projections: Record<number, any>,
+    historical_stats: Record<number, any>,
     fantasypros_ranks: Record<number, { rank: number; adp: number | null; positionalRanks: Record<string, number> }>
 ): Player[] {
-    const team_by_id = new Map(teams.map(t => [t.id, t]));
-
     const players: Player[] = player_details.map(player => {
-        const position = primary_position(player.eligible_slots, player.default_position_id);
-        const raw_stats = player.raw_stats ?? [];
-        const merged_stats = format_player_stats(raw_stats, position);
-        const projections = extract_projection(raw_stats, position, CURRENT_SEASON);
+        const current_stats = format_player_stats(stats[player.id], player.eligible_slots);
+        const historical = historical_stats[player.id] || {};
+        const merged_stats = { ...current_stats, ...historical };
         const fp_data = fantasypros_ranks[player.id];
-        const team = team_by_id.get(player.pro_team_id);
 
         return {
             id: player.id,
@@ -62,10 +50,10 @@ function build_player_store(
             firstName: player.first_name,
             lastName: player.last_name,
             team_id: player.pro_team_id,
-            pos: format_position_eligibility(player.eligible_slots, player.default_position_id),
+            pos: format_position_eligibility(player.eligible_slots),
             stats: merged_stats,
-            projections,
-            headshot: build_headshot(player, position, team),
+            projections: format_projections(projections[player.id]),
+            headshot: `https://a.espncdn.com/combiner/i?img=/i/headshots/mlb/players/full/${player.id}.png?w=96&h=70&cb=1`,
             ownership: player.ownership || 0,
             averageDraftPosition: fp_data?.adp ?? player.average_draft_position ?? null,
             percentChange: player.percent_change || null,
@@ -119,6 +107,36 @@ async function refresh_stats(): Promise<{
 }
 
 /**
+ * Refresh historical stats from FanGraphs
+ */
+async function refresh_historical(
+    player_details: PlayerDetails[]
+): Promise<Record<number, any>> {
+    const historical_stats = await fetch_historical_stats(player_details);
+    await store_historical_stats(historical_stats);
+    console.log('Historical stats refreshed.');
+
+    return historical_stats;
+}
+
+/**
+ * Refresh projections from FanGraphs
+ */
+async function refresh_projections(
+    player_details: PlayerDetails[]
+): Promise<Record<number, any>> {
+    const all_projections = await fetch_projections();
+    const projections = build_player_projections(all_projections, player_details);
+
+    for (const [player_id, projection] of Object.entries(projections)) {
+        await store_projection(parseInt(player_id), projection);
+    }
+
+    console.log('Projections refreshed.');
+    return projections;
+}
+
+/**
  * Refresh FantasyPros ECR rankings and ADP data
  */
 async function refresh_fantasypros(
@@ -169,21 +187,46 @@ admin_router.get('/refresh', async (c) => {
     console.log(`Divisions found: ${divisions.length}`);
 
     // Refresh or load player stats
+    let stats: Record<number, any>;
     let player_details: Record<number, PlayerDetails>;
 
     if (sources_to_update.includes('stats')) {
         const result = await refresh_stats();
+        stats = result.stats;
         player_details = result.player_details;
     } else {
-        await get_player_stats();
+        stats = await get_player_stats();
         player_details = await get_player_details();
     }
 
+    console.log(`Stats found for players: ${Object.keys(stats).length}`);
     console.log(`Player details found: ${Object.keys(player_details).length}`);
+
+    // Refresh or load historical stats
+    let historical_stats: Record<number, any>;
+    const player_details_array = Object.values(player_details);
+
+    if (sources_to_update.includes('historical')) {
+        historical_stats = await refresh_historical(player_details_array);
+    } else {
+        historical_stats = await get_historical_stats();
+    }
+
+    console.log(`Historical stats found for players: ${Object.keys(historical_stats).length}`);
+
+    // Refresh or load projections
+    let projections: Record<number, any>;
+
+    if (sources_to_update.includes('projections')) {
+        projections = await refresh_projections(player_details_array);
+    } else {
+        projections = await get_projections();
+    }
+
+    console.log(`Projections found: ${Object.keys(projections).length}`);
 
     // Refresh FantasyPros rankings
     let fantasypros_ranks: Record<number, { rank: number; adp: number | null; positionalRanks: Record<string, number> }> = {};
-    const player_details_array = Object.values(player_details);
 
     if (sources_to_update.includes('fantasypros')) {
         fantasypros_ranks = await refresh_fantasypros(player_details_array);
@@ -195,6 +238,9 @@ admin_router.get('/refresh', async (c) => {
     const players = build_player_store(
         teams,
         player_details_array,
+        stats,
+        projections,
+        historical_stats,
         fantasypros_ranks
     );
 

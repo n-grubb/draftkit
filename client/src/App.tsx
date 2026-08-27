@@ -1,4 +1,5 @@
 import {useContext} from 'react'
+import SportProvider, {SportContext} from '~/data/sportContext'
 import {StoreContext, StoreProvider} from '~/data/store'
 import DraftProvider from '~/data/draftContext'
 import StatsPrefsProvider from '~/data/statsPrefsContext'
@@ -9,7 +10,18 @@ import Draft from '~/components/Draft/Draft'
 
 function App() {
   return (
-    <StoreProvider>
+    <SportProvider>
+      <SportedApp />
+    </SportProvider>
+  )
+}
+
+function SportedApp() {
+  const {sport} = useContext(SportContext)
+  // Re-mount the data tree on sport change so players, teams, rankings and
+  // stat preferences all reload cleanly for the selected sport.
+  return (
+    <StoreProvider key={sport}>
       <DraftProvider>
         <StatsPrefsProvider>
           <AppLayout />
@@ -22,8 +34,6 @@ function App() {
 function AppLayout() {
   const {mode} = useContext(StoreContext)
 
-  // @todo: if no ranking exists, show onboarding. 
-
   return (
     <div id="app" className={`mode--${mode}`}>
       <AppHeader />
@@ -31,7 +41,6 @@ function AppLayout() {
           <AppRouter mode={mode} />
         </main>
       <AppFooter />
-      {/* <div className={`bg-effect mode--${mode}`} /> */}
     </div>
   )
 }
@@ -44,7 +53,6 @@ function AppRouter({ mode }) {
     return <Draft />
   }
 
-  // Not a valid mode. 
   console.error(`${mode} is not a valid mode`, { mode })
 
   return <></>

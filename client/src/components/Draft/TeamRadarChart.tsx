@@ -1,5 +1,6 @@
 import { useContext } from 'react';
 import { DraftContext } from '~/data/draftContext';
+import { SportContext } from '~/data/sportContext';
 import { formatStatValue, normalizeStatValue } from '~/features/stats';
 import {
     Radar,
@@ -12,21 +13,9 @@ import {
     Legend
 } from 'recharts';
 
-// Offensive output categories charted for a drafted team
-const RADAR_COLUMNS = [
-    { id: 'PYDS', name: 'PYDS' },
-    { id: 'PTD', name: 'PTD' },
-    { id: 'RYDS', name: 'RYDS' },
-    { id: 'RTD', name: 'RTD' },
-    { id: 'REC', name: 'REC' },
-    { id: 'RECYDS', name: 'RECYDS' },
-    { id: 'RECTD', name: 'RECTD' },
-];
-
-const TOTALS_COLUMNS = [{ id: 'FPTS', name: 'FPTS' }, ...RADAR_COLUMNS];
-
 const TeamRadarChart = () => {
     const { myDraftSlot, getTeamStats, getLeagueAverages } = useContext(DraftContext);
+    const { config } = useContext(SportContext);
 
     if (!myDraftSlot) return null;
 
@@ -44,7 +33,9 @@ const TeamRadarChart = () => {
         );
     }
 
-    const radarData = RADAR_COLUMNS.map(column => {
+    const { radarSections, totalsColumns, lowerIsBetter } = config.draft;
+
+    const sectionData = (columns) => columns.map(column => {
         const rawValue = teamStats[column.id];
         const leagueValue = leagueAvg ? leagueAvg[column.id] : null;
         return {
@@ -74,46 +65,45 @@ const TeamRadarChart = () => {
             <h3>Team Output</h3>
 
             <div className="radar-charts-container">
-                <div className="radar-chart-section">
-                    <h4>Offensive Output</h4>
-                    <ResponsiveContainer width="100%" height={250}>
-                        <RadarChart outerRadius={90} data={radarData}>
-                            <PolarGrid gridType="polygon" />
-                            <PolarAngleAxis dataKey="stat" tick={{ fill: 'var(--brown)', fontSize: 14 }} />
-                            <PolarRadiusAxis
-                                angle={90}
-                                domain={[0, 100]}
-                                axisLine={false}
-                                tick={false}
-                            />
-                            <Tooltip content={<CustomTooltip />} />
-                            <Legend />
-                            <Radar
-                                name="Your Team"
-                                dataKey="value"
-                                stroke="var(--teal)"
-                                fill="var(--teal)"
-                                fillOpacity={0.5}
-                            />
-                            <Radar
-                                name="League Average"
-                                dataKey="league"
-                                stroke="var(--grey)"
-                                fill="var(--grey)"
-                                fillOpacity={0.3}
-                            />
-                        </RadarChart>
-                    </ResponsiveContainer>
-                </div>
+                {radarSections.map(section => (
+                    <div className="radar-chart-section" key={section.title}>
+                        <h4>{section.title}</h4>
+                        <ResponsiveContainer width="100%" height={250}>
+                            <RadarChart outerRadius={90} data={sectionData(section.columns)}>
+                                <PolarGrid gridType="polygon" />
+                                <PolarAngleAxis dataKey="stat" tick={{ fill: 'var(--brown)', fontSize: 14 }} />
+                                <PolarRadiusAxis angle={90} domain={[0, 100]} axisLine={false} tick={false} />
+                                <Tooltip content={<CustomTooltip />} />
+                                <Legend />
+                                <Radar
+                                    name="Your Team"
+                                    dataKey="value"
+                                    stroke={section.color || 'var(--teal)'}
+                                    fill={section.color || 'var(--teal)'}
+                                    fillOpacity={0.5}
+                                />
+                                <Radar
+                                    name="League Average"
+                                    dataKey="league"
+                                    stroke="var(--grey)"
+                                    fill="var(--grey)"
+                                    fillOpacity={0.3}
+                                />
+                            </RadarChart>
+                        </ResponsiveContainer>
+                    </div>
+                ))}
             </div>
 
             <div className="stat-total-display">
                 <div className="batting-stats">
-                    {TOTALS_COLUMNS.map(column => {
+                    {totalsColumns.map(column => {
                         const value = teamStats[column.id] || 0;
                         const leagueValue = leagueAvg && leagueAvg[column.id] ? leagueAvg[column.id] : 0;
                         const diff = value - leagueValue;
-                        const diffClass = diff === 0 ? 'neutral' : diff > 0 ? 'positive' : 'negative';
+                        const lower = lowerIsBetter?.has(column.id);
+                        const isPositive = lower ? diff < 0 : diff > 0;
+                        const diffClass = diff === 0 ? 'neutral' : isPositive ? 'positive' : 'negative';
 
                         return (
                             <div className="stat-item" key={`total-${column.id}`}>

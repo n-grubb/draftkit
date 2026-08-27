@@ -1,65 +1,61 @@
-# DraftKit — Football (NFL) setup notes
+# DraftKit — both sports (baseball + football)
 
-This branch converts the baseball DraftKit into a **fantasy football** draft
-kit. Data comes from **ESPN** (player pool, positions, ownership, ADP, and
-projected/prior-season stats) and **FantasyPros** (PPR expert consensus
-rankings + ADP). FanGraphs (baseball-only) has been removed.
+DraftKit now supports **two sports**, switchable from a toggle in the header
+(next to the view/edit/draft mode selector). The choice is remembered per
+browser.
 
-Scoring is **PPR** (1 point per reception). Fantasy points (`FPTS`) are
-computed on the server from raw ESPN stats using the weights in
-`server/constants.ts → PPR_SCORING`, so they don't depend on which ESPN
-league's scoring the request uses. Kicker and D/ST points use ESPN's own
-projected total (their distance/points-allowed tiers aren't captured by flat
-weights).
+| | Baseball (MLB) | Football (NFL) |
+|---|---|---|
+| Player/team data | Deno server (`baseball-data.deno.dev`) | Fetched **directly from ESPN in the browser** — no backend |
+| Projections | FanGraphs (via the server) | ESPN projected stats, scored as **PPR** in the browser |
+| Expert ranks | FantasyPros (via the server) | Derived from ESPN's own draft ranking (no FantasyPros client-side) |
+| Rankings storage | localStorage + optional server sharing (PIN) | **localStorage only** (no sharing backend) |
 
-## Running it
+Everything else — view/edit/draft modes, drag-to-rank, notes, custom
+projections, the draft board, starters tracker and team chart — works the same
+in both sports.
 
-**Server** (Deno + Hono + KV), from `server/`:
+## Architecture
+
+Each sport is a single config object under `client/src/features/sports/`
+(`baseball.js`, `football.js`) describing its positions, stat formatting and
+quality thresholds, stat columns/groups, position filters, draft settings and
+data source. `registry.js` tracks the active sport; `data/sportContext.tsx`
+provides it to the app and re-mounts the data tree on switch so players, teams,
+rankings and stat prefs reload cleanly. The shared helper modules
+(`features/stats`, `features/positions`, `features/filtering/columns`) just
+delegate to the active config, so components stay sport-agnostic.
+
+localStorage is namespaced per sport (baseball keeps the legacy unprefixed keys;
+football keys are prefixed `football_`), so the two sports never collide.
+
+## Football data comes straight from ESPN (caveats)
+
+`client/src/features/sports/footballEspn.js` fetches NFL teams and the player
+pool from ESPN's public read API and builds players in the browser. Two things
+to know:
+
+- **CORS.** This relies on ESPN allowing browser requests. It works from public
+  read endpoints today, but if a future ESPN change blocks it, those two fetches
+  are the only place to route through a small proxy. The app shows a clear error
+  state if the fetch fails.
+- **Stat IDs.** The ESPN football stat/slot/position maps in `footballEspn.js`
+  use the community-known values (unverifiable from the build environment).
+  After first load, spot-check a couple of known players; if a stat looks off,
+  that file is the one place to correct it.
+
+## The Deno server is baseball-only
+
+`server/` is the baseball data server (ESPN + FanGraphs + FantasyPros), deployed
+at `baseball-data.deno.dev`. Football needs no server. Override the baseball API
+base URL with `VITE_API_URL` if you deploy it elsewhere.
+
+## Running
 
 ```
-deno run --allow-net --unstable-kv main.ts
+# Baseball server (optional — a deployed instance already backs baseball)
+cd server && deno run --allow-net --unstable-kv main.ts
+
+# Client (serves both sports)
+cd client && npm install && npm run dev
 ```
-
-Then populate the KV store once (and whenever you want fresh data):
-
-```
-curl http://localhost:8000/admin/refresh
-```
-
-**Client** (Vite + React), from `client/`:
-
-```
-npm install
-VITE_API_URL=http://localhost:8000 npm run dev
-```
-
-The client's data API base URL lives in `client/src/data/config.ts` and is
-overridable with `VITE_API_URL`. Its default (`https://football-data.deno.dev`)
-is a placeholder — point it at wherever you deploy the Deno server.
-
-## Verifying ESPN data (important)
-
-The ESPN fantasy football API is undocumented. The slot IDs, position IDs and
-**stat IDs** the server relies on are centralized in `server/constants.ts`
-(`SLOT_IDS`, `POSITION_MAP`, `ESPN_STAT_MAP`). These use the community-known
-mappings, but they were **not** verifiable from the environment this was built
-in (ESPN was blocked by network policy). After your first `/admin/refresh`,
-spot-check a few known players — if a stat looks wrong, the mapping in
-`constants.ts` is the first place to correct.
-
-`ESPN_PLAYERS_URL` uses a public read league (`leagues/0`) to pull the whole
-player pool. Your own league (`leagueId=228717`) is private and not required
-for the draft kit — it would only be needed to read league-specific settings,
-which requires ESPN login cookies (`espn_s2` / `SWID`).
-
-## What changed
-
-- **Server:** `constants.ts` (NFL slots/positions/stats + PPR), `espn.ts`
-  (NFL teams + `ffl` players + projections/actuals), `formatters.ts`
-  (football positions, stat extraction, PPR points), `fantasypros.ts` (NFL PPR
-  positions), `routes/admin.ts` (ESPN-sourced projections, FanGraphs removed).
-- **Client:** `features/positions.ts`, `features/stats.ts`,
-  `features/filtering/columns.ts` (QB/RB/WR/TE/K/DST, football stat columns,
-  benchmarks); stats-prefs, filter bar, player list/card/item, draft board,
-  starters tracker and team-output chart all footballized; data API centralized
-  in `data/config.ts`.

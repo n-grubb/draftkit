@@ -1,165 +1,131 @@
 /**
- * Centralized constants for the DraftKit server (NFL / fantasy football)
- *
- * NOTE ON ESPN IDS:
- * The ESPN fantasy football API is not officially documented. The slot IDs,
- * position IDs and stat IDs below are the community-known mappings. If a stat
- * looks wrong after a live refresh, this is the first place to check — every
- * mapping the app relies on is centralized here.
+ * Centralized constants for the DraftKit server
  */
 
-// ESPN lineup slot IDs (football)
+// ESPN slot IDs for position eligibility
 export const SLOT_IDS = {
-    QB: 0,
-    TQB: 1,
-    RB: 2,
-    RB_WR: 3,
-    WR: 4,
-    WR_TE: 5,
-    TE: 6,
-    OP: 7,        // offensive player (superflex)
-    DT: 8,
-    DE: 9,
-    LB: 10,
-    DL: 11,
-    CB: 12,
-    S: 13,
-    DB: 14,
-    DP: 15,
-    DST: 16,      // team defense / special teams
-    K: 17,
-    P: 18,
-    HC: 19,
-    BENCH: 20,
-    IR: 21,
-    FLEX: 23,     // RB/WR/TE
+    CATCHER: 0,
+    FIRST_BASE: 1,
+    SECOND_BASE: 2,
+    THIRD_BASE: 3,
+    SHORTSTOP: 4,
+    OUTFIELD: 5,
+    SECOND_SHORT: 6,
+    FIRST_THIRD: 7,
+    LEFT_FIELD: 8,
+    CENTER_FIELD: 9,
+    RIGHT_FIELD: 10,
+    DH: 11,
+    UTIL: 12,        // All batters have this
+    PITCHER: 13,     // All pitchers have this
+    STARTER: 14,
+    RELIEVER: 15,
+    BENCH: 16,
+    IL: 17,
+    INVALID: 18,
+    INFIELD: 19,
+    BATTER: 20,
+    PITCHER_ALT: 21,
+    MISC: 22,
 } as const;
 
 // Map ESPN slot IDs to position abbreviations
 export const POSITION_MAP: Record<number, string> = {
-    0: 'QB',
-    2: 'RB',
-    4: 'WR',
-    6: 'TE',
-    16: 'DST',
-    17: 'K',
-    23: 'FLEX',
+    0: 'C',
+    1: '1B',
+    2: '2B',
+    3: '3B',
+    4: 'SS',
+    5: 'OF',
+    6: '2B/SS',
+    7: '1B/3B',
+    8: 'LF',
+    9: 'CF',
+    10: 'RF',
+    11: 'DH',
+    12: 'UTIL',
+    13: 'P',
+    14: 'SP',
+    15: 'RP',
+    16: 'BE',
+    17: 'IL',
+    18: 'INV',
+    19: 'IF',
+    20: 'B',
+    21: 'P',
+    22: 'MISC',
 };
 
-// Slots that we surface as real, filterable positions
-export const DISPLAY_SLOTS = [SLOT_IDS.QB, SLOT_IDS.RB, SLOT_IDS.WR, SLOT_IDS.TE, SLOT_IDS.DST, SLOT_IDS.K];
-
-// Positions to exclude from display (roster/utility slots, not real positions)
+// Positions to exclude from display (covered by others or not used)
 export const IGNORED_POSITIONS = [
-    SLOT_IDS.TQB,
-    SLOT_IDS.RB_WR,
-    SLOT_IDS.WR_TE,
-    SLOT_IDS.OP,
-    SLOT_IDS.DT,
-    SLOT_IDS.DE,
-    SLOT_IDS.LB,
-    SLOT_IDS.DL,
-    SLOT_IDS.CB,
-    SLOT_IDS.S,
-    SLOT_IDS.DB,
-    SLOT_IDS.DP,
-    SLOT_IDS.P,
-    SLOT_IDS.HC,
+    SLOT_IDS.LEFT_FIELD,
+    SLOT_IDS.CENTER_FIELD,
+    SLOT_IDS.RIGHT_FIELD,
     SLOT_IDS.BENCH,
-    SLOT_IDS.IR,
-    SLOT_IDS.FLEX,
+    SLOT_IDS.IL,
+    SLOT_IDS.INVALID,
+    SLOT_IDS.INFIELD,
+    SLOT_IDS.BATTER,
+    SLOT_IDS.PITCHER_ALT,
+    SLOT_IDS.MISC,
 ];
 
-// ESPN default position IDs (player.defaultPositionId) -> abbreviation.
-// Used as a fallback / primary-position hint.
-export const DEFAULT_POSITION_MAP: Record<number, string> = {
-    1: 'QB',
-    2: 'RB',
-    3: 'WR',
-    4: 'TE',
-    5: 'K',
-    16: 'DST',
-};
-
-// ESPN stat ID mapping (football). statId -> our stat key.
-// Offensive stats are the reliable ones we compute PPR points from.
+// ESPN stat ID mapping
 export const ESPN_STAT_MAP: Record<string, number> = {
-    // Passing
-    PATT: 0,   // pass attempts
-    CMP: 1,    // completions
-    PYDS: 3,   // passing yards
-    PTD: 4,    // passing TDs
-    INT: 20,   // interceptions thrown
-    // Rushing
-    CAR: 23,   // rush attempts
-    RYDS: 24,  // rushing yards
-    RTD: 25,   // rushing TDs
-    // Receiving
-    REC: 53,   // receptions
-    RECYDS: 42, // receiving yards
-    RECTD: 43, // receiving TDs
-    TGT: 58,   // targets
-    // Misc offense
-    FUML: 72,  // fumbles lost
-    // Kicking
-    FGM: 83,   // field goals made
-    FGA: 84,   // field goals attempted
-    XPM: 86,   // extra points made
-    // Defense / special teams
-    SACK: 99,
-    DINT: 95,  // defensive interceptions
-    FR: 96,    // fumbles recovered
-    DTD: 93,   // defensive/ST touchdowns
-    SFTY: 98,  // safeties
-    PA: 120,   // points allowed
-    YDA: 127,  // yards allowed
-} as const;
-
-// PPR scoring rules (points per unit). Used to compute fantasy points from
-// raw stats so the app does not depend on which ESPN league scoring is queried.
-export const PPR_SCORING: Record<string, number> = {
-    PYDS: 0.04,   // 1 pt / 25 passing yards
-    PTD: 4,
-    INT: -2,
-    RYDS: 0.1,    // 1 pt / 10 rushing yards
-    RTD: 6,
-    REC: 1,       // full PPR
-    RECYDS: 0.1,  // 1 pt / 10 receiving yards
-    RECTD: 6,
-    FUML: -2,
-    FGM: 3,       // simplified (ESPN varies by distance)
-    XPM: 1,
-    SACK: 1,
-    DINT: 2,
-    FR: 2,
-    DTD: 6,
-    SFTY: 2,
+    AB: 0,
+    PA: 16,
+    R: 20,
+    HR: 5,
+    RBI: 21,
+    SB: 23,
+    OBP: 17,
+    AVG: 2,
+    KO: 27,
+    CS: 24,
+    OPS: 18,
+    SLG: 9,
+    XBH: 6,
+    IP: 34,
+    K: 48,
+    W: 53,
+    ERA: 47,
+    WHIP: 41,
+    SVHD: 83,
+    HD: 59,
+    SV: 57,
+    QS: 63,
+    CG: 62,
+    'K/9': 49,
+    BB: 39,
+    'K/BB': 82,
+    'SV%': 59,
+    BS: 58,
+    IRS: 61,
+    HRA: 46,
 };
 
-// Stats we surface for skill/offense players
-export const OFFENSE_STATS = [
-    'FPTS', 'PATT', 'CMP', 'PYDS', 'PTD', 'INT',
-    'CAR', 'RYDS', 'RTD',
-    'TGT', 'REC', 'RECYDS', 'RECTD', 'FUML',
+// Batter stats to extract from ESPN data
+export const BATTER_STATS = [
+    'AB', 'PA', 'R', 'HR', 'RBI', 'SB', 'OBP', 'AVG', 'KO', 'CS', 'OPS', 'SLG', 'XBH'
 ];
 
-// Stats we surface for kickers
-export const KICKER_STATS = ['FPTS', 'FGM', 'FGA', 'XPM'];
-
-// Stats we surface for team defenses
-export const DEFENSE_STATS = ['FPTS', 'SACK', 'DINT', 'FR', 'DTD', 'SFTY', 'PA', 'YDA'];
+// Pitcher stats to extract from ESPN data
+export const PITCHER_STATS = [
+    'IP', 'K', 'W', 'ERA', 'WHIP', 'SVHD', 'HD', 'SV', 'QS', 'BB', 'K/9', 'K/BB', 'BS', 'HRA'
+];
 
 // Data sources available for refresh
-export const VALID_DATA_SOURCES = ['teams', 'stats', 'fantasypros'] as const;
+export const VALID_DATA_SOURCES = ['teams', 'stats', 'projections', 'historical', 'fantasypros'] as const;
 
 // API URLs
-export const ESPN_TEAMS_URL = 'https://site.web.api.espn.com/apis/site/v2/teams?region=us&lang=en&leagues=nfl';
-// Public read endpoint for the full NFL player universe (kona_player_info view).
-export const ESPN_PLAYERS_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leagues/0?view=kona_player_info';
+export const ESPN_TEAMS_URL = 'https://site.web.api.espn.com/apis/site/v2/teams?region=us&lang=en&leagues=mlb';
+export const ESPN_PLAYERS_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/flb/seasons/2026/segments/0/leagues/3850?view=kona_player_info';
+export const FANGRAPHS_PROJECTIONS_URL = 'https://www.fangraphs.com/api/projections';
+export const FANGRAPHS_LEADERS_URL = 'https://www.fangraphs.com/api/leaders/major-league/data';
 
-// FantasyPros URLs (PPR)
-export const FANTASYPROS_RANKINGS_URL = 'https://www.fantasypros.com/nfl/rankings/ppr-cheatsheets.php';
-export const FANTASYPROS_ADP_URL = 'https://www.fantasypros.com/nfl/adp/ppr-overall.php';
+// FantasyPros URLs
+export const FANTASYPROS_RANKINGS_URL = 'https://www.fantasypros.com/mlb/rankings/overall.php';
+export const FANTASYPROS_ADP_URL = 'https://www.fantasypros.com/mlb/adp/overall.php';
 
 // Current season for data fetching
 export const CURRENT_SEASON = 2026;

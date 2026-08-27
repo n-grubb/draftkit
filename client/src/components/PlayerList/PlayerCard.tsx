@@ -1,5 +1,6 @@
 import { useContext } from 'react'
 import { StoreContext } from '~/data/store'
+import { SportContext } from '~/data/sportContext'
 import { StatsPrefsContext } from '~/data/statsPrefsContext'
 import { statsToDisplay } from '~/features/filtering/columns'
 import { formatStatValue, normalizeStatValue, evaluateStatQuality } from '~/features/stats'
@@ -18,6 +19,7 @@ const FALLBACK_IMAGE = `${import.meta.env.BASE_URL}assets/images/player-fallback
 
 const PlayerCard = ({ playerId, onClose }) => {
     const { players, teams } = useContext(StoreContext);
+    const { config } = useContext(SportContext);
     const { expandedStatsView, selectedStats } = useContext(StatsPrefsContext);
 
     const player      = players[playerId]
@@ -25,9 +27,9 @@ const PlayerCard = ({ playerId, onClose }) => {
     const projections = player.projections
     const stats       = player.stats
 
-    const positions = player.pos
+    const positions = config.positions.displayPositions(player)
     const team = teams[player.team_id]
-    const teamLogo = team?.logo
+    const teamLogo = config.data.teamLogo(team)
 
     // Use expanded view or custom stats based on user preferences
     const columns = expandedStatsView
@@ -42,12 +44,12 @@ const PlayerCard = ({ playerId, onClose }) => {
                 <div className="player-card-header">
                     <div className="player-photos large">
                         { teamLogo && (<img className="team-logo" src={teamLogo} width="48" />) }
-                        <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="180" onError={(e) => { const img = e.target as HTMLImageElement; if (!img.src.endsWith(FALLBACK_IMAGE)) { img.src = FALLBACK_IMAGE; } }} />
+                        <img className="player-headshot" src={config.data.largeHeadshot(player.headshot)} width="180" onError={(e) => { const img = e.target as HTMLImageElement; if (!img.src.endsWith(FALLBACK_IMAGE)) { img.src = FALLBACK_IMAGE; } }} />
                     </div>
                     <div className="player-info">
                         <h2>{player.name}</h2>
                         <div className="player-positions">
-                            {player.pos.map(position => (
+                            {positions.map(position => (
                                 <span key={position} className="position-chip" data-pos={position}>{position}</span>
                             ))}
                         </div>

@@ -135,6 +135,17 @@ function buildHeadshot(id, position, team) {
     return `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${id}.png&w=426&h=320&cb=1`
 }
 
+function calculateAge(dob) {
+    if (!dob) return null
+    const birth = new Date(dob)
+    if (isNaN(birth.getTime())) return null
+    const now = new Date()
+    let age = now.getFullYear() - birth.getFullYear()
+    const m = now.getMonth() - birth.getMonth()
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--
+    return age
+}
+
 export async function fetchFootballTeams() {
     const res = await fetch(ESPN_TEAMS_URL)
     if (!res.ok) throw new Error(`ESPN teams request failed (${res.status})`)
@@ -195,8 +206,8 @@ export async function fetchFootballPlayers(teams) {
             averageDraftPosition: p.ownership?.averageDraftPosition || null,
             percentChange: p.ownership?.percentChange || null,
             injuryStatus: p.injuryStatus || null,
-            age: null,
-            birthDate: null,
+            age: calculateAge(p.dateOfBirth),
+            birthDate: p.dateOfBirth || null,
             espnRank,
             fantasyProsRank: ecr?.rank ?? null,
             fantasyProsPositionalRank: null,

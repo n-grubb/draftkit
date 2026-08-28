@@ -39,7 +39,7 @@ const StatsPrefsModal = ({ onClose }) => {
 
     const saveChanges = () => {
         for (const g of statGroups) {
-            if ((local[g.key] || []).length === 0) {
+            if (!g.allowEmpty && (local[g.key] || []).length === 0) {
                 alert(`Please select at least one ${g.label.toLowerCase()} stat`);
                 return;
             }

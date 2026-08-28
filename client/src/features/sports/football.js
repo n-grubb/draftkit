@@ -175,7 +175,9 @@ const DEFENSE_COLUMNS = [
 ]
 
 const ALL_OFFENSE_COLUMNS = [...PASSING_COLUMNS, ...RUSHING_COLUMNS, ...RECEIVING_COLUMNS, ...MISC_OFFENSE_COLUMNS]
-const ALL_STAT_COLUMNS = [FPTS_COLUMN, ...ALL_OFFENSE_COLUMNS, ...KICKING_COLUMNS, ...DEFENSE_COLUMNS]
+// Player attributes (not stats) that apply to everyone and can be toggled on.
+const PLAYER_COLUMNS = [{ id: 'age', name: 'Age', group: 'all' }]
+const ALL_STAT_COLUMNS = [FPTS_COLUMN, ...ALL_OFFENSE_COLUMNS, ...PLAYER_COLUMNS, ...KICKING_COLUMNS, ...DEFENSE_COLUMNS]
 const COLUMN_BY_ID = Object.fromEntries(ALL_STAT_COLUMNS.map(c => [c.id, c]))
 
 const DEFAULT_OFFENSE_STAT_IDS = ['PYDS', 'PTD', 'RYDS', 'RTD', 'REC', 'RECYDS', 'RECTD']
@@ -201,7 +203,9 @@ function columnAppliesToPlayer(positions, columnId) {
 
 function offenseIdsFrom(selected) {
     const ids = selected?.offense
-    return (ids && ids.length) ? ids : DEFAULT_OFFENSE_STAT_IDS
+    // Respect an explicit empty selection (FPTS-only); only fall back to the
+    // default set when nothing has been chosen yet (undefined).
+    return Array.isArray(ids) ? ids : DEFAULT_OFFENSE_STAT_IDS
 }
 
 function statsForFilter(posFilter, selected = {}) {
@@ -226,6 +230,7 @@ const STAT_FULL_NAMES = {
     FGM: 'Field Goals Made', FGA: 'Field Goals Attempted', XPM: 'Extra Points Made',
     SACK: 'Sacks', DINT: 'Defensive Interceptions', FR: 'Fumbles Recovered', DTD: 'Defensive/ST Touchdowns',
     SFTY: 'Safeties', PA: 'Points Allowed', YDA: 'Yards Allowed',
+    age: 'Age',
 }
 
 /* ----------------------------------------------------------------------------
@@ -275,7 +280,7 @@ const DATA = {
     rankingsLocalOnly: true,
     // Includes the ECR snapshot version so refreshing FantasyPros rankings
     // invalidates the cached player list.
-    cacheVersion: `v3-${ECR_VERSION}`,
+    cacheVersion: `v4-${ECR_VERSION}`,
     fetchPlayers: fetchFootballPlayers,
     fetchTeams: fetchFootballTeams,
     largeHeadshot: (url) => url,
@@ -303,10 +308,11 @@ const football = {
     statGroups: [
         {
             key: 'offense',
-            label: 'Offense Stats (All view)',
-            help: 'Shown in the default table. Position filters (QB, RB, K, DST…) always show their own curated columns.',
-            columns: ALL_OFFENSE_COLUMNS,
+            label: 'Table Columns (All view)',
+            help: 'Extra columns for the default table. FPTS always shows, so you can select none. Position filters (QB, RB, K, DST…) show their own curated columns.',
+            columns: [...ALL_OFFENSE_COLUMNS, ...PLAYER_COLUMNS],
             defaultIds: DEFAULT_OFFENSE_STAT_IDS,
+            allowEmpty: true,
         },
     ],
     columns: {
@@ -314,7 +320,7 @@ const football = {
         statsToDisplay,
         columnAppliesToPlayer,
         legendGroups: [
-            { title: 'Offense', columns: [FPTS_COLUMN, ...ALL_OFFENSE_COLUMNS] },
+            { title: 'Offense', columns: [FPTS_COLUMN, ...ALL_OFFENSE_COLUMNS, ...PLAYER_COLUMNS] },
             { title: 'Kicking', columns: KICKING_COLUMNS },
             { title: 'Defense / ST', columns: DEFENSE_COLUMNS },
         ],

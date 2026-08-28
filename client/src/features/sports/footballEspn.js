@@ -190,7 +190,8 @@ export async function fetchFootballPlayers(teams) {
     // all of them is sluggish and a draft only needs the draftable pool. Keep
     // players with a real draft signal (ADP, ESPN rank, or non-trivial
     // ownership), capped to a generous depth.
-    const DRAFT_POOL_LIMIT = 400
+    // A typical draft is ~15 rounds (~180 players); 250 leaves comfortable depth.
+    const DRAFT_POOL_LIMIT = 250
     const ranked = usable.filter(
         (pl) => pl.espnRank != null || pl.averageDraftPosition != null || pl.ownership >= 1
     )

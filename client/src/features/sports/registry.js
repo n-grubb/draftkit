@@ -13,7 +13,8 @@ export const SPORTS = { baseball, football }
 
 export const SPORT_LIST = [baseball, football]
 
-export const DEFAULT_SPORT = 'baseball'
+// Default to football for now (baseball remains available via the toggle).
+export const DEFAULT_SPORT = 'football'
 
 let activeSportKey = DEFAULT_SPORT
 

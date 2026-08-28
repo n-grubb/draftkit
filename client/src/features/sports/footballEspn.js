@@ -186,8 +186,18 @@ export async function fetchFootballPlayers(teams) {
     const orderValue = (pl) => pl.averageDraftPosition ?? pl.espnRank ?? Infinity
     usable.sort((a, b) => orderValue(a) - orderValue(b))
 
+    // The ESPN player universe is ~1500+ players; rendering and drag-ranking
+    // all of them is sluggish and a draft only needs the draftable pool. Keep
+    // players with a real draft signal (ADP, ESPN rank, or non-trivial
+    // ownership), capped to a generous depth.
+    const DRAFT_POOL_LIMIT = 400
+    const ranked = usable.filter(
+        (pl) => pl.espnRank != null || pl.averageDraftPosition != null || pl.ownership >= 1
+    )
+    const pool = (ranked.length ? ranked : usable).slice(0, DRAFT_POOL_LIMIT)
+
     const posCounters = {}
-    for (const pl of usable) {
+    for (const pl of pool) {
         const ranks = {}
         for (const position of pl.pos) {
             posCounters[position] = (posCounters[position] || 0) + 1
@@ -196,5 +206,5 @@ export async function fetchFootballPlayers(teams) {
         pl.fantasyProsPositionalRank = ranks
     }
 
-    return usable
+    return pool
 }

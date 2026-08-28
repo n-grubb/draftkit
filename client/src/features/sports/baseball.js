@@ -402,6 +402,7 @@ const DATA = {
     source: 'server',
     apiUrl: API_URL,
     rankingsLocalOnly: false,
+    cacheVersion: 'v3',
     playersUrl: `${API_URL}/players`,
     teamsUrl: `${API_URL}/teams`,
     // Baseball headshots come sized w=96/h=70; upscale for display.

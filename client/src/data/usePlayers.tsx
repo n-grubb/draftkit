@@ -3,10 +3,6 @@ import useSWR from 'swr'
 import { SportContext } from './sportContext'
 import { storageKey } from './config'
 
-// Bump when the cached player shape/selection changes, to invalidate stale
-// localStorage caches (e.g. the pre-cap football pool).
-const PLAYERS_CACHE_VERSION = 'v2'
-
 function buildPlayerMap(players) {
     const playersMap = {}
     players.forEach(player => {
@@ -18,8 +14,12 @@ function buildPlayerMap(players) {
 const usePlayers = () => {
     const { sport, config } = useContext(SportContext)
 
-    const cacheKey = storageKey(sport, `players-${PLAYERS_CACHE_VERSION}`)
-    const timestampKey = storageKey(sport, `playersTimestamp-${PLAYERS_CACHE_VERSION}`)
+    // Each sport carries a cacheVersion so a change in the cached player shape
+    // or bundled data (e.g. a refreshed football ECR snapshot) invalidates the
+    // stale localStorage cache automatically.
+    const version = config.data.cacheVersion || 'v1'
+    const cacheKey = storageKey(sport, `players-${version}`)
+    const timestampKey = storageKey(sport, `playersTimestamp-${version}`)
 
     const initialState = useRef(null)
     if (initialState.current === null) {

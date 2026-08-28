@@ -2,7 +2,7 @@
 // Player data is fetched directly from ESPN in the browser (no backend) and
 // rankings are stored locally. See features/sports/footballEspn.js.
 
-import { fetchFootballPlayers, fetchFootballTeams } from './footballEspn'
+import { fetchFootballPlayers, fetchFootballTeams, ECR_VERSION } from './footballEspn'
 
 /* ----------------------------------------------------------------------------
  * Positions
@@ -273,6 +273,9 @@ const DRAFT = {
 const DATA = {
     source: 'espn-direct',
     rankingsLocalOnly: true,
+    // Includes the ECR snapshot version so refreshing FantasyPros rankings
+    // invalidates the cached player list.
+    cacheVersion: `v3-${ECR_VERSION}`,
     fetchPlayers: fetchFootballPlayers,
     fetchTeams: fetchFootballTeams,
     largeHeadshot: (url) => url,
@@ -284,7 +287,7 @@ const football = {
     label: 'Football',
     shortLabel: 'NFL',
     loadingText: 'Loading NFL players from ESPN…',
-    dataCredit: 'Player data & PPR projections from ESPN · rankings saved locally in your browser',
+    dataCredit: 'Player data & PPR projections from ESPN · expert ranks from FantasyPros · rankings saved locally in your browser',
     data: DATA,
     positions: {
         filters: POSITION_FILTERS,

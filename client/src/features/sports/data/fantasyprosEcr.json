@@ -1,0 +1,7 @@
+{
+  "updated": null,
+  "scoring": "PPR",
+  "source": "https://www.fantasypros.com/nfl/rankings/ppr-cheatsheets.php",
+  "note": "Run `npm run fetch:ecr` from the client/ directory to populate this file.",
+  "players": []
+}

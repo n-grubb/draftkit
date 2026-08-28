@@ -39,6 +39,22 @@ to know:
   read endpoints today, but if a future ESPN change blocks it, those two fetches
   are the only place to route through a small proxy. The app shows a clear error
   state if the fetch fails.
+
+## FantasyPros expert ranks (FPRO column)
+
+FantasyPros can't be fetched from the browser (no CORS), so its PPR ECR is
+bundled as a snapshot. To refresh it, run — from a machine that can reach
+fantasypros.com:
+
+```
+cd client && npm run fetch:ecr
+```
+
+That writes `client/src/features/sports/data/fantasyprosEcr.json`, which the
+app matches to ESPN players by name to fill the FPRO column and positional
+ranks. Commit the JSON and redeploy; the snapshot's timestamp is part of the
+player cache key, so the refreshed ranks show up on next load. The pool is also
+capped to the top ~250 draftable players for responsiveness.
 - **Stat IDs.** The ESPN football stat/slot/position maps in `footballEspn.js`
   use the community-known values (unverifiable from the build environment).
   After first load, spot-check a couple of known players; if a stat looks off,

@@ -10,7 +10,31 @@
 // If a future ESPN change blocks that, these two fetches are the only place to
 // route through a small proxy.
 
+import ecrSnapshot from './data/fantasyprosEcr.json'
+
 const SEASON = 2026
+
+// FantasyPros ECR snapshot (see scripts/fetch-fantasypros-ecr.mjs). Matched to
+// ESPN players by a normalized name so the FPRO column and positional ranks
+// populate without a runtime backend.
+function normalizeName(name) {
+    return String(name || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[.'’`]/g, '')
+        .replace(/\b(jr|sr|ii|iii|iv|v)\b/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+}
+
+const ECR_BY_NAME = new Map(
+    (ecrSnapshot.players || []).map((p) => [normalizeName(p.name), p])
+)
+
+// Changes whenever the ECR snapshot is refreshed, so the cached player list
+// is invalidated and re-matched against the new rankings.
+export const ECR_VERSION = ecrSnapshot.updated || 'none'
 
 const ESPN_TEAMS_URL = 'https://site.web.api.espn.com/apis/site/v2/teams?region=us&lang=en&leagues=nfl'
 // Game-level player universe (no league needed) with the kona_player_info view,
@@ -155,6 +179,7 @@ export async function fetchFootballPlayers(teams) {
         const rawStats = p.stats ?? []
         const team = teamList[p.proTeamId]
         const espnRank = p.draftRanksByRankType?.PPR?.rank ?? p.draftRanksByRankType?.STANDARD?.rank ?? null
+        const ecr = ECR_BY_NAME.get(normalizeName(p.fullName)) || null
 
         return {
             id,
@@ -173,8 +198,9 @@ export async function fetchFootballPlayers(teams) {
             age: null,
             birthDate: null,
             espnRank,
-            fantasyProsRank: null,
+            fantasyProsRank: ecr?.rank ?? null,
             fantasyProsPositionalRank: null,
+            _ecr: ecr,
         }
     })
 
@@ -183,7 +209,7 @@ export async function fetchFootballPlayers(teams) {
 
     // Sort by ADP (fallback to ESPN rank), then derive positional ranks from
     // that order so the "vsPRK" column works without FantasyPros data.
-    const orderValue = (pl) => pl.averageDraftPosition ?? pl.espnRank ?? Infinity
+    const orderValue = (pl) => pl.averageDraftPosition ?? pl.fantasyProsRank ?? pl.espnRank ?? Infinity
     usable.sort((a, b) => orderValue(a) - orderValue(b))
 
     // The ESPN player universe is ~1500+ players; rendering and drag-ranking
@@ -193,10 +219,13 @@ export async function fetchFootballPlayers(teams) {
     // A typical draft is ~15 rounds (~180 players); 250 leaves comfortable depth.
     const DRAFT_POOL_LIMIT = 250
     const ranked = usable.filter(
-        (pl) => pl.espnRank != null || pl.averageDraftPosition != null || pl.ownership >= 1
+        (pl) => pl.espnRank != null || pl.averageDraftPosition != null || pl.fantasyProsRank != null || pl.ownership >= 1
     )
     const pool = (ranked.length ? ranked : usable).slice(0, DRAFT_POOL_LIMIT)
 
+    // Positional ranks: prefer the FantasyPros positional rank where we matched
+    // one; otherwise fall back to a rank derived from the ADP/ECR ordering so
+    // the vsPRK column still works for unmatched players.
     const posCounters = {}
     for (const pl of pool) {
         const ranks = {}
@@ -204,7 +233,11 @@ export async function fetchFootballPlayers(teams) {
             posCounters[position] = (posCounters[position] || 0) + 1
             ranks[position] = posCounters[position]
         }
+        if (pl._ecr?.posRank && pl._ecr?.pos) {
+            ranks[pl._ecr.pos] = pl._ecr.posRank
+        }
         pl.fantasyProsPositionalRank = ranks
+        delete pl._ecr
     }
 
     return pool

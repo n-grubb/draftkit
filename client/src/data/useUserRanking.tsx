@@ -1,5 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import { fetchRanking, createRanking, updateRanking as updateRemoteRanking } from './rankingService';
+import { SportContext } from './sportContext';
+import { storageKey } from './config';
 
 const MAX_STORED_RANKINGS = 10;
 const RANKINGS_STORAGE_KEY = 'storedRankings';
@@ -30,7 +32,6 @@ function addNewPlayers(rankingData, currentPlayers) {
         -1
     );
 
-    // Sort new players by ADP so they appear in a sensible order at the end
     newPlayerIds.sort((a, b) => {
         const adpA = currentPlayers[a].averageDraftPosition ?? Infinity;
         const adpB = currentPlayers[b].averageDraftPosition ?? Infinity;
@@ -45,40 +46,35 @@ function addNewPlayers(rankingData, currentPlayers) {
     return { ...rankingData, players: updatedPlayers };
 }
 
-// Sync a ranking with the current player data: remove stale players and add new ones
 function syncRankingWithPlayers(rankingData, currentPlayers) {
     return addNewPlayers(filterStalePlayers(rankingData, currentPlayers), currentPlayers);
 }
 
-function readRankingsList() {
-    const json = localStorage.getItem(RANKINGS_STORAGE_KEY);
+function readRankingsList(key) {
+    const json = localStorage.getItem(key);
     return json ? JSON.parse(json) : [];
 }
 
 const useUserRanking = (players) => {
+    const { sport, config } = useContext(SportContext);
+    const localOnly = config.data.rankingsLocalOnly;
+    const rankingsListKey = storageKey(sport, RANKINGS_STORAGE_KEY);
+    const rkey = useCallback((id) => storageKey(sport, `ranking_${id}`), [sport]);
+
     // Get the ranking ID from URL if present
     const getUrlRankingId = () => {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get('id');
     };
 
-    // State for the active ranking
     const [ranking, setRanking] = useState<any>({});
-    // State for all saved rankings
     const [savedRankings, setSavedRankings] = useState([]);
-    // State for loading
     const [isLoading, setIsLoading] = useState(true);
-    // State for error
     const [error, setError] = useState(null);
-    // State for editing PIN
     const [pin, setPin] = useState('');
-    // State to track if ranking is shared
     const [isShared, setIsShared] = useState(false);
 
-    // Added a ref to track if we've done the initial load
     const initialLoadDone = useRef(false);
-
-    // Debounced localStorage save
     const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const debouncedSaveToStorage = useCallback((rankingToSave) => {
@@ -86,12 +82,11 @@ const useUserRanking = (players) => {
             clearTimeout(saveTimerRef.current);
         }
         saveTimerRef.current = setTimeout(() => {
-            localStorage.setItem(`ranking_${rankingToSave.id}`, JSON.stringify(rankingToSave));
+            localStorage.setItem(rkey(rankingToSave.id), JSON.stringify(rankingToSave));
             saveTimerRef.current = null;
         }, SAVE_DEBOUNCE_MS);
-    }, []);
+    }, [rkey]);
 
-    // Flush pending saves on unmount
     useEffect(() => {
         return () => {
             if (saveTimerRef.current) {
@@ -100,21 +95,16 @@ const useUserRanking = (players) => {
         };
     }, []);
 
-    // Load all saved rankings from localStorage
     const loadSavedRankings = useCallback(() => {
-        const storedRankings = readRankingsList();
+        const storedRankings = readRankingsList(rankingsListKey);
         setSavedRankings(storedRankings);
         return storedRankings;
-    }, []);
+    }, [rankingsListKey]);
 
-    // Save a ranking to the stored rankings list
     const saveToRankingsList = useCallback((rankingToSave, { immediate = false } = {}) => {
-        const currentRankings = readRankingsList();
-
-        // Check if this ranking already exists in our list (by ID)
+        const currentRankings = readRankingsList(rankingsListKey);
         const existingIndex = currentRankings.findIndex(r => r.id === rankingToSave.id);
 
-        // Create a light version of the ranking for the list (without all player data)
         const rankingForList = {
             id: rankingToSave.id,
             author: rankingToSave.author,
@@ -129,45 +119,37 @@ const useUserRanking = (players) => {
 
         let updatedRankings;
         if (existingIndex >= 0) {
-            // Update existing entry
             updatedRankings = [...currentRankings];
             updatedRankings[existingIndex] = rankingForList;
         } else {
-            // Check if we've reached the limit
             if (currentRankings.length >= MAX_STORED_RANKINGS) {
-                // Remove the oldest ranking to make space and clean up its data
                 const removed = currentRankings[currentRankings.length - 1];
                 if (removed?.id) {
-                    localStorage.removeItem(`ranking_${removed.id}`);
+                    localStorage.removeItem(rkey(removed.id));
                 }
                 updatedRankings = [...currentRankings];
                 updatedRankings.pop();
             }
-
-            // Add new ranking at the beginning (newest first)
             updatedRankings = [rankingForList, ...(currentRankings || [])];
         }
 
-        // Save the updated list
-        localStorage.setItem(RANKINGS_STORAGE_KEY, JSON.stringify(updatedRankings));
+        localStorage.setItem(rankingsListKey, JSON.stringify(updatedRankings));
         setSavedRankings(updatedRankings);
 
-        // Save the full ranking data (debounced or immediate)
         if (immediate) {
-            localStorage.setItem(`ranking_${rankingToSave.id}`, JSON.stringify(rankingToSave));
+            localStorage.setItem(rkey(rankingToSave.id), JSON.stringify(rankingToSave));
         } else {
             debouncedSaveToStorage(rankingToSave);
         }
 
         return updatedRankings;
-    }, [debouncedSaveToStorage]);
+    }, [debouncedSaveToStorage, rankingsListKey, rkey]);
 
-    // Persist a ranking update: set state, debounce save to localStorage, sync remote if shared
     const persistRankingUpdate = useCallback((newRanking, remotePayload) => {
         setRanking(newRanking);
         saveToRankingsList(newRanking);
 
-        if (isShared && !newRanking.id.startsWith('local') && pin) {
+        if (!localOnly && isShared && !newRanking.id.startsWith('local') && pin) {
             updateRemoteRanking(newRanking.id, remotePayload, pin)
                 .then((updatedRemoteRanking) => {
                     updatedRemoteRanking.name = newRanking.name;
@@ -178,9 +160,8 @@ const useUserRanking = (players) => {
                     console.error('Failed to update remote ranking:', err);
                 });
         }
-    }, [isShared, pin, saveToRankingsList]);
+    }, [isShared, pin, saveToRankingsList, localOnly]);
 
-    // Create a new local ranking
     const createNewRanking = useCallback((playersData = players, name = '') => {
         if (!playersData) {
             console.error('No players data available for creating new ranking');
@@ -188,29 +169,19 @@ const useUserRanking = (players) => {
         }
 
         const playerIds = Object.keys(playersData);
-        console.log('Creating initial ranking data...', { playerIds });
 
-        // Sort by averageDraftPosition (lower is better)
         playerIds.sort((a, b) => {
-            // If averageDraftPosition exists for both players, use that
             if (playersData[a].averageDraftPosition && playersData[b].averageDraftPosition) {
                 return playersData[a].averageDraftPosition - playersData[b].averageDraftPosition;
             }
-            // Fall back to ownership percentage if averageDraftPosition is missing
             return playersData[b].ownership - playersData[a].ownership;
         });
 
-        // Create a map of player info
         const playersMap = {};
         playerIds.forEach((playerId, index) => {
-            playersMap[playerId] = {
-                rank: index,
-                ignore: false,
-                highlight: false
-            };
+            playersMap[playerId] = { rank: index, ignore: false, highlight: false };
         });
 
-        // Generate a unique local ID
         const localId = `local_${Date.now()}`;
 
         const initialRanking = {
@@ -227,10 +198,8 @@ const useUserRanking = (players) => {
         setIsShared(false);
         setPin('');
 
-        // Save to our rankings list (immediate for creation)
         saveToRankingsList(initialRanking, { immediate: true });
 
-        // Update URL to remove any ranking ID
         const newUrl = new URL(window.location.href);
         newUrl.searchParams.delete('id');
         window.history.pushState({}, '', newUrl);
@@ -239,7 +208,6 @@ const useUserRanking = (players) => {
     }, [players, saveToRankingsList]);
 
     useEffect(() => {
-        // Only proceed if we have players data and haven't done the initial load yet
         if (!players || Object.keys(players).length === 0 || initialLoadDone.current) {
             return;
         }
@@ -249,54 +217,43 @@ const useUserRanking = (players) => {
             setError(null);
 
             try {
-                // Check if we have a ranking ID in the URL
                 const rankingId = getUrlRankingId();
 
-                // If rankingId is provided, fetch that ranking
                 if (rankingId) {
-                    // First check if we already have it locally
-                    const storedRanking = localStorage.getItem(`ranking_${rankingId}`);
+                    const storedRanking = localStorage.getItem(rkey(rankingId));
 
                     if (storedRanking) {
-                        // Use the stored version, filtering out stale player IDs
                         const parsedRanking = syncRankingWithPlayers(JSON.parse(storedRanking), players);
                         setRanking(parsedRanking);
                         setIsShared(!rankingId.startsWith('local'));
-                        return; // Exit early after loading the URL ranking
-                    } else {
-                        // Fetch from server
+                        return;
+                    } else if (!localOnly) {
                         const fetchedRanking = await fetchRanking(rankingId);
                         setRanking(fetchedRanking);
                         setIsShared(true);
                         saveToRankingsList(fetchedRanking, { immediate: true });
-                        return; // Exit early after loading the URL ranking
+                        return;
                     }
                 }
 
-                // No URL ranking, try to load most recent or create new
                 const savedRankings = loadSavedRankings();
 
                 if (savedRankings && savedRankings.length > 0) {
-                    // Load the most recent ranking
                     const mostRecentId = savedRankings[0].id;
-                    const storedRanking = localStorage.getItem(`ranking_${mostRecentId}`);
+                    const storedRanking = localStorage.getItem(rkey(mostRecentId));
 
                     if (storedRanking) {
                         setRanking(syncRankingWithPlayers(JSON.parse(storedRanking), players));
                         setIsShared(!mostRecentId.startsWith('local'));
                     } else {
-                        // Create new if we can't find the stored data
                         createNewRanking(players);
                     }
                 } else {
-                    // Create a new ranking if none exists
                     createNewRanking(players);
                 }
             } catch (err: any) {
                 console.error('Error initializing ranking:', err);
                 setError(err.message || 'Failed to load ranking');
-
-                // If there was an error loading a shared ranking, fallback to a new one
                 createNewRanking(players);
             } finally {
                 setIsLoading(false);
@@ -305,62 +262,46 @@ const useUserRanking = (players) => {
         };
 
         initializeRanking();
-    }, [players, createNewRanking, saveToRankingsList, loadSavedRankings]);
+    }, [players, createNewRanking, saveToRankingsList, loadSavedRankings, rkey, localOnly]);
 
-    // Remove a ranking from the list and its storage
     const deleteRanking = (rankingId) => {
-        // Check if we're trying to delete the active ranking
         if (ranking.id === rankingId) {
-            return false; // Can't delete the active ranking
+            return false;
         }
 
-        // Get current saved rankings
         const currentRankings = loadSavedRankings();
-
-        // Filter out the ranking to delete
         const updatedRankings = currentRankings.filter(r => r.id !== rankingId);
 
-        // Update the stored list
-        localStorage.setItem(RANKINGS_STORAGE_KEY, JSON.stringify(updatedRankings));
+        localStorage.setItem(rankingsListKey, JSON.stringify(updatedRankings));
         setSavedRankings(updatedRankings);
-
-        // Remove the full ranking data
-        localStorage.removeItem(`ranking_${rankingId}`);
+        localStorage.removeItem(rkey(rankingId));
 
         return true;
     };
 
-    // Switch to a different ranking
     const switchRanking = async (rankingId) => {
         try {
             setIsLoading(true);
             setError(null);
 
-            // Check if we have it locally first
-            const storedRanking = localStorage.getItem(`ranking_${rankingId}`);
+            const storedRanking = localStorage.getItem(rkey(rankingId));
 
             let targetRanking;
             if (storedRanking) {
                 targetRanking = syncRankingWithPlayers(JSON.parse(storedRanking), players);
-            } else if (rankingId.startsWith('local')) {
-                // If it's a local ranking but we don't have it stored, create a new one
+            } else if (rankingId.startsWith('local') || localOnly) {
                 return createNewRanking(players);
             } else {
-                // Fetch from server
                 targetRanking = await fetchRanking(rankingId);
-                // Save full ranking data immediately
-                localStorage.setItem(`ranking_${rankingId}`, JSON.stringify(targetRanking));
+                localStorage.setItem(rkey(rankingId), JSON.stringify(targetRanking));
             }
 
-            // Update state
             setRanking(targetRanking);
             setIsShared(!rankingId.startsWith('local'));
-            setPin(''); // Clear PIN when switching rankings
+            setPin('');
 
-            // Add to the recent rankings list
             saveToRankingsList(targetRanking, { immediate: true });
 
-            // Update URL with the ranking ID
             const newUrl = new URL(window.location.href);
             if (rankingId.startsWith('local')) {
                 newUrl.searchParams.delete('id');
@@ -378,12 +319,14 @@ const useUserRanking = (players) => {
         }
     };
 
-    // Share a ranking
     const shareRanking = async (author = '', description = '', newPin = '', name = '') => {
+        if (localOnly) {
+            // Local-only sports (football) don't use the sharing backend.
+            return null;
+        }
         try {
             setIsLoading(true);
 
-            // Create a new remote ranking
             const sharedRanking = await createRanking(
                 ranking.players,
                 author,
@@ -391,18 +334,14 @@ const useUserRanking = (players) => {
                 newPin
             );
 
-            // Add name if provided
             sharedRanking.name = name || (author ? `${author}'s Ranking` : `Ranking #${sharedRanking.id}`);
 
-            // Update state
             setRanking(sharedRanking);
             setIsShared(true);
             if (newPin) setPin(newPin);
 
-            // Save to our rankings list (immediate for sharing)
             saveToRankingsList(sharedRanking, { immediate: true });
 
-            // Update URL with the ranking ID without page reload
             const newUrl = new URL(window.location.href);
             newUrl.searchParams.set('id', sharedRanking.id);
             window.history.pushState({}, '', newUrl);
@@ -416,38 +355,22 @@ const useUserRanking = (players) => {
         }
     };
 
-    // Load a specific shared ranking
     const loadRanking = async (id) => {
         return switchRanking(id);
     };
 
-    // Takes a playerRanking (array of playerIds),
-    // & updates the stored ranking to match
     const updateRanking = async (playerOrder) => {
-        // Update ranks based on new order
         const updatedPlayers = { ...ranking.players };
 
         playerOrder.forEach((playerId, index) => {
             if (updatedPlayers[playerId]) {
-                updatedPlayers[playerId] = {
-                    ...updatedPlayers[playerId],
-                    rank: index
-                };
+                updatedPlayers[playerId] = { ...updatedPlayers[playerId], rank: index };
             } else {
-                updatedPlayers[playerId] = {
-                    rank: index,
-                    ignore: false,
-                    highlight: false
-                };
+                updatedPlayers[playerId] = { rank: index, ignore: false, highlight: false };
             }
         });
 
-        const newRanking = {
-            ...ranking,
-            players: updatedPlayers,
-            updatedAt: Date.now()
-        };
-
+        const newRanking = { ...ranking, players: updatedPlayers, updatedAt: Date.now() };
         persistRankingUpdate(newRanking, { players: updatedPlayers });
     };
 
@@ -457,19 +380,10 @@ const useUserRanking = (players) => {
 
         const updatedPlayers = {
             ...ranking.players,
-            [playerId]: {
-                ...currentPlayerInfo,
-                highlight: !isCurrentlyHighlighted,
-                ignore: false
-            }
+            [playerId]: { ...currentPlayerInfo, highlight: !isCurrentlyHighlighted, ignore: false }
         };
 
-        const newRanking = {
-            ...ranking,
-            players: updatedPlayers,
-            updatedAt: Date.now()
-        };
-
+        const newRanking = { ...ranking, players: updatedPlayers, updatedAt: Date.now() };
         persistRankingUpdate(newRanking, { players: updatedPlayers });
     };
 
@@ -478,18 +392,10 @@ const useUserRanking = (players) => {
 
         const updatedPlayers = {
             ...ranking.players,
-            [playerId]: {
-                ...currentPlayerInfo,
-                note: note || undefined
-            }
+            [playerId]: { ...currentPlayerInfo, note: note || undefined }
         };
 
-        const newRanking = {
-            ...ranking,
-            players: updatedPlayers,
-            updatedAt: Date.now()
-        };
-
+        const newRanking = { ...ranking, players: updatedPlayers, updatedAt: Date.now() };
         persistRankingUpdate(newRanking, { players: updatedPlayers });
     };
 
@@ -499,7 +405,6 @@ const useUserRanking = (players) => {
 
         let updatedCustom;
         if (value === null || value === undefined || value === '') {
-            // Remove the override
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [statId]: _removed, ...rest } = currentCustom;
             updatedCustom = Object.keys(rest).length > 0 ? rest : undefined;
@@ -509,18 +414,10 @@ const useUserRanking = (players) => {
 
         const updatedPlayers = {
             ...ranking.players,
-            [playerId]: {
-                ...currentPlayerInfo,
-                customProjections: updatedCustom
-            }
+            [playerId]: { ...currentPlayerInfo, customProjections: updatedCustom }
         };
 
-        const newRanking = {
-            ...ranking,
-            players: updatedPlayers,
-            updatedAt: Date.now()
-        };
-
+        const newRanking = { ...ranking, players: updatedPlayers, updatedAt: Date.now() };
         persistRankingUpdate(newRanking, { players: updatedPlayers });
     };
 
@@ -530,7 +427,6 @@ const useUserRanking = (players) => {
             useCustomProjections: ranking.useCustomProjections === false ? true : false,
             updatedAt: Date.now()
         };
-
         persistRankingUpdate(newRanking, { useCustomProjections: newRanking.useCustomProjections });
     };
 
@@ -540,34 +436,22 @@ const useUserRanking = (players) => {
 
         const updatedPlayers = {
             ...ranking.players,
-            [playerId]: {
-                ...currentPlayerInfo,
-                ignore: !isCurrentlyIgnored,
-                highlight: false
-            }
+            [playerId]: { ...currentPlayerInfo, ignore: !isCurrentlyIgnored, highlight: false }
         };
 
-        const newRanking = {
-            ...ranking,
-            players: updatedPlayers,
-            updatedAt: Date.now()
-        };
-
+        const newRanking = { ...ranking, players: updatedPlayers, updatedAt: Date.now() };
         persistRankingUpdate(newRanking, { players: updatedPlayers });
     };
 
-    // Function to get the share URL for the current ranking
     const getShareUrl = () => {
         if (!ranking || !ranking.id || ranking.id.startsWith('local')) {
             return null;
         }
-
         const url = new URL(window.location.origin);
         url.searchParams.set('id', ranking.id);
         return url.toString();
     };
 
-    // Check if we've reached the storage limit
     const isAtStorageLimit = savedRankings.length >= MAX_STORED_RANKINGS;
 
     return {
@@ -578,6 +462,7 @@ const useUserRanking = (players) => {
         isShared,
         pin,
         setPin,
+        localOnly,
         updateRanking,
         highlightPlayer,
         ignorePlayer,

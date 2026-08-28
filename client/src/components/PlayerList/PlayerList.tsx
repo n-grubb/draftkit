@@ -20,16 +20,19 @@ import PlayerItem, {PlayerNoteRow} from './PlayerItem'
 import PlayerCard from './PlayerCard'
 import Toast from '~/components/Toast'
 import {StoreContext} from '~/data/store'
+import {SportContext} from '~/data/sportContext'
 import {DraftContext} from '~/data/draftContext'
 import {StatsPrefsContext} from '~/data/statsPrefsContext'
 import {statsForFilter} from '~/features/filtering/columns'
 
-const SIMPLE_POSITION_FILTERS = new Set(['C', '1B', '2B', 'SS', '3B', 'OF', 'DH', 'SP', 'RP']);
-
 const PlayerList = ({ editable }: any) => {
     const {players, ranking, mode, toggleCustomProjections} = useContext(StoreContext);
+    const {config} = useContext(SportContext);
     const {draftedPlayers} = useContext(DraftContext);
-    const {selectedBattingStats, selectedPitchingStats} = useContext(StatsPrefsContext);
+    const {selectedStats} = useContext(StatsPrefsContext);
+
+    const SIMPLE_POSITION_FILTERS = useMemo(() => new Set(config.positions.simpleFilters), [config]);
+    const matchFilter = config.positions.matchPlayerToFilter;
 
     const [posFilter, setPosFilter] = useState(undefined)
     const [rankedPlayerIds, setRankedPlayerIds] = useState([]);
@@ -94,18 +97,14 @@ const PlayerList = ({ editable }: any) => {
         const player = players?.[playerId]
         if (!player) { return false }
         if (isDraftMode && draftedPlayerIds.includes(playerId)) { return false; }
-        if (!posFilter) return true
-        if (posFilter === 'DH') {
-            return player.pos.every(p => p === 'DH' || p === 'UTIL')
-        }
-        return player.pos.includes(posFilter)
+        return matchFilter(player, posFilter)
     }
 
     const columns = useMemo(
         () => isDraftMode
             ? statsForFilter(posFilter)
-            : statsForFilter(posFilter, selectedBattingStats, selectedPitchingStats),
-        [isDraftMode, posFilter, selectedBattingStats, selectedPitchingStats]
+            : statsForFilter(posFilter, selectedStats),
+        [isDraftMode, posFilter, selectedStats]
     );
 
     const handleSortClick = (colId: string) => {
@@ -148,9 +147,7 @@ const PlayerList = ({ editable }: any) => {
         let filtered = rankedPlayerIds.filter(id => {
             const player = players?.[id];
             if (!player) return false;
-            if (!posFilter) return true;
-            if (posFilter === 'DH') return player.pos.every(p => p === 'DH' || p === 'UTIL');
-            return player.pos.includes(posFilter);
+            return matchFilter(player, posFilter);
         });
         if (searchQuery) {
             const q = searchQuery.toLowerCase();

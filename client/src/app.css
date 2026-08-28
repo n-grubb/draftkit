@@ -752,6 +752,15 @@ button[data-disabled] {
   --c-1b-3b: #cd853f; /* 1B/3B - Peru Brown */
   --c-util: #8a2be2;  /* UTIL - BlueViolet */
   --c-p: #483d8b;     /* P - DarkSlateBlue */
+
+  /* Fantasy football position colors */
+  --c-qb: #e60012;    /* QB - Vibrant Red */
+  --c-rb: #00b800;    /* RB - Vibrant Green */
+  --c-wr: #0039e6;    /* WR - Vibrant Blue */
+  --c-te: #ff9500;    /* TE - Vibrant Orange */
+  --c-k: #9700cc;     /* K - Vibrant Purple */
+  --c-dst: #5c5c5c;   /* DST - Dark Gray */
+  --c-flex: #008b8b;  /* FLEX - Teal */
   --c-all: #213f65;   /* ALL - Navy */
 }
 
@@ -2857,3 +2866,72 @@ button {
     }
 }
 
+
+/* ---- Fantasy football position colors ---- */
+.player-pos[data-pos="QB"] { color: var(--c-qb); }
+.player-pos[data-pos="RB"] { color: var(--c-rb); }
+.player-pos[data-pos="WR"] { color: var(--c-wr); }
+.player-pos[data-pos="TE"] { color: var(--c-te); }
+.player-pos[data-pos="K"] { color: var(--c-k); }
+.player-pos[data-pos="DST"] { color: var(--c-dst); }
+.player-pos[data-pos="FLEX"] { color: var(--c-flex); }
+
+.position-chip[data-pos="QB"] { background-color: var(--c-qb); }
+.position-chip[data-pos="RB"] { background-color: var(--c-rb); }
+.position-chip[data-pos="WR"] { background-color: var(--c-wr); }
+.position-chip[data-pos="TE"] { background-color: var(--c-te); }
+.position-chip[data-pos="K"] { background-color: var(--c-k); }
+.position-chip[data-pos="DST"] { background-color: var(--c-dst); }
+.position-chip[data-pos="FLEX"] { background-color: var(--c-flex); }
+
+.drafted-player[data-primary-pos="QB"] .mini-headshot { border-color: var(--c-qb); }
+.drafted-player[data-primary-pos="RB"] .mini-headshot { border-color: var(--c-rb); }
+.drafted-player[data-primary-pos="WR"] .mini-headshot { border-color: var(--c-wr); }
+.drafted-player[data-primary-pos="TE"] .mini-headshot { border-color: var(--c-te); }
+.drafted-player[data-primary-pos="K"] .mini-headshot { border-color: var(--c-k); }
+.drafted-player[data-primary-pos="DST"] .mini-headshot { border-color: var(--c-dst); }
+
+/* ---- Sport selector (baseball / football toggle) ---- */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sport-selector {
+  display: flex;
+  align-items: center;
+  background: var(--navy);
+  border-radius: 4px;
+}
+
+.sport-option {
+  min-width: 44px;
+  text-align: center;
+  cursor: pointer;
+  padding: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.sport-option span {
+  display: inline-block;
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.15s ease-out;
+}
+
+.sport-option input {
+  appearance: none;
+}
+
+.sport-option.selected span {
+  background: var(--gold);
+}
+
+.error-detail {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  opacity: 0.75;
+  max-width: 32rem;
+}

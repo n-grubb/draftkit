@@ -1,6 +1,8 @@
 import { useContext, useState, useEffect, useRef } from 'react'
 import { StoreContext } from '~/data/store'
+import { SportContext } from '~/data/sportContext'
 import ModeSelector from '~/components/ModeSelector'
+import SportSelector from '~/components/SportSelector'
 import { validatePin } from '~/data/rankingService'
 
 // Maximum number of stored rankings
@@ -11,6 +13,8 @@ const VALIDATED_PINS_KEY = 'validatedPins';
 
 const AppHeader = () => {
     const { mode, updateMode, ranking, userRanking, players } = useContext(StoreContext);
+    const { config } = useContext(SportContext);
+    const canShare = !config.data.rankingsLocalOnly;
     const { 
         isShared, 
         pin, 
@@ -82,10 +86,10 @@ const AppHeader = () => {
     
     // Check if PIN is needed when switching to edit mode
     useEffect(() => {
-        if (mode === 'edit' && isShared && !pin && ranking && ranking.id && !ranking.id.startsWith('local')) {
+        if (canShare && mode === 'edit' && isShared && !pin && ranking && ranking.id && !ranking.id.startsWith('local')) {
             setShowPinModal(true);
         }
-    }, [mode, isShared, pin, ranking?.id]);
+    }, [mode, isShared, pin, ranking?.id, canShare]);
     
     // Store validated PIN in localStorage
     const storeValidatedPin = (rankingId, validPin) => {
@@ -222,6 +226,7 @@ const AppHeader = () => {
         <header data-component="AppHeader">
             <div className="header-left">
                 <h1>draftkit</h1>
+                <SportSelector />
             </div>
             
             <div className="ranking-actions">
@@ -426,10 +431,10 @@ const AppHeader = () => {
                                     <div className="ranking-description">{ranking.description}</div>
                                 )}
                                 
-                                {/* Share button for edit mode */}
-                                {mode === 'edit' && (
-                                    <button 
-                                        className="share-button drawer-button" 
+                                {/* Share button for edit mode (server-backed sports only) */}
+                                {mode === 'edit' && canShare && (
+                                    <button
+                                        className="share-button drawer-button"
                                         onClick={() => {
                                             toggleShareModal();
                                             setShowRankingsDrawer(false);

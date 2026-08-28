@@ -1,34 +1,11 @@
 import React, {useContext, useState, useRef, useEffect, memo} from 'react'
 import {StoreContext} from '~/data/store'
+import {SportContext} from '~/data/sportContext'
 import {DraftContext} from '~/data/draftContext'
 import {formatStatValue, evaluateStatQuality} from '~/features/stats'
-import {isBatter, isPitcher} from '~/features/positions'
-import {ALL_BATTING_COLUMNS, ALL_PITCHING_COLUMNS} from '~/features/filtering/columns'
-
-const BATTING_COLUMN_IDS = new Set(ALL_BATTING_COLUMNS.map(col => col.id));
-const PITCHING_COLUMN_IDS = new Set(ALL_PITCHING_COLUMNS.map(col => col.id));
+import {columnAppliesToPlayer} from '~/features/filtering/columns'
 
 const FALLBACK_IMAGE = `${import.meta.env.BASE_URL}assets/images/player-fallback.png`
-
-const EXCLUDED_POSITIONS = ['1B/3B', '2B/SS', 'P', 'UTIL']
-const SIMPLE_POSITION_FILTERS = new Set(['C', '1B', '2B', 'SS', '3B', 'OF', 'DH', 'SP', 'RP']);
-
-const INJURY_LABELS = {
-    'DAY_TO_DAY': 'DTD',
-    'OUT': 'O',
-    'SEVEN_DAY_DL': 'IL7',
-    'TEN_DAY_DL': 'IL10',
-    'FIFTEEN_DAY_DL': 'IL15',
-    'SIXTY_DAY_DL': 'IL60',
-    'SUSPENSION': 'SUSP',
-    'PATERNITY': 'PAT',
-    'BEREAVEMENT': 'BRV',
-}
-
-const getInjuryLabel = (status) => {
-    if (!status || status === 'ACTIVE') return null
-    return INJURY_LABELS[status] || status
-}
 
 const IgnoreIcon = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -99,30 +76,25 @@ const RowActions = memo(function RowActions({ playerId, playerRanking, showNote,
 const PlayerItem = memo(function PlayerItem(props: any) {
     const {playerId, playerRanking, editable, onNameClick, columns, rank, posFilter, showNote, isEditing, onToggleNote} = props
     const {players, teams, mode, ranking} = useContext(StoreContext);
+    const {config} = useContext(SportContext);
     const {isMyTurn, draftPlayer} = useContext(DraftContext);
 
     const isDraftMode = mode === 'draft';
+    const SIMPLE_POSITION_FILTERS = new Set(config.positions.simpleFilters);
 
     const player = players[playerId]
     if (!player) return null
     const projections = player.projections
 
-    let positions = player.pos.filter(position => !EXCLUDED_POSITIONS.includes(position))
-    if (positions.length > 1 && !positions.includes('SP')) {
-        positions = positions.filter(position => position != 'DH')
-    }
+    const positions = config.positions.displayPositions(player);
+    const primaryPosition = config.positions.primaryPosition(player);
 
     const useCustom = ranking.useCustomProjections !== false;
     const customProjections = useCustom ? playerRanking?.customProjections : null;
 
     const renderCellValue = (player, columnId) => {
-        // Show "--" for inapplicable stat categories (e.g., pitching stats for batters)
-        const playerHasBattingPos = player.pos?.some(p => isBatter(p));
-        const playerHasPitchingPos = player.pos?.some(p => isPitcher(p));
-        if (PITCHING_COLUMN_IDS.has(columnId) && !playerHasPitchingPos) {
-            return <span className="stat-neutral">—</span>;
-        }
-        if (BATTING_COLUMN_IDS.has(columnId) && !playerHasBattingPos) {
+        // Show "—" for stats that don't apply to this player's position(s)
+        if (!columnAppliesToPlayer(player.pos, columnId)) {
             return <span className="stat-neutral">—</span>;
         }
 
@@ -133,13 +105,6 @@ const PlayerItem = memo(function PlayerItem(props: any) {
             return <span className="stat-neutral">—</span>;
         }
 
-        let primaryPosition = null;
-        if (player.pos.includes('SP')) {
-            primaryPosition = 'SP';
-        } else if (player.pos.includes('RP')) {
-            primaryPosition = 'RP';
-        }
-
         const quality = evaluateStatQuality(columnId, value, primaryPosition);
         const formattedValue = formatStatValue(columnId, value);
         const className = quality !== 'below-average' ? `stat-${quality}` : '';
@@ -148,8 +113,8 @@ const PlayerItem = memo(function PlayerItem(props: any) {
     }
 
     const team = teams[player.team_id]
-    const teamLogo = team.logo?.href
-    const injuryLabel = getInjuryLabel(player.injuryStatus)
+    const teamLogo = config.data.teamLogo(team)
+    const injuryLabel = config.positions.injuryLabel(player.injuryStatus)
 
     const onDraft = () => draftPlayer(playerId)
 
@@ -159,7 +124,7 @@ const PlayerItem = memo(function PlayerItem(props: any) {
             <td className="player-identity-cell">
                 <div className="player-photos">
                     {teamLogo && <img className="team-logo" src={teamLogo} width="24" loading="lazy" />}
-                    <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="72" loading="lazy" onError={(e) => { const img = e.target as HTMLImageElement; if (!img.src.endsWith(FALLBACK_IMAGE)) { img.src = FALLBACK_IMAGE; } }} />
+                    <img className="player-headshot" src={config.data.largeHeadshot(player.headshot)} width="72" loading="lazy" onError={(e) => { const img = e.target as HTMLImageElement; if (!img.src.endsWith(FALLBACK_IMAGE)) { img.src = FALLBACK_IMAGE; } }} />
                 </div>
                 <div className="player-identity">
                     <div className="player-name-row">
@@ -174,7 +139,7 @@ const PlayerItem = memo(function PlayerItem(props: any) {
                         )}
                     </div>
                     <div className="player-meta small">
-                        <span className="player-team-abbrev">{team.abbrev}</span>
+                        <span className="player-team-abbrev">{team?.abbrev}</span>
                         <span className="player-position-list">
                             {positions.map((position, i) => (
                                 <span key={position}>
@@ -321,7 +286,7 @@ const StatCellInput = ({ playerId, statId, label, projections, customProjections
         }
     };
 
-    const placeholder = originalValue !== '' ? formatStatValue(statId, originalValue) : '—';
+    const placeholder = originalValue !== '' ? String(formatStatValue(statId, originalValue)) : '—';
 
     return (
         <div className="stat-cell-input-wrapper">

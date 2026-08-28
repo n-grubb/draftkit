@@ -1,22 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import StatsPrefsModal from './StatsPrefsModal';
-
-const POSITION_FILTERS = [
-    { label: 'All',     value: undefined },
-    { label: 'C',       value: 'C'       },
-    { label: '1B',      value: '1B'      },
-    { label: '2B',      value: '2B'      },
-    { label: 'SS',      value: 'SS'      },
-    { label: '2B/SS',   value: '2B/SS'   },
-    { label: '3B',      value: '3B'      },
-    { label: '1B/3B',   value: '1B/3B'   },
-    { label: 'OF',      value: 'OF'      },
-    { label: 'DH',      value: 'DH'      },
-    { label: 'Batters', value: 'UTIL'    },
-    { label: 'SP',      value: 'SP'      },
-    { label: 'RP',      value: 'RP'      },
-    { label: 'Pitchers', value: 'P'      },
-]
+import { SportContext } from '~/data/sportContext';
 
 const SearchIcon = () => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -46,6 +30,8 @@ const NumbersRectIcon = () => (
 
 const FilterBar = (props) => {
     const { posFilter, onPosChange, draftMode, searchQuery, onSearchChange, allNotesExpanded, onToggleAllNotes, hasCustomProjections, useCustomProjections, onToggleCustomProjections } = props;
+    const { config } = useContext(SportContext);
+    const POSITION_FILTERS = config.positions.filters;
     const [showStatsModal, setShowStatsModal] = useState(false);
     const [searchExpanded, setSearchExpanded] = useState(false);
     const searchInputRef = useRef(null);

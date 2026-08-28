@@ -7,8 +7,12 @@ import './app.css'
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('/draftkit/sw.js', {
-        scope: '/draftkit/'
+      // Register under the app's actual base path (which differs for PR
+      // previews served from a subdirectory), so the worker and its scope
+      // match the deployment instead of assuming the production base.
+      const base = import.meta.env.BASE_URL;
+      const registration = await navigator.serviceWorker.register(`${base}sw.js`, {
+        scope: base
       });
       
       // Handle service worker updates

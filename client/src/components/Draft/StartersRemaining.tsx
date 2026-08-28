@@ -1,27 +1,7 @@
 import { useContext, useMemo } from 'react';
 import { StoreContext } from '~/data/store';
+import { SportContext } from '~/data/sportContext';
 import { DraftContext } from '~/data/draftContext';
-import { STARTER_THRESHOLDS, getAdjustedThreshold } from '~/features/positions';
-
-const DISPLAY_POSITIONS = [
-    { id: 'C', label: 'C', category: 'Batters' },
-    { id: '1B', label: '1B', category: 'Batters' },
-    { id: '2B', label: '2B', category: 'Batters' },
-    { id: '3B', label: '3B', category: 'Batters' },
-    { id: 'SS', label: 'SS', category: 'Batters' },
-    { id: 'OF', label: 'OF', category: 'Batters' },
-    { id: '1B/3B', label: 'CI', category: 'Batters' },
-    { id: '2B/SS', label: 'MI', category: 'Batters' },
-    // { id: 'UTIL', label: 'UTIL', category: 'Batters' },
-    { id: 'SP', label: 'SP', category: 'Pitchers' },
-    { id: 'RP', label: 'RP', category: 'Pitchers' },
-];
-
-// Helper to group positions by category
-const POSITION_CATEGORIES = {
-    'Batters': ['C', '1B', '2B', '3B', 'SS', 'OF', '1B/3B', '2B/SS'],
-    'Pitchers': ['SP', 'RP'],
-};
 
 // Circular progress component
 const CircularProgress = ({ value, size = 50, strokeWidth = 5, position }) => {
@@ -81,8 +61,16 @@ const CircularProgress = ({ value, size = 50, strokeWidth = 5, position }) => {
 
 const StartersRemaining = () => {
     const { players } = useContext(StoreContext);
+    const { config } = useContext(SportContext);
     const { totalTeams, draftedPlayers } = useContext(DraftContext);
-    
+
+    const starterGroups = config.positions.starterGroups;
+    const getAdjustedThreshold = config.positions.getAdjustedThreshold;
+    const displayPositions = useMemo(
+        () => starterGroups.flatMap(g => g.positions.map(p => ({ ...p, category: g.category }))),
+        [starterGroups]
+    );
+
     // Get the list of drafted player IDs
     const draftedPlayerIds = useMemo(() => 
         Object.values(draftedPlayers), 
@@ -94,7 +82,7 @@ const StartersRemaining = () => {
         const positionCounts: Record<string, any> = {};
         
         // Initialize position counts
-        DISPLAY_POSITIONS.forEach(({ id }) => {
+        displayPositions.forEach(({ id }) => {
             positionCounts[id] = {
                 total: 0,
                 drafted: 0,
@@ -143,23 +131,16 @@ const StartersRemaining = () => {
         });
         
         return positionCounts;
-    }, [players, draftedPlayerIds, totalTeams]);
-    
+    }, [players, draftedPlayerIds, totalTeams, displayPositions, getAdjustedThreshold]);
+
     // Group positions by category
-    const positionsByCategory = Object.entries(POSITION_CATEGORIES).map(([category, positions]) => {
-        return {
-            category,
-            positions: positions.map(posId => {
-                const posInfo = DISPLAY_POSITIONS.find(p => p.id === posId);
-                return {
-                    ...posInfo,
-                    stats: startersRemainingByPosition[posId]
-                };
-            })
-        };
-    });
-    
-    console.log({ positionsByCategory, startersRemainingByPosition });
+    const positionsByCategory = starterGroups.map(group => ({
+        category: group.category,
+        positions: group.positions.map(pos => ({
+            ...pos,
+            stats: startersRemainingByPosition[pos.id]
+        })),
+    }));
 
     return (
         <div className="starters-remaining-container">

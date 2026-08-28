@@ -1,106 +1,72 @@
 import { useContext, useState } from 'react';
 import { StatsPrefsContext } from '~/data/statsPrefsContext';
-import { 
-    ALL_BATTING_COLUMNS, 
-    ALL_PITCHING_COLUMNS,
-    DEFAULT_BATTING_COLUMNS,
-    DEFAULT_PITCHING_COLUMNS
-} from '~/features/filtering/columns';
 
 const StatCheckbox = ({ stat, isSelected, onChange }) => (
     <div className="stat-checkbox">
         <label>
-            <input
-                type="checkbox"
-                checked={isSelected}
-                onChange={() => onChange(stat.id)}
-            />
+            <input type="checkbox" checked={isSelected} onChange={() => onChange(stat.id)} />
             <span className="stat-name">{stat.name}</span>
         </label>
     </div>
 );
 
 const StatsPrefsModal = ({ onClose }) => {
-    const { 
-        selectedBattingStats, 
-        selectedPitchingStats,
+    const {
+        selectedStats,
+        statGroups,
         expandedStatsView,
-        updateBattingStats, 
-        updatePitchingStats,
+        updateGroupStats,
         toggleExpandedStatsView,
-        resetToDefaults
     } = useContext(StatsPrefsContext);
-    
-    // Local state for current selections (to avoid updating context on every change)
-    const [localBattingStats, setLocalBattingStats] = useState([...selectedBattingStats]);
-    const [localPitchingStats, setLocalPitchingStats] = useState([...selectedPitchingStats]);
+
+    // Local working copy of each group's selection
+    const [local, setLocal] = useState(() => {
+        const copy = {};
+        statGroups.forEach(g => { copy[g.key] = [...(selectedStats[g.key] || g.defaultIds)]; });
+        return copy;
+    });
     const [localExpandedView, setLocalExpandedView] = useState(expandedStatsView);
-    
-    // Toggle a batting stat
-    const toggleBattingStat = (statId) => {
-        setLocalBattingStats(prev => {
-            if (prev.includes(statId)) {
-                return prev.filter(id => id !== statId);
-            } else {
-                return [...prev, statId];
-            }
+
+    const toggleStat = (groupKey, statId) => {
+        setLocal(prev => {
+            const current = prev[groupKey] || [];
+            const next = current.includes(statId)
+                ? current.filter(id => id !== statId)
+                : [...current, statId];
+            return { ...prev, [groupKey]: next };
         });
     };
-    
-    // Toggle a pitching stat
-    const togglePitchingStat = (statId) => {
-        setLocalPitchingStats(prev => {
-            if (prev.includes(statId)) {
-                return prev.filter(id => id !== statId);
-            } else {
-                return [...prev, statId];
-            }
-        });
-    };
-    
-    // Toggle expanded view
-    const handleExpandedViewToggle = () => {
-        setLocalExpandedView(prev => !prev);
-    };
-    
-    // Save changes and close modal
+
     const saveChanges = () => {
-        // Ensure at least one stat is selected for each type
-        if (localBattingStats.length === 0) {
-            alert("Please select at least one batting stat");
-            return;
+        for (const g of statGroups) {
+            if (!g.allowEmpty && (local[g.key] || []).length === 0) {
+                alert(`Please select at least one ${g.label.toLowerCase()} stat`);
+                return;
+            }
         }
-        if (localPitchingStats.length === 0) {
-            alert("Please select at least one pitching stat");
-            return;
-        }
-        
-        updateBattingStats(localBattingStats);
-        updatePitchingStats(localPitchingStats);
-        if (localExpandedView !== expandedStatsView) {
-            toggleExpandedStatsView();
-        }
+        statGroups.forEach(g => updateGroupStats(g.key, local[g.key]));
+        if (localExpandedView !== expandedStatsView) toggleExpandedStatsView();
         onClose();
     };
-    
-    // Reset to defaults
+
     const handleReset = () => {
-        setLocalBattingStats(DEFAULT_BATTING_COLUMNS.map(col => col.id));
-        setLocalPitchingStats(DEFAULT_PITCHING_COLUMNS.map(col => col.id));
+        const defaults = {};
+        statGroups.forEach(g => { defaults[g.key] = [...g.defaultIds]; });
+        setLocal(defaults);
         setLocalExpandedView(false);
     };
-    
+
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="stats-prefs-modal" onClick={e => e.stopPropagation()}>
                 <h2>Customize Stats Display</h2>
-                
+
                 <div className="expanded-toggle">
                     <label>
                         <input
                             type="checkbox"
                             checked={localExpandedView}
-                            onChange={handleExpandedViewToggle}
+                            onChange={() => setLocalExpandedView(prev => !prev)}
                         />
                         <span>Expanded Stats View (Player Card)</span>
                     </label>
@@ -108,49 +74,32 @@ const StatsPrefsModal = ({ onClose }) => {
                         When enabled, player cards will show all available stats
                     </p>
                 </div>
-                
+
                 {!localExpandedView && (
                     <div className="stat-selections">
-                        <div className="stat-column">
-                            <h3>Batting Stats</h3>
-                            <div className="stat-group">
-                                {ALL_BATTING_COLUMNS.map(stat => (
-                                    <StatCheckbox
-                                        key={stat.id}
-                                        stat={stat}
-                                        isSelected={localBattingStats.includes(stat.id)}
-                                        onChange={toggleBattingStat}
-                                    />
-                                ))}
+                        {statGroups.map(group => (
+                            <div className="stat-column" key={group.key}>
+                                <h3>{group.label}</h3>
+                                {group.help && <p className="help-text">{group.help}</p>}
+                                <div className="stat-group">
+                                    {group.columns.map(stat => (
+                                        <StatCheckbox
+                                            key={stat.id}
+                                            stat={stat}
+                                            isSelected={(local[group.key] || []).includes(stat.id)}
+                                            onChange={(id) => toggleStat(group.key, id)}
+                                        />
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div className="stat-column">
-                            <h3>Pitching Stats</h3>
-                            <div className="stat-group">
-                                {ALL_PITCHING_COLUMNS.map(stat => (
-                                    <StatCheckbox
-                                        key={stat.id}
-                                        stat={stat}
-                                        isSelected={localPitchingStats.includes(stat.id)}
-                                        onChange={togglePitchingStat}
-                                    />
-                                ))}
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 )}
-                
+
                 <div className="modal-buttons">
-                    <button className="reset-button" onClick={handleReset}>
-                        Reset to Defaults
-                    </button>
-                    <button className="cancel-button" onClick={onClose}>
-                        Cancel
-                    </button>
-                    <button className="save-button" onClick={saveChanges}>
-                        Save Changes
-                    </button>
+                    <button className="reset-button" onClick={handleReset}>Reset to Defaults</button>
+                    <button className="cancel-button" onClick={onClose}>Cancel</button>
+                    <button className="save-button" onClick={saveChanges}>Save Changes</button>
                 </div>
             </div>
         </div>

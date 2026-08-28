@@ -1,5 +1,6 @@
 import { useContext } from 'react'
 import { StoreContext } from '~/data/store'
+import { SportContext } from '~/data/sportContext'
 import { StatsPrefsContext } from '~/data/statsPrefsContext'
 import { statsToDisplay } from '~/features/filtering/columns'
 import { formatStatValue, normalizeStatValue, evaluateStatQuality } from '~/features/stats'
@@ -16,29 +17,24 @@ import {
 
 const FALLBACK_IMAGE = `${import.meta.env.BASE_URL}assets/images/player-fallback.png`
 
-const EXLUDED_POSITIONS = ['P', 'UTIL']
-
 const PlayerCard = ({ playerId, onClose }) => {
     const { players, teams } = useContext(StoreContext);
-    const { expandedStatsView, selectedBattingStats, selectedPitchingStats } = useContext(StatsPrefsContext);
-    
+    const { config } = useContext(SportContext);
+    const { expandedStatsView, selectedStats } = useContext(StatsPrefsContext);
+
     const player      = players[playerId]
     if (!player) return null
     const projections = player.projections
     const stats       = player.stats
 
-    // Don't show specialty roster spots as POS
-    let positions = [...player.pos].filter(position => !EXLUDED_POSITIONS.includes(position))
-    if (positions.length > 1) {
-        positions = positions.filter(position => position != 'DH')
-    }
+    const positions = config.positions.displayPositions(player)
+    const team = teams[player.team_id]
+    const teamLogo = config.data.teamLogo(team)
 
-    const teamLogo = teams[player.team_id].logo?.href
-    
     // Use expanded view or custom stats based on user preferences
-    const columns = expandedStatsView 
-        ? statsToDisplay(player.pos, null, null, true) // Show all stats
-        : statsToDisplay(player.pos, selectedBattingStats, selectedPitchingStats);
+    const columns = expandedStatsView
+        ? statsToDisplay(player.pos, null, true) // Show all applicable stats
+        : statsToDisplay(player.pos, selectedStats);
     
     return (
         <div className="player-card-overlay" onClick={onClose}>
@@ -48,17 +44,17 @@ const PlayerCard = ({ playerId, onClose }) => {
                 <div className="player-card-header">
                     <div className="player-photos large">
                         { teamLogo && (<img className="team-logo" src={teamLogo} width="48" />) }
-                        <img className="player-headshot" src={player.headshot.replace('w=96', 'w=426').replace('h=70', 'h=320')} width="180" onError={(e) => { const img = e.target as HTMLImageElement; if (!img.src.endsWith(FALLBACK_IMAGE)) { img.src = FALLBACK_IMAGE; } }} />
+                        <img className="player-headshot" src={config.data.largeHeadshot(player.headshot)} width="180" onError={(e) => { const img = e.target as HTMLImageElement; if (!img.src.endsWith(FALLBACK_IMAGE)) { img.src = FALLBACK_IMAGE; } }} />
                     </div>
                     <div className="player-info">
                         <h2>{player.name}</h2>
                         <div className="player-positions">
-                            {player.pos.map(position => (
+                            {positions.map(position => (
                                 <span key={position} className="position-chip" data-pos={position}>{position}</span>
                             ))}
                         </div>
-                        <div className="player-team" style={{ color: teams[player.team_id].color || 'var(--brown)' }}>
-                            {teams[player.team_id].name}
+                        <div className="player-team" style={{ color: team?.color || 'var(--brown)' }}>
+                            {team?.name}
                         </div>
                         {player.averageDraftPosition && (
                             <div className="adp">

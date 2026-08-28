@@ -47,7 +47,7 @@ const usePlayers = () => {
     const { data, error, isLoading, mutate } = useSWR(swrKey, swrFetcher)
 
     if (error) {
-        throw new Error('Failed to fetch player data.')
+        console.error('Failed to fetch player data:', error)
     }
 
     const players = data ? buildPlayerMap(data) : cachedPlayers

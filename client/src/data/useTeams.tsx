@@ -23,10 +23,10 @@ const useTeams = () => {
     const { data, error, isLoading } = useSWR(shouldFetch ? ['teams', sport] : null, swrFetcher)
 
     if (error) {
-        throw new Error('Failed to fetch teams.')
+        console.error('Failed to fetch teams:', error)
     }
 
-    const teams = data ? data : JSON.parse(storedTeams)
+    const teams = data ? data : (storedTeams ? JSON.parse(storedTeams) : [])
 
     if (data?.length > 0) {
         localStorage.setItem(cacheKey, JSON.stringify(teams))

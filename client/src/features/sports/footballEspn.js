@@ -13,7 +13,9 @@
 const SEASON = 2026
 
 const ESPN_TEAMS_URL = 'https://site.web.api.espn.com/apis/site/v2/teams?region=us&lang=en&leagues=nfl'
-const ESPN_PLAYERS_URL = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${SEASON}/segments/0/leagues/0?view=kona_player_info`
+// Game-level player universe (no league needed) with the kona_player_info view,
+// which includes projected + prior-season stat splits.
+const ESPN_PLAYERS_URL = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${SEASON}/players?scoringPeriodId=0&view=kona_player_info`
 
 // ESPN lineup slot IDs -> position abbreviations
 const POSITION_MAP = { 0: 'QB', 2: 'RB', 4: 'WR', 6: 'TE', 16: 'DST', 17: 'K' }
@@ -140,8 +142,14 @@ export async function fetchFootballPlayers(teams) {
     if (!res.ok) throw new Error(`ESPN players request failed (${res.status})`)
     const data = await res.json()
 
-    const players = (data.players || []).map((entry) => {
-        const p = entry.player
+    // The game-level /players endpoint returns a bare array of player objects;
+    // the league kona_player_info view wraps each as { id, player: {...} }.
+    // Normalize both shapes.
+    const rawList = Array.isArray(data) ? data : (data.players || [])
+
+    const players = rawList.map((entry) => {
+        const p = entry.player || entry
+        const id = entry.id ?? p.id
         const pos = primaryPosition(p.eligibleSlots, p.defaultPositionId)
         const positions = positionsFromSlots(p.eligibleSlots, p.defaultPositionId)
         const rawStats = p.stats ?? []
@@ -149,7 +157,7 @@ export async function fetchFootballPlayers(teams) {
         const espnRank = p.draftRanksByRankType?.PPR?.rank ?? p.draftRanksByRankType?.STANDARD?.rank ?? null
 
         return {
-            id: entry.id,
+            id,
             name: p.fullName,
             firstName: p.firstName,
             lastName: p.lastName,
@@ -157,7 +165,7 @@ export async function fetchFootballPlayers(teams) {
             pos: positions,
             stats: yearlyStats(rawStats, pos),
             projections: projection(rawStats, pos),
-            headshot: buildHeadshot(entry.id, pos, team),
+            headshot: buildHeadshot(id, pos, team),
             ownership: p.ownership?.percentOwned || 0,
             averageDraftPosition: p.ownership?.averageDraftPosition || null,
             percentChange: p.ownership?.percentChange || null,
@@ -170,13 +178,16 @@ export async function fetchFootballPlayers(teams) {
         }
     })
 
+    // Drop anything that isn't a usable player (no name or no mapped position)
+    const usable = players.filter((pl) => pl.name && pl.pos.length > 0)
+
     // Sort by ADP (fallback to ESPN rank), then derive positional ranks from
     // that order so the "vsPRK" column works without FantasyPros data.
     const orderValue = (pl) => pl.averageDraftPosition ?? pl.espnRank ?? Infinity
-    players.sort((a, b) => orderValue(a) - orderValue(b))
+    usable.sort((a, b) => orderValue(a) - orderValue(b))
 
     const posCounters = {}
-    for (const pl of players) {
+    for (const pl of usable) {
         const ranks = {}
         for (const position of pl.pos) {
             posCounters[position] = (posCounters[position] || 0) + 1
@@ -185,5 +196,5 @@ export async function fetchFootballPlayers(teams) {
         pl.fantasyProsPositionalRank = ranks
     }
 
-    return players
+    return usable
 }

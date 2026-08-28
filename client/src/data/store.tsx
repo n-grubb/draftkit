@@ -1,8 +1,28 @@
 import { createContext, useState, useMemo, useCallback, useContext } from 'react';
 import { SportContext } from './sportContext'
+import SportSelector from '~/components/SportSelector'
 import useTeams from './useTeams'
 import usePlayers from './usePlayers'
 import useUserRanking from './useUserRanking'
+
+// A minimal shell shown during loading / on data errors. It keeps the sport
+// toggle available so a failure loading one sport's data never traps the user
+// (they can still switch to the other sport, which reloads from scratch).
+function StatusShell({ children }) {
+    return (
+        <div id="app" className="mode--view">
+            <header data-component="AppHeader">
+                <div className="header-left">
+                    <h1>draftkit</h1>
+                    <SportSelector />
+                </div>
+            </header>
+            <main>
+                <div className="centered">{children}</div>
+            </main>
+        </div>
+    )
+}
 
 /**
  * Create a global store context that all components can access.
@@ -55,22 +75,21 @@ export const StoreProvider = ({ children }) => {
 
     if (error) {
         return (
-            <div className="centered">
-                <p className="error">Error retrieving {config.shortLabel} source data.</p>
-                {config.data.source === 'espn-direct' && (
-                    <p className="error-detail">
-                        Couldn’t load live data from ESPN. This can happen if ESPN is
-                        unreachable or blocks the browser request.
-                    </p>
-                )}
-            </div>
+            <StatusShell>
+                <p className="error">Couldn’t load {config.shortLabel} data.</p>
+                <p className="error-detail">
+                    {config.data.source === 'espn-direct'
+                        ? 'The browser couldn’t load live data from ESPN — it may be unreachable or blocking the request. Try the other sport with the toggle above.'
+                        : 'The data server couldn’t be reached. Try the other sport with the toggle above.'}
+                </p>
+            </StatusShell>
         )
     }
     if (isLoading) {
         return (
-            <div className="centered">
+            <StatusShell>
                 <p>{config.loadingText}</p>
-            </div>
+            </StatusShell>
         )
     }
 
